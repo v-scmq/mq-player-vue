@@ -78,3 +78,10 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+
+.idea
+build
+dist_electron
+
+package-lock.json

@@ -1,0 +1,160 @@
+<template>
+  <div class="slider" :class=" {'vertical' : vertical} " @click="onSliderClicked">
+    <div class="track"/>
+    <div class="buffering" v-if="buffering!=null" :style="{width:`${buffering*100}%`}"/>
+    <div class="fill"/>
+    <div class="thumb" @mousedown.prevent="onDragStart"/>
+  </div>
+</template>
+
+<script>
+
+/**
+ * 滑动条组件, 用于双向绑定的value属性值永远在 [0,1] 区间.  它具有2个可供外部使用的事件:
+ * 1.change事件,数据改变时,实时的回调方法.第一个参数是当前value属性值, 第二个参数若为true,
+ *        则表示 “滑块被拖动” 或 “点击滑动条有效位置”, 其余情况都是为undefined
+ *
+ * 2.input事件组件内部主动发起修改value属性值所用,通常不建议使用
+ *
+ * 需要注意: 当滑动条是竖直方向上显示时,滑动条的高度需要能够 自动适应 或 直接明确指定
+ *    (最佳解决方案,父元素使用flex布局自动适应,slider组件不需要再做任何变动)
+ *
+ * @author SCMQ
+ * @date 2020-12-13
+ */
+export default {
+  name: "Slider",
+
+  props: {
+    value: {type: Number, default: 0},
+    vertical: {type: Boolean, default: null},
+    buffering: {type: Number, default: null}
+  },
+
+  data: () => ({
+    $fill: null,       // 填充块div元素(dom对象)
+    $thumb: null,      // 滑  块div元素(dom对象)
+    $offsetX: null,    // 鼠标在滑块上按下时距离滑块的做左偏移量
+    $offsetLeft: null, // 滑块距离父元素slider的左偏移量(单位px)
+    $dragged: null    // 滑块是否发生过拖动
+  }),
+
+  mounted() {
+    this.$data.$fill = this.$el.querySelector('.fill');
+    this.$data.$thumb = this.$el.querySelector('.thumb');
+    // 当值大于0时需要更新滑块和填充块
+    if (this.value > 0) {
+      this.setStyle(this.value * 100);
+    }
+  },
+
+  watch: {
+    value(newValue) {
+      // 若没有拖动,则更新滑块和填充块的位置
+      this.setStyle(newValue * 100);
+      // 发出change事件,以便侦测数据值改变
+      this.$emit('change', newValue);
+    }
+  },
+
+  methods: {
+    /**
+     * 鼠标开始拖动(鼠标在滑块上按下)时触发, 此时并还未开始拖动,仅仅是准备好拖动.
+     * 需要注意检测中断拖动不能依靠滑块(div)元素本身,需要借助document对象 或 window对象
+     * 因为元素本身在鼠标移动后,所监听的鼠标释放事件并不会触发,但是document或window一定会触发
+     * @param e {MouseEvent} 鼠标事件
+     */
+    onDragStart(e) {
+      let value = this.vertical, thumb = this.$data.$thumb;
+      this.$data.$offsetX = value ? e.clientY : e.clientX;
+      this.$data.$offsetLeft = value ? thumb.offsetTop : thumb.offsetLeft;
+      document.onmousemove = this.onDragging;
+      document.onmouseup = this.onDragEnd;
+    },
+
+    /**
+     * 鼠标停止拖动(鼠标在页面开始按下后,然后释放)时触发.
+     * 此时只会提交change事件,并且传出的第2个参数boolean值true以方便侦测滑块拖动结束
+     */
+    onDragEnd() {
+      // 在拖动处理的onDragging方法中, 若确实发生值的变化,$dragged值才会为true
+      if (this.$data.$dragged) {
+        // 触发一次改变事件,并传出boolean值true作为拖动结束的标记
+        this.$emit("change", this.value, true);
+      }
+
+      this.$data.$dragged = null;
+      this.$data.$offsetX = null;
+      this.$data.$offsetLeft = null;
+      document.onmousemove = null;
+      document.onmouseup = null;
+    },
+
+    /**
+     * 滑块被拖动时触发.在此过程中,只会提交input事件以修改value属性值
+     * @param e {MouseEvent} 鼠标事件
+     */
+    onDragging(e) {
+      let total = this.vertical ? this.$el.clientHeight : this.$el.clientWidth;
+
+      // 增量 = 现在的e.clientX|e.clientY - 鼠标按下时的e.clientX|e.clientY(即this.$data.$offsetX)
+      let value = this.vertical ? e.clientY : e.clientX;
+      value = value - this.$data.$offsetX + this.$data.$offsetLeft;
+      value = value < 0 ? 0 : value > total ? total : value;
+
+      // 计算新的值,此时保留3为有效数字,然后检测值是否变化,才提交值(虽然提交相同值不会触发value改变)
+      value = this.vertical ? 1 - (value / total).toFixed(3) :
+          (value / total).toFixed(3) - 0;
+
+      if (this.value !== value) {
+        // 立刻置为true,这将用于表名滑块确实发生过拖动
+        this.$data.$dragged = true;
+        // 提交input事件以修改value属性值
+        this.$emit('input', value);
+      }
+    },
+
+    /**
+     * 滑动条被点击时触发,随着先后触发input事件和change事件
+     * 触发change事件并传出第二个参数值true 以方便侦测滑动条的值是人为改变
+     * @param e {MouseEvent} 鼠标事件
+     */
+    onSliderClicked(e) {
+      if (e.target === this.$el) {
+
+        let value = this.vertical ? e.offsetY / this.$el.clientHeight
+            : e.offsetX / this.$el.clientWidth;
+        value = value.toFixed(3) - 0;
+        value = this.vertical ? 1 - value : value;
+
+        if (value !== this.value) {
+          this.$emit('input', value);
+          this.$emit('change', value, true);
+        }
+      }
+    },
+
+    /**
+     * 设置滑块的位置和填充块的宽度
+     * @param value 滑动条模型绑定的值的100倍(滑动条绑定的value在[0,1]区间内)
+     */
+    setStyle(value) {
+      if (this.vertical) {
+        this.$data.$fill.style.height = `${value}%`;
+        this.$data.$thumb.style.top = `${100 - value}%`;
+      } else {
+        this.$data.$fill.style.width = value = `${value}%`;
+        this.$data.$thumb.style.left = value;
+      }
+    },
+
+    /**
+     * 检测滑块是否正在被拖动
+     * @returns {boolean} 若滑块在被鼠标拖动,则返回true;否则返回false
+     */
+    isNotDragging() {
+      return this.$data.$offsetX == null;
+    }
+  }
+}
+</script>
