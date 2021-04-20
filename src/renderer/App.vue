@@ -41,7 +41,7 @@ export default {
 
   created() {
     this.routes = this.$router.options.routes;
-    let netStateChanged = () => console.info(navigator.onLine ? '网络已连接' : '已断开网络连接');
+    let netStateChanged = () => this.$message(navigator.onLine ? '网络已连接' : '已断开网络连接');
     window.addEventListener('online', netStateChanged);
     window.addEventListener('offline', netStateChanged);
     this.$db.open();

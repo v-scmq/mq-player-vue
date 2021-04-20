@@ -282,7 +282,7 @@ export default {
       // 暂停当前播放的媒体
       player.pause();
       if (!list || list.length === 0 || index === -1 || index >= list.length) {
-        this._message({message: "没有播放数据源，请选择一个播放源！", type: 'waring'});
+        this.$message.warning("没有播放数据源，请选择一个播放源！");
         return;
       }
       player.index = index;

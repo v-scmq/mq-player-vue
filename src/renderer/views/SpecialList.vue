@@ -1,6 +1,6 @@
 <template>
   <div class='v-column'>
-    <div class='v-row tag' @click='onListViewClicked'>
+    <div class='v-row list-view' @click='onListViewClicked'>
       <div class='item' v-for='(tag,index) in visibleTags' :key='index'>{{ tag.name }}</div>
     </div>
     <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
@@ -36,8 +36,8 @@ export default {
     // this.$source.impl.singerList(this.page, this.area, this.sex, this.en).then(res => this.list = res);
   },
   mounted() {
-    let nodes = this.$el.querySelectorAll('.list-view');
-    nodes.forEach(node => node.childNodes[0].classList.add('active'));
+    let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
+    nodes.forEach(node => node.classList.add('active'));
   },
   methods: {
     onListViewClicked(event) {
@@ -84,7 +84,7 @@ export default {
   margin: 0.5em 0;
 }
 
-.tag .item {
+.list-view .item {
   cursor: pointer;
   border-radius: 1em;
   white-space: nowrap;
@@ -93,11 +93,11 @@ export default {
   color: var(--text-base);
 }
 
-.tag .item:hover {
+.list-view .item:hover {
   color: var(--text-hover);
 }
 
-.tag .item.active {
+.list-view .item.active {
   background: var(--fill-base);
   color: var(--text-active);
 }

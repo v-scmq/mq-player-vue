@@ -91,23 +91,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.tag .item {
-  cursor: pointer;
-  border-radius: 1em;
-  white-space: nowrap;
-  margin: 0 0 0 0.5em;
-  padding: 0.25em 0.75em;
-  color: var(--text-base);
-}
-
-.tag .item:hover {
-  color: var(--text-hover);
-}
-
-.tag .item.active {
-  background: var(--fill-base);
-  color: var(--text-active);
-}
-</style>

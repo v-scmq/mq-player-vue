@@ -112,23 +112,13 @@ const setWindowThumbBarButton = () => {
 
     let playing = false;
 
-    mainWindow.setThumbarButtons([
-        {
-            tooltip: '上一曲',
-            icon: prevIcon,
-            click: () => console.info("prev...")
-        },
-        {
-            tooltip: playing ? '暂停' : '播放',
-            icon: playing ? pauseIcon : playIcon,
-            click: () => console.info("play...")
-        },
-        {
-            tooltip: '下一曲',
-            icon: nextIcon,
-            click: () => console.info("next...")
-        }
-    ]);
+    /** @type {[{tooltip: string, icon: string|NativeImage, click: (function(): void)}]}*/
+    let buttons = [
+        {tooltip: '上一曲', icon: prevIcon, click: () => console.info("prev...")},
+        {tooltip: playing ? '暂停' : '播放', icon: playing ? pauseIcon : playIcon, click: () => console.info("play...")},
+        {tooltip: '下一曲', icon: nextIcon, click: () => console.info("next...")}
+    ];
+    mainWindow.setThumbarButtons(buttons);
     mainWindow.setThumbnailClip({x: 0, y: 0, width: 200, height: 100});
 }
 
@@ -190,7 +180,7 @@ const handleNetRequest = (event, options) => new Promise(resolve => {
 
     let data = options['data'];
     // post请求时且存在数据时,将数据通过输出流管道发送到目标服务器
-    if ((options.method === 'post' || options.method === 'POST') && data) {
+    if (options.method && options.method.toLowerCase() === 'post' && data) {
         // 写入数据(String | Buffer)
         data = ((data instanceof Buffer) || (typeof data) === 'string') ? data :
             (typeof data) === 'object' ? JSON.stringify(data) : data.toString();

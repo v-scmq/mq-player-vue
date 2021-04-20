@@ -29,8 +29,8 @@ export default {
     // this.$source.impl.singerList(this.page, this.area, this.sex, this.en).then(res => this.list = res);
   },
   mounted() {
-    let nodes = this.$el.querySelectorAll('.list-view');
-    nodes.forEach(node => node.childNodes[0].classList.add('active'));
+    let nodes = this.$el.querySelectorAll('.list-view .item:first-child');
+    nodes.forEach(node => node.classList.add('active'));
   },
   methods: {
     onListViewClicked(event) {
