@@ -1,47 +1,47 @@
 <template>
   <div class="v-column">
     <div class="v-row" style="margin: 0 0 12px 0;">
-      <Button text="播放全部" @click="playSelect">
+      <button-base text="播放全部" @click="playSelect">
         <svg width="1.5em" height="1.5em" viewBox="0 0 16 16">
           <path
               d="M10.804 8L5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z"/>
         </svg>
-      </Button>
+      </button-base>
 
-      <Button text="批量操作" @click="onMultiple">
+      <button-base text="批量操作" @click="onMultiple">
         <svg width="1.5em" height="1.5em" viewBox="0 0 16 16">
           <path v-if="multiple"
                 d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
           <path v-else
                 d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"/>
         </svg>
-      </Button>
+      </button-base>
 
-      <Button text="增加列" @click="doAddColumn"/>
-      <Button text="删除列" @click="doDelColumn"/>
-      <Button text="修改列" @click="doUpdColumn"/>
+      <button-base text="增加列" @click="doAddColumn"/>
+      <button-base text="删除列" @click="doDelColumn"/>
+      <button-base text="修改列" @click="doUpdColumn"/>
 
       <text-field v-model="inputKey" placeholder="搜索本地歌曲" @keyup.native.enter="onEntered"/>
 
-      <Button text='导入歌曲' @click="onImportData">
+      <button-base text='导入歌曲' @click="onImportData">
         <svg width="1.5em" height="1.5em" viewBox="0 0 16 16">
           <path
               d="M11.798 8.271l-3.182 1.97c-.27.166-.616-.036-.616-.372V9.1s-2.571-.3-4 2.4c.571-4.8 3.143-4.8 4-4.8v-.769c0-.336.346-.538.616-.371l3.182 1.969c.27.166.27.576 0 .742z M.5 3l.04.87a1.99 1.99 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14h10.348a2 2 0 0 0 1.991-1.819l.637-7A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2zm.694 2.09A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09l-.636 7a1 1 0 0 1-.996.91H2.826a1 1 0 0 1-.995-.91l-.637-7zM6.172 2a1 1 0 0 1 .707.293L7.586 3H2.19c-.24 0-.47.042-.684.12L1.5 2.98a1 1 0 0 1 1-.98h3.672z"/>
         </svg>
         <input type="file" style="display:none" ref="fileChooser" multiple accept="audio/*" @change="importData"/>
-      </Button>
+      </button-base>
 
-      <Button text="排序方式">
+      <button-base text="排序方式">
         <svg width="1.2em" height="1.2em" viewBox="0 0 16 16">
           <path
               d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5zm-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5z"/>
         </svg>
-      </Button>
+      </button-base>
     </div>
 
-    <Table :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick">
+    <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick">
       <!-- <template v-slot:singer="{item}">{{ item.singer }}</template>-->
-    </Table>
+    </table-view>
   </div>
 </template>
 
@@ -64,7 +64,7 @@ export default {
   }),
 
   created() {
-    this.$spinner.open(document.body);
+    this.$spinner.open();
     this.$db.queryAll(this.$db.localMusicTable).then(data => {
       this.list = data || this.list;
       this.list.push({
@@ -75,8 +75,7 @@ export default {
         size: '3.5MB',
         path: 'https://webfs.yun.kugou.com/202102252302/ea7842d8bc23ae6253952e7eacf5fa57/G104/M0A/0C/03/qA0DAFvpXUuAOXTEAEMp8DXFEh4255.mp3'
       });
-      this.$spinner.close();
-    });
+    }).finally(this.$spinner.close);
   },
 
   methods: {
@@ -270,7 +269,7 @@ export default {
           }
         }
 
-        let meta = this._metadata ? await this._metadata.parseFile(path) : null;
+        let meta = this.$metadata ? await this.$metadata.parseFile(path) : null;
         savedList.push(this.parse(path, file, meta));
       }
       this._fs = undefined;
