@@ -122,8 +122,8 @@ const player = {
             this.nativePlayer.src = '';
             return false;
         }
-        // this.nativePlayer.src = media.path.charAt(1) === ':' ? `fs:///${media.path}` : media.path;
-        this.nativePlayer.src = media.path;
+        // this.nativePlayer.src = media.path;
+        this.nativePlayer.src = media.path.charAt(1) === ':' ? `media://${media.path}` : media.path;
         let listener = this.eventListener;
         if (listener && listener.mediaChanged) {
             listener.mediaChanged(media);
@@ -280,7 +280,7 @@ player.nativePlayer.ontimeupdate = () => {
 // 注册播放器正在缓冲时的回调
 player.nativePlayer.onprogress = e => {
     let listener = player.eventListener;
-    if (listener && player.bufferChanged) {
+    if (listener && listener.bufferChanged) {
         listener.bufferChanged(e.timeStamp);
     }
 };
