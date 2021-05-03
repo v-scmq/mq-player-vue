@@ -8,7 +8,7 @@
         {{ data.name }}
       </div>
       <div class='v-column scroll-wrapper'>
-        <div class='item' v-for='item in data.items' :key='item.id'>{{ item.name }}</div>
+        <div class='item' v-for='(item,index) in data.items' :key='index' :data="index">{{ item.name }}</div>
       </div>
     </div>
   </div>
@@ -26,12 +26,12 @@ export default {
     this._resizeObserver.observe(this.$el);
 
     if (this.list && this.list.length) {
-      let node = this.$el.querySelector('.list-view');
-      node.classList.toggle('expand', true);
+      let items = this.list[0].items;
+      if (items && items.length) {
+        this._selectedItem = items[0];
+      }
+      this.expandDefault();
     }
-
-    // let node = this.$el.querySelector('.scroll-wrapper')
-    // node.addEventListener('webkitTransitionEnd', this.onAnimateEnd)
   },
 
   beforeDestroy() {
@@ -42,7 +42,45 @@ export default {
     }
   },
 
+  watch: {
+    /** 当数据发生变化时 */
+    list() {
+      this.$nextTick(this.expandDefault);
+    }
+  },
+
   methods: {
+    /**
+     * 当没有任何展开的列表项时,展开一个默认的列表项
+     */
+    expandDefault() {
+      let nodes = this.$el.querySelectorAll('.list-view');
+      // 若没有任何列表项时,则重置已选定的记录
+      if (nodes.length < 1) {
+        this._selectedItem = null;
+        return;
+      }
+
+      // 检测列表项是否至少有一项被展开
+      for (let node of nodes) {
+        if (node.classList.contains('expand')) {
+          return;
+        }
+      }
+
+      // 默认展开列表项的第一个
+      nodes[0].classList.toggle('expand');
+      // 获取第一个列表项的第一个子列表项
+      let node = nodes[0].querySelector('.scroll-wrapper .item:first-child');
+      // 若存在子列表项
+      if (node) {
+        // 记录第一个列表项的第一个子列表项为所选记录
+        this._selectedItem = this.list[0].items[0];
+        // 强制选中第一个列表项的第一个子列表项
+        node.classList.toggle('selected', true);
+      }
+    },
+
     /**
      * 当根元素宽高发生变化时,回调此方法以计算滚动盒子内部高度
      * @param entry {ResizeObserverEntry} 大小调整观察者Entry对象
@@ -56,9 +94,9 @@ export default {
 
     /**
      * ListView被点击时触发
-     * @param event {MouseEvent} 鼠标事件
-     * @param data {Object} 鼠标所击对应的数据项
-     * @param index {Number} 鼠标所击对应的数据项索引
+     * @param event {MouseEvent}               鼠标事件
+     * @param data {{name:String,items:Array}} 鼠标所击对应的数据项
+     * @param index {Number}                   鼠标所击对应的数据项索引
      */
     onClick(event, data, index) {
       event.stopPropagation();
@@ -73,7 +111,10 @@ export default {
         nodes.forEach(node => node.classList.remove('selected'));
         // 强制为当前所点击ListView子项添加选中class标记
         classList.toggle('selected', true);
-        this.$emit('change', data, index);
+        let current = data.items[node.getAttribute('data')];
+        if (this._selectedItem !== current) {
+          this.$emit('change', this._selectedItem = current, data, index);
+        }
         return;
       }
 
