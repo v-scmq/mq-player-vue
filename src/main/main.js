@@ -21,8 +21,14 @@ app.setPath('crashDumps', `${appPath}/crashDumps`);
 // 主进程浏览器窗口, 系统托盘
 let mainWindow = null, tray = null;
 
-const createWindow = () => {
-    // Create the browser window.
+// 当Electron完成初始化并准备创建浏览器窗口时，将调用此方法 有些API只能在事件发生后使用
+app.on('ready', () => {
+    // 注册自定义文件协议,解决高版本electron不能加载本地文件的问题,同时此方案仍然保留web安全策略
+    // request请求包含原始请求URL和header等信息,callback回调用于将文件绝对路径传入并做响应信息处理
+    let handler = (request, callback) => callback(decodeURI(request.url.replace('media://', '')));
+    protocol.registerFileProtocol('media', handler);
+
+    // 创建浏览器主窗口
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
@@ -30,29 +36,30 @@ const createWindow = () => {
         frame: false,
         backgroundColor: 'rgb(236, 236, 236)',
         webPreferences: {
-            nodeIntegration: true,// process.env.ELECTRON_NODE_INTEGRATION
-            enableRemoteModule: false,// 必须开启远程模块,否则不能使用在渲染进程中使用
-            zoomFactor: 0.8, // 设置80%的默认缩放比例
-            webSecurity: false, // 默认为true,设置为false关闭web安全策略(如同源策略)
+            nodeIntegration: true,     // 开启NodeJS集成
+            enableRemoteModule: false, // 关闭远程模块,使用ipcMain和ipcRender代替
+            zoomFactor: 0.8,           // 设置浏览器窗口为80%的默认缩放比例
+            webSecurity: true,         // 默认为true,设置为false将关闭web安全策略(如同源策略)
+            contextIsolation: false    // 关闭上下文隔离限制(从版本12.0开始默认为true)
         }
-    })
+    });
 
-    mainWindow.once("ready-to-show", () => {
-        createTray();
-        setWindowThumbBarButton();
-        mainWindow.openDevTools();
-        mainWindow.webContents.setZoomFactor(0.8);
-    })
+    // 窗口已就绪,此时可以显示
+    let readyShow = () => {
+        createTray();              // 创建托盘
+        mainWindow.show();         // 显示窗口
+        setWindowThumbBarButton(); // 设置任务栏缩略图
+    };
 
     // 若在生产环境
     if (process.env.WEBPACK_DEV_SERVER_URL) {
-        // Load the url of the dev server if in development mode
-        mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL).then(() => mainWindow.show());
-        mainWindow.webContents.openDevTools()
+        // 加载开发模式服务器的URL
+        mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL).then(readyShow);
+        mainWindow.webContents.openDevTools();
     } else {
         createProtocol('app');
-        // Load the index.html when not in development
-        mainWindow.loadURL('app://./index.html').then(() => mainWindow.show());
+        // 从自定义协议加载首页html文件
+        mainWindow.loadURL('app://./index.html').then(readyShow);
     }
 
     // 当浏览器窗口关闭时,解除mainWindow引用指向
@@ -69,9 +76,6 @@ const createWindow = () => {
     ipcMain.on('window-maximize-restore', () =>
         mainWindow.isMaximized() ? mainWindow.restore() : mainWindow.maximize());
 
-    // 在渲染进程中,请求关闭浏览器窗口
-    ipcMain.on('window-close', () => mainWindow.close());
-
     // 在渲染进程中,请求获取窗口状态.在主进程中返回状态到渲染进程
     ipcMain.handle('request-window-state', () => mainWindow.isMaximized());
 
@@ -80,22 +84,13 @@ const createWindow = () => {
 
     // 在渲染进程中,请求主进程发起网络请求,主进程将响应信息返回到渲染进程
     ipcMain.handle('net-request', handleNetRequest);
-}
-
-// 当Electron完成初始化并准备创建浏览器窗口时，将调用此方法 有些API只能在事件发生后使用
-app.on('ready', () => {
-    // 注册自定义文件协议,解决高版本electron不能加载本地文件的问题,同时此方案仍然保留web安全策略
-    // request请求包含原始请求URL和header等信息,callback回调用于将文件绝对路径传入并做响应信息处理
-    protocol.registerFileProtocol('file', (request, callback) =>
-        callback(decodeURI(request.url.replace('file:///', ''))));
-    createWindow();
 });
 
 // 当所有窗口关闭后结束进程
 app.on('window-all-closed', () => process.platform !== 'darwin' ? app.quit() : null);
 
 // 在macOS上，当单击dock图标并且没有其他窗口打开时，通常会在应用程序中重新创建一个窗口。
-app.on('activate', () => BrowserWindow.getAllWindows() ? createWindow() : null);
+// app.on('activate', () => BrowserWindow.getAllWindows() ? createWindow() : null);
 
 // 应请求以开发模式从父进程中干净地退出。
 if (process.env.NODE_ENV !== 'production') {
@@ -112,14 +107,14 @@ const setWindowThumbBarButton = () => {
 
     let playing = false;
 
-    /** @type {[{tooltip: string, icon: string|NativeImage, click: (function(): void)}]}*/
+    /** @type {[{tooltip: string, icon: string|NativeImage, click: (function(): void)}]} */
     let buttons = [
         {tooltip: '上一曲', icon: prevIcon, click: () => console.info("prev...")},
         {tooltip: playing ? '暂停' : '播放', icon: playing ? pauseIcon : playIcon, click: () => console.info("play...")},
         {tooltip: '下一曲', icon: nextIcon, click: () => console.info("next...")}
     ];
     mainWindow.setThumbarButtons(buttons);
-    mainWindow.setThumbnailClip({x: 0, y: 0, width: 200, height: 100});
+    // mainWindow.setThumbnailClip({x: 0, y: 0, width: 1920, height: 1080});
 }
 
 const createTray = () => {
@@ -131,8 +126,8 @@ const createTray = () => {
         {label: 'Item3', click: () => console.info("item3 clicked")},
         {label: "Item4"}
     ]);
-    tray.setToolTip('MQ音乐,聆听世界的声音！');
     tray.setTitle("MQ音乐");
+    tray.setToolTip('MQ音乐,聆听世界的声音！');
     tray.setContextMenu(contextMenu);
     tray.on("right-click", (keyEvent, rectangle) => {
         console.info("event = ", keyEvent);
