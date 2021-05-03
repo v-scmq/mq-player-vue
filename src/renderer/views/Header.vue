@@ -146,9 +146,6 @@ export default {
 
     /** 关闭窗口 */
     closeWindow() {
-      // let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      // ipcRender ? ipcRender.send('window-close') : window.close();
-      // window.close();
       window.open("about:blank", "_top").close();
       window.opener = null;
       window.close();

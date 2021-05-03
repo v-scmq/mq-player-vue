@@ -1,10 +1,10 @@
-import Button from './Button';
+import Accordion from "./Accordion";
+import Button from './ButtonBase';
 import CheckBox from "./CheckBox";
-import Table from "./Table";
+import TableView from "./TableView";
 import TextField from "./TextField";
 import Slider from "./Slider";
 import Spinner from "./Spinner";
-import Accordion from "./Accordion";
 
 import MessageControl from "./Message";
 
@@ -15,26 +15,25 @@ export default {
      */
     initializeSpinner(Vue) {
         // 继承 Spinner组件,并扩展open方法和close方法
-        const SpinnerConstructor = Vue.extend(Spinner);
+        const spinner = new (Vue.extend(Spinner))();
 
         /**
-         * 显示进度旋转器
+         * 显示进度旋转器.(可选,默认以document.body元素作为父元素)
          * @param parent {Element | HTMLElement} 进度旋转器的父元素
          */
-        SpinnerConstructor.prototype.open = function (parent) {
-            if (this.$el) {
-                if (!parent.contains(this.$el)) parent.appendChild(this.$el);
+        spinner.open = (parent = document.body) => {
+            // 若DOM元素已被挂载
+            if (spinner.$el) {
+                parent.appendChild(spinner.$el);
             } else {
-                this.$mount().$nextTick(() => parent.appendChild(this.$el));
+                spinner.$mount().$nextTick(() => parent.appendChild(spinner.$el));
             }
         };
 
         /**关闭进度旋转器*/
-        SpinnerConstructor.prototype.close = function () {
-            this.$el.remove();
-        };
+        spinner.close = () => spinner.$el ? spinner.$el.remove() : null;
 
-        Vue.prototype['$spinner'] = new SpinnerConstructor();
+        Vue.prototype['$spinner'] = spinner;
     },
 
     /**
@@ -42,12 +41,17 @@ export default {
      * @param Vue
      */
     initializeMessage(Vue) {
-        let MessageConstructor = Vue.extend(MessageControl);
+        const MessageConstructor = Vue.extend(MessageControl);
+        let instances = [], count = 0;
 
-        let instance, instances = [], count = 0;
-
+        /**
+         * 通过配置选项在页面上显示消息
+         *
+         * @param options {Object|String} 配置选项
+         * @return {Object} message对象
+         */
         const Message = options => {
-            if (Vue.prototype.$isServer) return;
+            if (Vue.prototype.$isServer) return null;
             options = options || {};
             if (typeof options === 'string') {
                 options = {message: options};
@@ -56,7 +60,9 @@ export default {
             let id = ++count;
             // 将onClose方法传入到Message.vue
             options.onClose = () => Message.close(id);
-            instance = new MessageConstructor({data: options});
+
+            /** @type {Object} */
+            let instance = new MessageConstructor({data: options});
             instance.id = id;
 
             // 计算当前message在竖直方向上的起始位置
@@ -91,7 +97,7 @@ export default {
             let length = instances.length, index, removedHeight;
             for (index = 0; index < length; ++index) {
                 if (id === instances[index].id) {
-                    removedHeight = instance.$el.offsetHeight;
+                    removedHeight = instances[index].$el.offsetHeight;
                     instances.splice(index, 1);
                     --length;
                     break;
@@ -122,7 +128,7 @@ export default {
     install(Vue) {
         Vue.component(Button.name, Button);
         Vue.component(CheckBox.name, CheckBox);
-        Vue.component(Table.name, Table);
+        Vue.component(TableView.name, TableView);
         Vue.component(TextField.name, TextField);
         Vue.component(Slider.name, Slider);
         Vue.component(Accordion.name, Accordion);

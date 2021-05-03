@@ -42,7 +42,7 @@ export default {
     closed: false,
     center: null,
     timer: null,
-    duration: 3000,
+    duration: 3500,
     verticalOffset: 20,
   }),
 

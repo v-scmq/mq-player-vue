@@ -5,7 +5,7 @@
     </div>
     <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
       <div class='v-column content-box' v-for='(item,index) in list' :key='index' :class='item.class'>
-        <img class=cover :src='item.cover' alt/>
+        <img class=cover :src='item.cover' loading="lazy" alt/>
         <div class='name'>{{ item.fileName }}</div>
       </div>
     </div>
@@ -26,17 +26,21 @@ export default {
   }),
 
   created() {
+    this.$spinner.open();
     this.$source.impl.mvTagList().then(res => {
       this.tagType = res;
       if (!res || !res.length) {
-        return;
+        return null;
       }
+
       this.$nextTick(() => {
         let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
         nodes.forEach(node => node.classList.add('active'));
-        this.list = this.$source.impl.mvList(this.tagType[0], this.page);
       });
-    });
+
+      return this.$source.impl.mvList(this.tagType[0], this.page);
+
+    }).then(list => this.list = list).finally(this.$spinner.close);
   },
 
   methods: {

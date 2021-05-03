@@ -6,8 +6,8 @@
         <!-- 通过传入 `to` 属性指定链接. -->
         <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
         <template v-for='(route,index) in routes'>
-          <router-link tag='div' class='tab' :to='route.path' :key='index' v-if='route.meta'>
-            {{ route.meta.title }}
+          <router-link custom v-slot='{navigate,isActive}' :to='route.path' :key='index' v-if='route.meta'>
+            <div :class="isActive ? 'tab active' : 'tab'" @click='navigate'>{{ route.meta.title }}</div>
           </router-link>
         </template>
       </div>

@@ -238,7 +238,7 @@ export default {
      * 播放器由于缓冲而回调此方法
      * @param value 缓存进度值
      */
-    bufferChanged(value) {
+    bufferChanged(value) {``
       console.info("buffer-value=>", value);
     },
 

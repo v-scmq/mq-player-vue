@@ -8,11 +8,13 @@
         <!-- 通过传入 `to` 属性指定链接. -->
         <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
         <template v-for="(route,index) in routes">
-          <router-link tag="div" class="tab" :to="route.path" :key="index" v-if="route.meta">
-            <svg class="icon" width="1.2em" height="1.2em" viewBox="0 0 16 16">
-              <path :d="route.meta.icon"/>
-            </svg>
-            {{ route.meta.title }}
+          <router-link custom v-slot="{navigate,isActive}" :to="route.path" :key="index" v-if="route.meta">
+            <div @click="navigate" :class="isActive ? 'tab active' : 'tab'">
+              <svg class="icon" width="1.2em" height="1.2em" viewBox="0 0 16 16">
+                <path :d="route.meta.icon"/>
+              </svg>
+              {{ route.meta.title }}
+            </div>
           </router-link>
         </template>
 
@@ -34,16 +36,16 @@ import Header from "./views/Header";
 import Footer from "./views/Footer";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {Header, Footer},
 
   data: () => ({routes: null}),
 
   created() {
     this.routes = this.$router.options.routes;
-    let netStateChanged = () => this.$message(navigator.onLine ? '网络已连接' : '已断开网络连接');
-    window.addEventListener('online', netStateChanged);
-    window.addEventListener('offline', netStateChanged);
+    let netStateChanged = () => this.$message(navigator.onLine ? "网络已连接" : "已断开网络连接");
+    window.addEventListener("online", netStateChanged);
+    window.addEventListener("offline", netStateChanged);
     this.$db.open();
   },
 

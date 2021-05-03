@@ -15,6 +15,7 @@
 <script>
 export default {
   name: 'SingerListView',
+
   data: () => ({
     tagType: [],
     list: [],
@@ -23,11 +24,14 @@ export default {
     sex: null,
     en: null,
   }),
-  created() {
-    this.tagType = this.$source.impl.singerTagList();
 
-    // this.$source.impl.singerList(this.page, this.area, this.sex, this.en).then(res => this.list = res);
+  created() {
+    this.$spinner.open();
+    this.tagType = this.$source.impl.singerTagList();
+    this.$source.impl.singerList(this.page, this.area, this.sex, this.en)
+        .then(res => this.list = res).finally(this.$spinner.close);
   },
+
   mounted() {
     let nodes = this.$el.querySelectorAll('.list-view .item:first-child');
     nodes.forEach(node => node.classList.add('active'));

@@ -5,7 +5,7 @@
     </div>
     <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
       <div class='v-column content-box' v-for='(item,index) in list' :key='index'>
-        <img class=cover :src='item.cover' alt/>
+        <img class=cover :src='item.cover' loading="lazy" alt/>
         <div class='name'>{{ item.name }}</div>
       </div>
     </div>
@@ -24,21 +24,30 @@ export default {
     visibleTags: [],
     page: {current: 1, size: 30},
   }),
-  created() {
-    this.$source.impl.specialTagList().then(async res => {
-      this.tagType = res;
-      res.forEach(({children}) => children && children.length ? this.visibleTags.push(children[0]) : null)
-      console.info(res);
 
-      this.list = await this.$source.impl.specialList(res[0].children[0], this.page);
-    });
-
-    // this.$source.impl.singerList(this.page, this.area, this.sex, this.en).then(res => this.list = res);
-  },
   mounted() {
-    let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
-    nodes.forEach(node => node.classList.add('active'));
+    this.$spinner.open();
+    this.$source.impl.specialTagList().then(res => {
+      this.tagType = res;
+      console.info('step1:=>', res)
+      res.forEach(({children}) => children && children.length ? this.visibleTags.push(children[0]) : null)
+      return res && res.length > 0 && res[0].children ? res[0].children[0] : null;
+
+    }).then(value => {
+      console.info('step2:=>', value)
+      if (!value) return;
+      return this.$source.impl.specialList(value, this.page);
+
+    }).then(list => {
+      this.list = list;
+      this.$nextTick(() => {
+        let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
+        nodes.forEach(node => node.classList.add('active'));
+      });
+
+    }).finally(this.$spinner.close);
   },
+
   methods: {
     onListViewClicked(event) {
       let node = event.target;
