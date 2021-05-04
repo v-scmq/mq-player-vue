@@ -118,12 +118,19 @@ const player = {
      * @param media{Object} 媒体资源路径
      */
     prepare(media) {
-        if (!media || !media.path) {
+        let path = media && media.path ? media.path : '';
+        // 路径至少包含2个字符
+        if (path.length < 2) {
             this.nativePlayer.src = '';
             return false;
         }
-        // this.nativePlayer.src = media.path;
-        this.nativePlayer.src = media.path.charAt(1) === ':' ? `media://${media.path}` : media.path;
+
+        let isWindows = navigator.platform.toLowerCase().includes('win');
+        // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
+        let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
+
+        this.nativePlayer.src = isLocalFile ? `media://${path}` : path;
+
         let listener = this.eventListener;
         if (listener && listener.mediaChanged) {
             listener.mediaChanged(media);
