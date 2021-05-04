@@ -85,7 +85,8 @@ export default {
       ipcRender.on('restored', () => this.icon = this.$data.$maximizeIcon);
 
     } else {
-      this.icon = this.$data.$maximizeIcon;
+      // 当窗口最大化时,显示为已经最大化的图标
+      this.icon = document.fullscreenElement ? this.$data.$maximizedIcon : this.$data.$maximizeIcon;
     }
 
     this._routeable = null;
@@ -98,7 +99,7 @@ export default {
       if (this.backLength === 0) {
         this.forwardLength = 0;
         let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-        ipcRender ? ipcRender.send('request-clear-history') : null;
+        ipcRender ? ipcRender.invoke('request-clear-history') : null;
       }
       ++this.backLength;
     });
@@ -128,20 +129,32 @@ export default {
     /** 刷新 */
     refresh() {
       let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      ipcRender ? ipcRender.send('request-reload') : null;
+      ipcRender ? ipcRender.invoke('request-reload') : null;
     },
 
     /** 最小化窗口 */
     minimize() {
       let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      ipcRender ? ipcRender.send('window-minimize') : null;
+      ipcRender ? ipcRender.invoke('window-minimize') : null;
     },
 
     /** 最大化或还原窗口 */
     maximizeOrRestore() {
       let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      ipcRender ? ipcRender.send('window-maximize-restore') : null;
-      // document.fullscreen ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      if (ipcRender) {
+        ipcRender.invoke('window-maximize-restore');
+
+      } else {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+          // 当窗口未最大化时,显示为需要最大化图标
+          this.icon = this.$data.$maximizeIcon;
+        } else {
+          document.documentElement.requestFullscreen();
+          // 当窗口最大化时,显示为已经最大化的图标
+          this.icon = this.$data.$maximizedIcon;
+        }
+      }
     },
 
     /** 关闭窗口 */
