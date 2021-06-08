@@ -30,15 +30,15 @@ export default {
   }),
 
   mounted() {
-    this.$spinner.open(document.body);
+    this.$spinner.open();
     this.$source.impl.rankList().then(res => {
       this.tagType = res;
+      let value = res && res.length && res[0].items ? res[0].items[0] : null;
+      return value ? this.$source.impl.rankSongList(value, this.page) : null;
 
-      this.$source.impl.rankSongList(res[0].items[0], this.page).then(list => {
-        this.list = list;
-        this.$spinner.close();
-      });
-    });
+    }).then(list =>
+        this.list = list instanceof Array ? list : []
+    ).finally(this.$spinner.close);
   },
 
   methods: {
