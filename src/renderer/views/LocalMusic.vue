@@ -64,18 +64,17 @@ export default {
   }),
 
   created() {
+    // 获取数据库表名称
+    this._tableNamed = this.$db.tables.localMusic.name;
     this.$spinner.open();
-    this.$db.queryAll(this.$db.localMusicTable).then(data => {
-      this.list = data || this.list;
-      this.list.push({
-        title: '梨花落',
-        singer: '魏新雨',
-        album: '梨花落',
-        duration: '04:35',
-        size: '3.5MB',
-        path: 'https://webfs.yun.kugou.com/202102252302/ea7842d8bc23ae6253952e7eacf5fa57/G104/M0A/0C/03/qA0DAFvpXUuAOXTEAEMp8DXFEh4255.mp3'
-      });
-    }).finally(this.$spinner.close);
+    this.$db.open()
+        .then(() => this.$db.queryAll(this._tableNamed))
+        .then(data => this.list = data || this.list)
+        .finally(this.$spinner.close);
+  },
+
+  beforeDestroy() {
+    this.$db.close();
   },
 
   methods: {
@@ -113,8 +112,7 @@ export default {
      */
     onEntered() {
       this.$spinner.open(this.$el);
-      let table = this.$db.localMusicTable;
-      this.$db.queryOfFilter(table, this.onFilter).then(data => {
+      this.$db.queryOfFilter(this._tableNamed, this.onFilter).then(data => {
         this.list = data || this.list;
         this.$spinner.close();
       });
@@ -276,7 +274,7 @@ export default {
 
       if (savedList.length) {
         this.list.push(...savedList);
-        await this.$db.insert(this.$db.localMusicTable, savedList);
+        await this.$db.insert(this._tableNamed, savedList);
       }
       this.$spinner.close();
     },
