@@ -40,8 +40,8 @@ let mainWindow = null, tray = null;
 app.on('ready', () => {
     // 注册自定义文件协议,解决高版本electron不能加载本地文件的问题,同时此方案仍然保留web安全策略
     // request请求包含原始请求URL和header等信息,callback回调用于将文件绝对路径传入并做响应信息处理
-    let handler = (request, callback) => callback(decodeURI(request.url.replace('media://', '')));
-    protocol.registerFileProtocol('media', handler);
+    // let handler = (request, callback) => callback(decodeURI(request.url.replace('media://', '')));
+    // protocol.registerFileProtocol('media', handler);
 
     // 创建浏览器主窗口
     mainWindow = new BrowserWindow({
@@ -53,7 +53,7 @@ app.on('ready', () => {
         webPreferences: {
             nodeIntegration: true,          // 开启NodeJS集成
             contextIsolation: false,        // 关闭上下文隔离限制(从版本12.0开始默认为true)
-            webSecurity: true,              // 默认为true,设置为false将关闭web安全策略(如同源策略)
+            webSecurity: false,             // 默认为true,设置为false将关闭web安全策略(如同源策略)
             // enableRemoteModule: false,   // 关闭远程模块,(最佳方案:使用ipcMain和ipcRender代替)
             // zoomFactor: 0.8,             // 设置浏览器窗口为80%的默认缩放比例(窗口显示后设置,否则很容易失效)
         }
@@ -163,9 +163,6 @@ let readyToShow = () => {
  *  @return {Promise}
  */
 const handleNetRequest = (event, options) => new Promise(resolve => {
-    console.info('============== handleNetRequest ===============')
-    console.info('config=>', options);
-
     let request = net.request(options), headers = options['headers'];
     // 若选项中存在header配置信息,则先设置请求头
     if (headers) {
@@ -174,18 +171,27 @@ const handleNetRequest = (event, options) => new Promise(resolve => {
 
     // 监听网络响应
     request.on('response', response => {
-        console.log('STATUS = ', response.statusCode);
-        console.log('HEADERS = ', JSON.stringify(response.headers));
-        console.info('STATUS-MESSAGE = ', response.statusMessage, '\n\n\n');
+        // 返回到渲染进程的数据
+        const res = {
+            // 响应数据
+            data: '',
+            // 响应头信息
+            headers: response.headers,
+            // 状态码
+            statusCode: response.statusCode,
+            // 状态信息
+            statusMessage: response.statusMessage,
+        };
 
-        // 接收响应数据
-        let data = '';
+        // 改变Promise对象状态:由pending(进行中)转变为resolved(已成功)
+        const resolved = () => resolve(JSON.stringify(res));
+
         // 数据得到响应时,拼接响应数据
-        response.on('data', chunk => data += chunk.toString());
+        response.on('data', chunk => res.data += chunk.toString());
         // 数据响应完成时,promise对象状态变为resolved以将数据返回
-        response.on('end', () => resolve(data));
+        response.on('end', resolved);
         // 数据响应失败
-        response.on('error', () => response(null));
+        response.on('error', resolved);
     });
 
     // 当前网络请求发生错误时
