@@ -341,7 +341,7 @@ export default {
         // 直接全部数据选中属性值设置为false
         this.data.forEach(item => item._checked = false)
         // 将当前行数据设置为选中
-        this.data[index]._checked = true;
+        item._checked = true;
 
       } else if (event.detail === 2) {
         this.$emit('row-dblclick', index);
