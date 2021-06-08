@@ -1,15 +1,52 @@
 export default {
     db: null,
-    localMusicTable: "local_music",
-    playListTable: "play_list",
+    openQueue: null,
+    tables: {
+        user: {name: 'user', keyPath: 'uin', autoIncrement: false},
+        localMusic: {name: 'local_music', keyPath: 'id', autoIncrement: true},
+        playList: {name: 'play_list', keyPath: 'id', autoIncrement: true},
+    },
 
     /** 异步打开indexedDB */
     open() {
         return new Promise(resolve => {
+            // 若数据库已经打卡成功
+            if (this.db) {
+                // 使用局部引用变量
+                let queue = this.openQueue;
+                // 将全局变量移除
+                this.openQueue = undefined;
+
+                // 立刻resolve第一次打开数据库请求
+                resolve(null);
+                // 循环resolve其他请求
+                return queue ? queue.forEach(resolveItem => resolveItem()) : null;
+            }
+
+            // 检测是否不是第一次调用
+            let isNotFirst = !!this.openQueue;
+            this.openQueue = this.openQueue || [];
+            // 若不是第一次调用,则追加到请求队列中,并立刻结束当前方法执行
+            if (isNotFirst) {
+                return this.openQueue.push(resolve);
+            }
+
             let dbFactory = window.indexedDB;// || window.webkitIndexedDB;
             let request = this.request = dbFactory.open('data.db', 1);
             // 数据库打开成功
-            request.onsuccess = event => resolve(this.db = event.target.result);
+            request.onsuccess = event => {
+                // 使用局部引用变量
+                let queue = this.openQueue;
+                // 将全局变量移除
+                this.openQueue = undefined;
+
+                // 立刻resolve第一次打开数据库请求
+                resolve(this.db = event.target.result);
+                // 循环resolve其他请求
+                if (queue && queue.length > 0) {
+                    queue.forEach(resolveItem => resolveItem());
+                }
+            };
             // 数据库打开失败
             request.onerror = () => resolve(null, null);
             // 数据库打开被阻塞
@@ -18,11 +55,11 @@ export default {
             request.onupgradeneeded = event => {
                 let db = event.target.result;
                 let tableList = db.objectStoreNames;
-                if (!tableList.contains(this.localMusicTable)) {
-                    db.createObjectStore(this.localMusicTable, {keyPath: 'id', autoIncrement: true});
-                }
-                if (!tableList.contains(this.playListTable)) {
-                    db.createObjectStore(this.playListTable, {keyPath: 'id', autoIncrement: true});
+                for (let table of Object.keys(this.tables)) {
+                    let option = this.tables[table];
+                    if (!tableList.contains(option.name)) {
+                        db.createObjectStore(option.name, option);
+                    }
                 }
             };
         });
