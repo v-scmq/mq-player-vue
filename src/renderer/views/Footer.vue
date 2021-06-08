@@ -1,11 +1,11 @@
 <template>
   <div class="v-column">
-    <Slider v-model="time" ref="progressSlider" :buffering="null" @change="valueChanged"/>
+    <slider v-model="time" ref="progressSlider" :buffering="buffered" @change="valueChanged"/>
     <div class="v-row" style="justify-content: space-between;">
 
       <!-- 左侧部分 -->
       <div class="v-row" style="flex:1">
-        <img class="album-icon" :class="isDefaultAlbum?'has-filter':null" :src="albumPath" alt="专辑" draggable="false"/>
+        <img class="album-icon" :src="albumPath" alt="专辑" draggable="false" @click="showDetailView"/>
 
         <div class="v-column media-info">
           <span>{{ singer }} - {{ title }}</span>
@@ -138,10 +138,13 @@
       </div>
     </div>
 
+    <music-viewer :visible="musicViewerVisible" :cover="albumPath" @close="musicViewerVisible=false"/>
   </div>
 </template>
 
 <script>
+import MusicViewer from "./MusicViewer";
+
 const DEFAULT_ALBUM = 'icon/default_album.jpg';
 const PLAY_ICON = 'M511.35350613 6.02636267C231.4001792 6.02636267 4.65202773 232.77451413 4.65202773 512.72784107S231.4001792 1019.42789227 511.35350613 1019.42789227s506.7014784-226.74672427 506.7014784-506.7000512S791.30683307 6.02636267 511.35350613 6.02636267z m-101.3382976 734.71407466V284.71381653l304.0191744 228.01402454-304.0191744 228.01259626z m0 0';
 const PAUSE_ICON = 'M512 7.314286C234.057143 7.314286 7.314286 234.057143 7.314286 512s226.742857 504.685714 504.685714 504.685714 504.685714-226.742857 504.685714-504.685714S789.942857 7.314286 512 7.314286z m-51.2 709.485714H358.4V307.2h102.4v409.6z m204.8 0H563.2V307.2h102.4v409.6z';
@@ -157,6 +160,8 @@ const PLAY_MODE = {
 export default {
   name: "Footer",
 
+  components: {MusicViewer},
+
   data: () => ({
     time: 0,
     path: null,
@@ -169,11 +174,13 @@ export default {
     title: "聆听世界",
     volume: 0.2,
     speed: 0.33, // 1 = 1.5x + 0.5 => x = 1/3 = 0.33
+    buffered: null,
     modeType: PLAY_MODE,
     playModelIcon: PLAY_MODE.listCircle,
     volumePopup: null,
     modePopup: null,
     speedPopup: null,
+    musicViewerVisible: null,
 
     volumeIcon: 'M3 11a.842.842 0 0 1 1-1h4l5.859-4.2s2.119-1.716 2.141.2v18s-.021 1.6-1.619.7l-6.381-4.7h-4a.888.888 0 0 1-1-1v-8zm17.328-1.821a1.07 1.07 0 0 0-1.446 0 .917.917 0 0 0 0 1.357 6.056 6.056 0 0 1 0 8.939.923.923 0 0 0 0 1.362 1.072 1.072 0 0 0 1.446 0 7.9 7.9 0 0 0 0-11.658zm2.772-3.025a1.074 1.074 0 0 0-1.453 0 .927.927 0 0 0 0 1.36 10.175 10.175 0 0 1 0 15.028.924.924 0 0 0 0 1.36 1.082 1.082 0 0 0 1.453 0 12.027 12.027 0 0 0 0-17.748z',
     muteIcon: 'M3 11a.842.842 0 0 1 1-1h4l5.859-4.2s2.119-1.716 2.141.2v18s-.021 1.6-1.619.7l-6.381-4.7h-4a.888.888 0 0 1-1-1v-8z M28.995 18.558l-1.387 1.455-3.608-3.594-3.608 3.595-1.387-1.455 3.571-3.559-3.571-3.558 1.387-1.455 3.608 3.594 3.608-3.595 1.387 1.455-3.571 3.559z'
@@ -191,6 +198,9 @@ export default {
   },
 
   methods: {
+    showDetailView() {
+      this.musicViewerVisible = true;
+    },
     /**
      * 播放器状态回调
      * @param status 播放器状态
@@ -238,8 +248,8 @@ export default {
      * 播放器由于缓冲而回调此方法
      * @param value 缓存进度值
      */
-    bufferChanged(value) {``
-      console.info("buffer-value=>", value);
+    bufferChanged(value) {
+      this.buffered = value;
     },
 
     /**
@@ -386,10 +396,6 @@ export default {
   border-radius: 6px;
   cursor: pointer;
   margin: 0 4px 2px 2px;
-}
-
-.album-icon.has-filter {
-  filter: sepia(1);
 }
 
 #speed.icon {
