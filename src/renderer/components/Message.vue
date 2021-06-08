@@ -42,7 +42,7 @@ export default {
     closed: false,
     center: null,
     timer: null,
-    duration: 3500,
+    duration: 5000,
     verticalOffset: 20,
   }),
 
@@ -52,13 +52,13 @@ export default {
       this.$destroy();
       this.$el.onmouseenter = null;
       this.$el.onmouseleave = null;
-      this.$el.parentNode.removeChild(this.$el);
+      this.$el.remove();
     },
 
     close() {
       this.closed = true;
       this.visible = false;
-      (typeof this.onClose === 'function') ? this.onClose(this) : null;
+      this.onClose instanceof Function ? this.onClose(this) : null;
     }
   },
 
