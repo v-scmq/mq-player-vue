@@ -5,6 +5,7 @@ import TableView from "./TableView";
 import TextField from "./TextField";
 import Slider from "./Slider";
 import Spinner from "./Spinner";
+import Modal from "./Modal";
 
 import MessageControl from "./Message";
 
@@ -132,6 +133,7 @@ export default {
         Vue.component(TextField.name, TextField);
         Vue.component(Slider.name, Slider);
         Vue.component(Accordion.name, Accordion);
+        Vue.component(Modal.name, Modal);
 
         this.initializeSpinner(Vue);
         this.initializeMessage(Vue);
