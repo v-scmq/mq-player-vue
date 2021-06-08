@@ -31,6 +31,17 @@ const player = {
     /** 播放索引 */
     index: 0,
 
+    /** 音频分析器 */
+    analyser: null,
+    /** 音频输入源 */
+    audioSource: null,
+    /** 音频上下文 */
+    audioContext: null,
+    /** 频谱计时器 */
+    spectrumTimer: null,
+    /** 音频频谱监听器 */
+    audioSpectrumListener: null,
+
     /**
      * 开始播放媒体
      */
@@ -125,11 +136,12 @@ const player = {
             return false;
         }
 
-        let isWindows = navigator.platform.toLowerCase().includes('win');
+        // let isWindows = navigator.platform.toLowerCase().includes('win');
         // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
-        let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
+        // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
 
-        this.nativePlayer.src = isLocalFile ? `media://${path}` : path;
+        // this.nativePlayer.src = isLocalFile ? `media:///${path}` : path;
+        this.nativePlayer.src = path;
 
         let listener = this.eventListener;
         if (listener && listener.mediaChanged) {
@@ -244,6 +256,57 @@ const player = {
     },
 
     /**
+     * 设置音频频谱数据变化监听器.<br>
+     * 注意为了减少CPU负载,只有播放器在播放时才会回调监听器,
+     * 同时应该在没有显示频谱视图的时候,取消监听器
+     * @param listener {Function} 音频频谱数据监听器处理方法
+     */
+    setAudioSpectrumListener(listener = null) {
+        // 取消原有监听器
+        this.spectrumTimer ? cancelAnimationFrame(this.spectrumTimer) : null;
+        // 解除原有监听器引用
+        this.audioSpectrumListener = null;
+        // 若未提供监听器,则后续什么也不做
+        if (!listener) {
+            return;
+        }
+
+        // 若未初始化音频上下文,则先初始化
+        if (!this.audioContext) {
+            // 创建音频上下文
+            this.audioContext = new (AudioContext || window['webkitAudioContext'])();
+            // 创建音频输入源
+            this.audioSource = this.audioContext.createMediaElementSource(this.nativePlayer);
+            // 创建音频分析器
+            this.analyser = this.audioContext.createAnalyser();
+            // 音频输入源连接到分析器
+            this.audioSource.connect(this.analyser);
+            // 音频分析器连接到音频输出目标(如麦克风、耳机...)
+            this.analyser.connect(this.audioContext.destination);
+
+            // 8位无符号音频频谱数据
+            this.dataArray = new Uint8Array(1024);
+        }
+
+        // 代理传入的监听方法
+        this.audioSpectrumListener = () => {
+            // 复制频谱数据到8位无符号数组中
+            this.analyser.getByteFrequencyData(this.dataArray);
+            // 主动调用传入的监听方法,以便渲染频谱数据
+            listener(this.dataArray);
+            // 以每秒60次的调用继续调用代理监听方法
+            this.spectrumTimer = requestAnimationFrame(this.audioSpectrumListener);
+        }
+
+        // 主动执行一次代理监听方法
+        this.audioSpectrumListener();
+        // 若播放器并未播放,则取消监听
+        if (!this.isPlaying()) {
+            cancelAnimationFrame(this.spectrumTimer);
+        }
+    },
+
+    /**
      * 将毫秒时间值转为标准时间字符串
      * @param value{Number} 时间值，单位秒
      */
@@ -285,10 +348,13 @@ player.nativePlayer.ontimeupdate = () => {
 };
 
 // 注册播放器正在缓冲时的回调
-player.nativePlayer.onprogress = e => {
+player.nativePlayer.onprogress = () => {
     let listener = player.eventListener;
     if (listener && listener.bufferChanged) {
-        listener.bufferChanged(e.timeStamp);
+        let value = player.nativePlayer.buffered;
+        value = value.length > 0 ? value.end(value.length - 1) : 0;
+        let duration = player.nativePlayer.duration || 1;
+        listener.bufferChanged(value / duration);
     }
 };
 
@@ -299,6 +365,12 @@ player.nativePlayer.onplaying = () => {
     if (listener && listener.statusChanged) {
         listener.statusChanged(STATUS.PLAYING);
     }
+
+    // 若已注册音频监听器
+    if (player.audioSpectrumListener) {
+        // 开启音频频谱监听
+        player.audioSpectrumListener();
+    }
 };
 
 // 注册播放器正在播放时的回调
@@ -307,6 +379,11 @@ player.nativePlayer.onended = () => {
     player.status = STATUS.STOPPED;
     if (listener && listener.finished) {
         listener.finished();
+    }
+
+    // 取消音频频谱数据监听
+    if (player.spectrumTimer) {
+        cancelAnimationFrame(player.spectrumTimer);
     }
 };
 
@@ -317,6 +394,11 @@ player.nativePlayer.onpause = () => {
     if (listener && listener.statusChanged) {
         listener.statusChanged(STATUS.PAUSED);
     }
+
+    // 取消音频频谱数据监听
+    if (player.spectrumTimer) {
+        cancelAnimationFrame(player.spectrumTimer);
+    }
 };
 
 // 注册播放器阻塞时的回调
@@ -325,6 +407,11 @@ player.nativePlayer.onstalled = () => {
     player.status = STATUS.STALLED;
     if (listener && listener.statusChanged) {
         listener.statusChanged(STATUS.STALLED);
+    }
+
+    // 取消音频频谱数据监听
+    if (player.spectrumTimer) {
+        cancelAnimationFrame(player.spectrumTimer);
     }
 };
 
