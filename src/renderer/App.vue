@@ -46,11 +46,6 @@ export default {
     let netStateChanged = () => this.$message(navigator.onLine ? "网络已连接" : "已断开网络连接");
     window.addEventListener("online", netStateChanged);
     window.addEventListener("offline", netStateChanged);
-    this.$db.open();
-  },
-
-  beforeDestroy() {
-    this.$db.close();
   }
 }
 </script>
