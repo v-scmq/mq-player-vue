@@ -38,8 +38,8 @@ export default {
     },
 
     /**
-     *
-     * @param Vue
+     * 初始化Message组件
+     * @param Vue Vue Class
      */
     initializeMessage(Vue) {
         const MessageConstructor = Vue.extend(MessageControl);
