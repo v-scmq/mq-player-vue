@@ -1,6 +1,6 @@
 <template>
   <div v-show="visible" class="modal" :class="{'opened':opened}" @click="close">
-    <div class="v-column modal-content">
+    <div class="v-column modal-content" :style="{width,height}">
       <div class="v-row titled-pane">
         {{ title }}
         <svg @click="close" class="close-icon">
@@ -22,6 +22,10 @@ export default {
   props: {
     // 对话框标题
     title: String,
+    // 模态框宽度
+    width: String,
+    // 模态框高度
+    height: String,
     // 是否指定为模式对话框,默认false,即可通过点击遮罩层关闭
     modality: {type: Boolean, default: false},
   },
