@@ -1,7 +1,8 @@
 <template>
   <div class='v-column'>
     <div class='v-row list-view' @click='onListViewClicked'>
-      <div class='item' v-for='(tag,index) in visibleTags' :key='index'>{{ tag.name }}</div>
+      <div class='item' v-for='(tag, index) in visibleTags' :key='index' :custom-data='tag.id'>{{ tag.name }}</div>
+      <div class="item" id="more">更多</div>
     </div>
     <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
       <div class='v-column content-box' v-for='(item,index) in list' :key='index'>
@@ -9,6 +10,16 @@
         <div class='name'>{{ item.name }}</div>
       </div>
     </div>
+    <modal modality title="全部分类" ref="tagModal" width="90%" height="80%">
+      <template v-slot:content>
+        <template v-for="(item, _index) in tags">
+          {{ item.title }}
+          <div class='v-row list-view' :key='_index'>
+            <div class='item' v-for='(tag, index) in item.items' :key='index' :custom-data='index'>{{ tag.name }}</div>
+          </div>
+        </template>
+      </template>
+    </modal>
   </div>
 </template>
 
@@ -16,46 +27,55 @@
 export default {
   name: 'SpecialList',
   data: () => ({
+    tags: [],
     list: [],
-    area: 0,
-    sex: null,
-    en: null,
-    tagType: null,
+    tag: {},
     visibleTags: [],
     page: {current: 1, size: 30},
   }),
 
   mounted() {
     this.$spinner.open();
-    this.$source.impl.specialTagList().then(res => {
-      this.tagType = res;
-      console.info('step1:=>', res)
-      res.forEach(({children}) => children && children.length ? this.visibleTags.push(children[0]) : null)
-      return res && res.length > 0 && res[0].children ? res[0].children[0] : null;
-
-    }).then(value => {
-      console.info('step2:=>', value)
-      if (!value) return;
-      return this.$source.impl.specialList(value, this.page);
-
-    }).then(list => {
-      this.list = list;
-      this.$nextTick(() => {
-        let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
-        nodes.forEach(node => node.classList.add('active'));
-      });
-
+    this.$source.impl.specialList(null, this.page).then(res => {
+      if (res instanceof Array) {
+        this.list = res;
+      } else {
+        this.tags = res.tags;
+        this.list = res.list;
+        let random = Math.random();
+        res.tags.forEach(item => {
+          let items = item.items, size = items.length;
+          let tag = size > 0 ? items[Math.floor(random * size)] : null;
+          tag ? this.visibleTags.push(tag) : null;
+        });
+        this.$nextTick(() => {
+          let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
+          nodes.forEach(node => node.classList.add('active'));
+        });
+      }
     }).finally(this.$spinner.close);
   },
 
   methods: {
     onListViewClicked(event) {
       let node = event.target;
+      if (node.id === 'more') {
+        this.$refs.tagModal.open();
+        return;
+      }
+
+      let attr = node.attributes.getNamedItem('custom-data');
       if (node.classList.contains('item')) {
         node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
         node.classList.add('active');
+
+        if ((this.tag.id = attr ? attr.value : null)) {
+          this.$spinner.open();
+          this.$source.impl.specialList(this.tag, this.page)
+              .then(data => this.list = data).finally(this.$spinner.close);
+        }
       }
-    },
+    }
   }
 }
 </script>
@@ -76,7 +96,6 @@ export default {
   height: 13em;
   cursor: pointer;
   border-radius: 8em;
-  z-index: 999;
   transition: transform .75s cubic-bezier(0, 1, .75, 1);
 }
 
