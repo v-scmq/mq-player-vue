@@ -2,7 +2,7 @@
   <div class="title-bar v-row">
     <div class="v-row no-drag fixed-left-bar" style="padding:4px;">
       <!--  用户头像图片 -->
-      <img alt draggable="false" class="user-icon image" :src="headURL" v-if="loginFlag"/>
+      <img alt draggable="false" class="user-icon image" :src="user.headURL" v-if="user.uin" @click="openLoginModal"/>
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
       <div class="user-icon container" v-else>
@@ -11,7 +11,7 @@
         </svg>
       </div>
 
-      <span class="user-name" :title="nickName">{{ loginFlag ? nickName : '未登录' }}</span>
+      <span class="user-name" :title="user.nickName">{{ user.uin ? user.nickName : '未登录' }}</span>
     </div>
 
     <div class="v-row option-container no-drag" style="margin:0 4px 0 16px;">
@@ -79,10 +79,11 @@
       </svg>
     </div>
 
-    <modal title="QQ登录" ref="loginModal" id="login-modal">
-      <template v-slot:content>
-        <textarea spellcheck="false" id="qq-input" placeholder="请输入QQ音乐COOKIE信息"/>
-        <button-base text="登录" @click="onLogin"/>
+    <modal title="QQ登录" ref="loginModal" id="login-modal" width="600px" height="400px">
+      <template v-slot:content style="align-items:center">
+        <textarea spellcheck="false" id="qq-input" placeholder="请输入QQ音乐COOKIE信息" :disabled="!!user.uin"/>
+        <button-base :text="user.uin ? '退出' : '登录'" :disabled="user.uin"
+                     @click="user.uin ? loginOut($event) : login($event)"/>
       </template>
     </modal>
   </div>
@@ -107,9 +108,8 @@ export default {
     forwardLength: 0,
     screenStateIcon: null,
     searchInput: '',
-    loginFlag: false,
-    headURL: '',
-    nickName: '',
+    // 用户基本信息
+    user: {uin: '', headURL: '', nickName: ''}
   }),
 
   created() {
@@ -156,7 +156,7 @@ export default {
     });
 
     // 尝试登录
-    this.$nextTick(this.onLogin);
+    this.$nextTick(this.login);
   },
 
   methods: {
@@ -182,8 +182,7 @@ export default {
 
     /** 刷新 */
     refresh() {
-      let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      ipcRender ? ipcRender.invoke('request-reload') : null;
+      location.reload();
     },
 
     /** 最小化窗口 */
@@ -235,7 +234,7 @@ export default {
      *
      * @param event {MouseEvent} 鼠标事件,若没有鼠标事件,则认为主动调用
      */
-    onLogin(event) {
+    login(event) {
       // 存储用户信息的数据库表名称
       let tableName = this.$db.tables.user.name;
 
@@ -244,13 +243,10 @@ export default {
         this.$refs.loginModal.close();
         let value = this.$el.querySelector('#qq-input').value;
 
-        this.$source.QQMusicSource.login(value).then(userInfo => {
-          this.headURL = userInfo.headURL;
-          this.nickName = userInfo.nickName;
-          this.loginFlag = true;
-
-          this.$db.delete(tableName, userInfo.uin)
-              .then(() => this.$db.insert(tableName, userInfo));
+        this.$source.impl.login(value).then(user => {
+          // (typeof null) => 'object' ; (null instanceof Object) => true
+          this.user = user instanceof Object ? user : {};
+          this.$db.delete(tableName, user.uin).then(() => this.$db.insert(tableName, user));
 
         }).catch(reason => this.$message.error(reason.message));
         return;
@@ -258,13 +254,25 @@ export default {
 
       // 主动调用从数据库获取用户信息
       this.$db.open().then(() => this.$db.queryAll(tableName)).then(userInfo => {
-        if ((userInfo = userInfo ? userInfo[0] : null)) {
-          this.headURL = userInfo.headURL;
-          this.nickName = userInfo.nickName;
-          this.$source.QQMusicSource.cookie = userInfo.cookieValue;
-          this.loginFlag = true;
+        if ((userInfo = userInfo ? userInfo[0] : null) && userInfo.uin) {
+          this.user = userInfo;
+          this.$source.impl.cookie = userInfo.cookieValue;
         }
       });
+    },
+
+    /**
+     * 开始退出登录
+     * @param event {MouseEvent} 鼠标事件,若没有鼠标事件,则认为主动调用
+     */
+    loginOut(event) {
+      // 存储用户信息的数据库表名称
+      let tableName = this.$db.tables.user.name;
+      let uin = this.user.uin;
+      uin ? this.$db.delete(tableName, uin) : null;
+      // 清除用户信息
+      this.user = {};
+      (event instanceof MouseEvent) ? this.$refs.loginModal.close() : null;
     }
   }
 }
