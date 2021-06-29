@@ -4,7 +4,7 @@
     <div class='v-row' style='align-items:stretch;height:100%;'>
       <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick"/>
 
-      <accordion :list="tagType" @change='onRankChanged' style='flex:none'/>
+      <accordion :list="rankList" @change='onRankChanged' style='flex:none'/>
     </div>
   </div>
 </template>
@@ -13,7 +13,7 @@
 export default {
   name: 'RankList',
   data: () => ({
-    tagType: [],
+    rankList: [],
     list: [],
     page: {current: 1, size: 30},
     area: 0,
@@ -31,14 +31,14 @@ export default {
 
   mounted() {
     this.$spinner.open();
-    this.$source.impl.rankList().then(res => {
-      this.tagType = res;
-      let value = res && res.length && res[0].items ? res[0].items[0] : null;
-      return value ? this.$source.impl.rankSongList(value, this.page) : null;
-
-    }).then(list =>
-        this.list = list instanceof Array ? list : []
-    ).finally(this.$spinner.close);
+    this.$source.impl.rankSongList(null, this.page).then(res => {
+      if (res instanceof Array) {
+        this.list = res;
+      } else {
+        this.rankList = res.rankList;
+        this.list = res.list;
+      }
+    }).finally(this.$spinner.close);
   },
 
   methods: {
