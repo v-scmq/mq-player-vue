@@ -30,9 +30,13 @@ export default {
 
             // 若有提交的数据,必须设置请求的中的内容类型
             if (options.data) {
-                options.headers['Content-Type'] = (typeof options.data === 'object') ?
+                options.headers['Content-Type'] = (typeof options.data === 'object') || options.headers.postJSON ?
                     'application/json;charset=UTF-8' : 'application/x-www-form-urlencoded;charset=UTF-8';
             }
+
+            let postJSON = options.headers.postJSON
+            delete options.headers.postJSON;
+
             // 重新设置header
             options.headers = headers;
 
@@ -50,7 +54,8 @@ export default {
             }).catch(reason => {
                 Vue.prototype.$message(`请求失败:${reason}`);
                 resolve(reason);
-            });
+
+            }).finally(() => postJSON ? options.headers.postJSON = postJSON : null);
         });
 
         /**
@@ -84,7 +89,7 @@ export default {
         };
 
         KuGouSource.http = QQMusicSource.http = http;
-        Vue.prototype["$source"] = {KuGouSource, QQMusicSource, impl: KuGouSource};
+        Vue.prototype["$source"] = {KuGouSource, QQMusicSource, impl: QQMusicSource};
         Vue.prototype["$http"] = http;
     }
 }
