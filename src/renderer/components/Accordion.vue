@@ -5,7 +5,7 @@
         <svg viewBox='-0.5 -2 8 8' width='1em' height='1em' class='icon'>
           <path d='M 0 0 h 7 l -3.5 4 z'></path>
         </svg>
-        {{ data.name }}
+        {{ data.title }}
       </div>
       <div class='v-column scroll-wrapper'>
         <div class='item' v-for='(item,index) in data.items' :key='index' :data="index">{{ item.name }}</div>
