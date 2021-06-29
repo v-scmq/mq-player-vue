@@ -1,12 +1,15 @@
 <template>
   <div class='v-column'>
-    <div class='v-row list-view' @click='onListViewClicked'>
-      <div class='item' v-for='(tag,index) in tagType' :key='index'>{{ tag.name }}</div>
+    <!--    <div class='v-row list-view' @click='onListViewClicked'>-->
+    <!--      <div class='item' v-for='(tag,index) in tagType' :key='index'>{{ tag.name }}</div>-->
+    <!--    </div>-->
+    <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
+      <div class='item' v-for='tag in children' :key='tag.id' :custom-data='tag.value'>{{ tag.name }}</div>
     </div>
     <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
       <div class='v-column content-box' v-for='(item,index) in list' :key='index' :class='item.class'>
         <img class=cover :src='item.cover' loading="lazy" alt/>
-        <div class='name'>{{ item.fileName }}</div>
+        <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
       </div>
     </div>
   </div>
@@ -17,30 +20,38 @@ export default {
   name: 'MVList',
 
   data: () => ({
-    tagType: [],
+    tags: [],
     list: [],
+    tag: {},
     page: {current: 1, size: 30},
-    area: 0,
-    sex: null,
-    en: null,
   }),
 
-  created() {
+  mounted() {
     this.$spinner.open();
-    this.$source.impl.mvTagList().then(res => {
-      this.tagType = res;
-      if (!res || !res.length) {
-        return null;
+    this.$source.impl.mvList(null, this.page).then(data => {
+      if (data instanceof Array) {
+        this.list = data;
+
+      } else {
+        let tagList = [];
+        let array = Object.keys(data.tags);
+        array.forEach(key => {
+          //  {area:[{id:1,name:'A'}] .....]} => {en:id, ......}
+          this.tag[key] = null;
+          data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
+          //  {area:[{id:1,name:'A'}] .....]} => [[], []]
+          tagList.push(data.tags[key]);
+        });
+        this.tags = tagList;
+        this.list = data.list;
+
+        this.$nextTick(() => {
+          let nodes = this.$el.querySelectorAll('.list-view .item:first-child');
+          nodes.forEach(node => node.classList.add('active'));
+        });
       }
 
-      this.$nextTick(() => {
-        let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
-        nodes.forEach(node => node.classList.add('active'));
-      });
-
-      return this.$source.impl.mvList(this.tagType[0], this.page);
-
-    }).then(list => this.list = list).finally(this.$spinner.close);
+    }).finally(this.$spinner.close);
   },
 
   methods: {
@@ -49,12 +60,20 @@ export default {
      * @param event {MouseEvent} 鼠标事件
      */
     onListViewClicked(event) {
-      let node = event.target;
-      if (node.classList.contains('item')) {
+      let node = event.target, value;
+      let attr = node.attributes.getNamedItem('custom-data');
+
+      if ((value = attr ? attr.value : null)) {
+        let [group, id] = value.split('-');
+        this.tag[group] = id;
         node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
         node.classList.add('active');
+
+        this.$spinner.open();
+        this.$source.impl.mvList(this.tag, this.page)
+            .then(data => this.list = data).finally(this.$spinner.close);
       }
-    },
+    }
   }
 }
 </script>
