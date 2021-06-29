@@ -1,12 +1,12 @@
 <template>
   <div class='v-column'>
-    <div class='v-row list-view' v-for='(tagList,index) in tagType' :key='index' @click='onListViewClicked'>
-      <div class='item' v-for='tag in tagList' :key='tag.id' :data='tag.id'>{{ tag.name }}</div>
+    <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
+      <div class='item' v-for='tag in children' :key='tag.id' :custom-data='tag.value'>{{ tag.name }}</div>
     </div>
     <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
       <div class='v-column singer-box' v-for='(item,index) in list' :key='index' :class='item.class'>
-        <img class=cover :src='item.cover' alt/>
-        <div>{{ item.name }}</div>
+        <img alt class=cover :src='item.cover' @click="navigateTo(item)"/>
+        <div @click="navigateTo(item)">{{ item.name }}</div>
       </div>
     </div>
   </div>
@@ -17,33 +17,59 @@ export default {
   name: 'SingerListView',
 
   data: () => ({
-    tagType: [],
+    tags: [],
     list: [],
     page: {current: 1, size: 30},
-    area: 0,
-    sex: null,
-    en: null,
+    tag: {en: null, area: null, sex: null, genre: null, group: null}
   }),
 
-  created() {
-    this.$spinner.open();
-    this.tagType = this.$source.impl.singerTagList();
-    this.$source.impl.singerList(this.page, this.area, this.sex, this.en)
-        .then(res => this.list = res).finally(this.$spinner.close);
-  },
-
   mounted() {
-    let nodes = this.$el.querySelectorAll('.list-view .item:first-child');
-    nodes.forEach(node => node.classList.add('active'));
+    this.$spinner.open();
+    this.$source.impl.singerList(null, this.page).then(data => {
+      if (data instanceof Array) {
+        this.list = data;
+
+      } else {
+        let tagList = [];
+        let array = Object.keys(data.tags);
+        array.forEach(key => {
+          //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => {en:id, area:id, sex:id}
+          this.tag[key] = null;
+          data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
+          //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => [[], [], []]
+          tagList.push(data.tags[key]);
+        });
+        this.tags = tagList;
+        this.list = data.list;
+
+        this.$nextTick(() => {
+          let nodes = this.$el.querySelectorAll('.list-view .item:first-child');
+          nodes.forEach(node => node.classList.add('active'));
+        });
+      }
+
+    }).finally(this.$spinner.close);
   },
   methods: {
     onListViewClicked(event) {
-      let node = event.target;
-      if (node.classList.contains('item')) {
+      let node = event.target, value;
+      let attr = node.attributes.getNamedItem('custom-data');
+
+      if ((value = attr ? attr.value : null)) {
+        let [group, id] = value.split('-');
+        this.tag[group] = id;
         node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
         node.classList.add('active');
+
+        this.$spinner.open();
+        this.$source.impl.singerList(this.tag, this.page)
+            .then(data => this.list = data).finally(this.$spinner.close);
       }
     },
+
+    navigateTo(singer) {
+      this.$router.push({path: '/singer-view', query: singer});
+    }
   }
 }
 </script>
@@ -85,6 +111,8 @@ export default {
 .list-view .item.active {
   background: var(--fill-base);
   color: var(--text-active);
+  pointer-events: none;
+  cursor: none;
 }
 
 </style>
