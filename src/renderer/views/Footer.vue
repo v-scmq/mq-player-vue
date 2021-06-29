@@ -237,8 +237,9 @@ export default {
      */
     mediaChanged(media) {
       this.title = media.title;
-      this.singer = media.singer;
-      this.albumPath = media.cover || DEFAULT_ALBUM;
+      let singer = media.singer, album = media.album;
+      this.singer = (typeof singer) === 'string' ? singer : singer.name;
+      this.albumPath = (!album || !album.cover) ? DEFAULT_ALBUM : album.cover;
       this.isDefaultAlbum = this.albumPath === DEFAULT_ALBUM;
       // 重新媒体后需要重新设置播放速率
       this.handleSpeedChange(this.speed);
