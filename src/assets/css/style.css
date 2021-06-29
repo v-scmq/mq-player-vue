@@ -137,6 +137,7 @@ html, body, #app {
     height: 100%;
     overflow: hidden;
     user-select: none;
+    white-space: nowrap;
     background: rgb(236, 236, 236);
 }
 
@@ -548,8 +549,6 @@ html, body, #app {
 }
 
 .modal .modal-content {
-    width: 600px;
-    height: 400px;
     background: white;
     border-radius: 10px;
     transition: transform .4s;
@@ -584,7 +583,7 @@ html, body, #app {
 .modal > .modal-content > .content {
     flex: 1;
     padding: 1em;
-    align-items: center;
+    overflow: hidden auto;
 }
 
 /*======================Message==================*/
@@ -715,6 +714,10 @@ html, body, #app {
     display: none
 }
 
+#login-modal > .modal-content > .content {
+    align-items: center;
+}
+
 #login-modal > .modal-content > .content > #qq-input {
     flex: 1;
     outline: none;
@@ -736,4 +739,27 @@ html, body, #app {
     border-radius: 25px;
     background: rgb(226, 155, 208);
     width: 300px;
+}
+
+.singer-info-container {
+    align-items: stretch;
+    color: var(--text-base);
+}
+
+.singer-info-container .v-column {
+    justify-content: space-around;
+    margin: 1em;
+}
+
+/*.singer-info-container .v-column .v-row > * {*/
+/*    margin: 0 1em 0 0;*/
+/*}*/
+
+.singer-info-container .count-info:nth-child(n+2)::before {
+    content: '|';
+    margin: 0 1.5em;
+}
+
+.singer-info-container .button {
+    margin: 0 1.5em 0 0;
 }
