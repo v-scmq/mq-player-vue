@@ -1,30 +1,31 @@
-import Vue from 'vue';
-import app from './App';
-import router from './router';
+import Vue from "vue";
+import app from "./App";
+import router from "./router";
 
-import elementUI from 'element-ui';
-import 'element-ui/lib/theme-chalk/index.css';
-
-import 'xe-utils';
-import 'vxe-table/lib/style.css';
-import vxeTable from "vxe-table";
-
-import control from './components';
-import '../assets/css/style.css';
+import control from "./components";
+import "../assets/css/style.css";
 import player from "./player";
 import db from "./database";
-import api from './api';
+import api from "./api";
 import axios from "axios";
 
-Vue.prototype["$electron"] = window.require ? window.require('electron') : null;
-Vue.prototype["$metadata"] = window.require ? window.require('music-metadata') : null;
+// 已在以下文件修改了导入库的逻辑(require => (window.require || require)("lib-name")
+// %project_home%\node_modules\strtok3\lib\FsPromise.js
+// %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js
+import * as mm from "music-metadata";
+
+// 确保引入库不会出现错误
+let $require$ = window.require || require || (() => null);
+
+Vue.prototype["$electron"] = $require$("electron");
+Vue.prototype["$fs"] = $require$("fs");
+Vue.prototype["$metadata"] = mm;
 Vue.prototype["$player"] = player;
 Vue.prototype["$request"] = axios;
 Vue.prototype["$db"] = db;
+$require$ = null;
 
 Vue.config.productionTip = false;
-Vue.use(vxeTable);
-Vue.use(elementUI);
 Vue.use(control);
 Vue.use(api);
 
