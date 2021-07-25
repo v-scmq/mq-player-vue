@@ -13,19 +13,21 @@ export default {
 
         /**
          * 发起网络请求(默认GET请求)
-         * @param options {Object} 配置选项对象
-         * @returns {Promise<{data:Object | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
+         * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
+         * @returns {Promise<{data:Object | Buffer | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
          */
         const http = options => new Promise(resolve => {
-            let headers = options.headers || {};
+            options.headers = options.headers || {};
+            options.RESPONSE_TYPE = http.RESPONSE_TYPE;
+
             // 若没有提供UA信息,则提供默认的UA信息
-            if (!headers['User-Agent']) {
-                headers['User-Agent'] = options.isMobile ? USER_AGENT_MOBILE : USER_AGENT_PC;
+            if (!options.headers['User-Agent']) {
+                options.headers['User-Agent'] = options.isMobile ? USER_AGENT_MOBILE : USER_AGENT_PC;
             }
 
             // 若没有提供来源页面信息,则提供默认的url部分
-            if (!headers.referer) {
-                headers.referer = options.url;
+            if (!options.headers.referer) {
+                options.headers.referer = options.url;
             }
 
             // 若有提交的数据,必须设置请求的中的内容类型
@@ -34,22 +36,15 @@ export default {
                     'application/json;charset=UTF-8' : 'application/x-www-form-urlencoded;charset=UTF-8';
             }
 
+
             let postJSON = options.headers.postJSON
             delete options.headers.postJSON;
 
-            // 重新设置header
-            options.headers = headers;
-
             // 传递请求到主进程,并等待主进程发起网络请求,然后返回响应数据
-            ipcRender.invoke('net-request', options).then(data => {
-                // 反序列化数据
-                data = JSON.parse(data);
-                Vue.prototype.$message(`状态码：${data.statusCode}, 消息：${data.statusMessage}`);
-
-                // 若配置选项提供响应内容为文本,则直接返回字符串,否则返回反序列化后的对象
-                data.data = options.isText ? data.data : JSON.parse(data.data);
+            ipcRender.invoke('net-request', options).then(res => {
+                Vue.prototype.$message(`状态码：${res.statusCode}, 消息：${res.statusMessage}`);
                 // 从pending状态变成resolved状态
-                resolve(data);
+                resolve(res);
 
             }).catch(reason => {
                 Vue.prototype.$message(`请求失败:${reason}`);
@@ -60,8 +55,8 @@ export default {
 
         /**
          * 发起GET请求.若传入的参数只是一个字符串则,会认为是目标URL
-         * @param options {Object | String} 配置选项
-         * @return {Promise<{data:Object | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
+         * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
+         * @returns {Promise<{data:Object | Buffer | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
          */
         http.get = options => {
             // 转换为配置选项对象
@@ -75,8 +70,8 @@ export default {
 
         /**
          * 发起POST请求.若传入的参数只是一个字符串,则会认为是目标URL
-         * @param options {Object | String} 配置选项
-         * @return {Promise<{data:Object | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
+         * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
+         * @returns {Promise<{data:Object | Buffer | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
          */
         http.post = options => {
             // 转换为配置选项对象
@@ -87,6 +82,12 @@ export default {
             options.method = 'post';
             return http(options);
         };
+
+        /**
+         * 接收 HTTP/HTTPS 响应类型枚举
+         * @type {{BYTE: number, JSON: number, TEXT: number}}
+         */
+        http.RESPONSE_TYPE = {BYTE: 2, JSON: 1, TEXT: 3};
 
         KuGouSource.http = QQMusicSource.http = http;
         Vue.prototype["$source"] = {KuGouSource, QQMusicSource, impl: QQMusicSource};

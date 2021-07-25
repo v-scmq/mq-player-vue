@@ -16,7 +16,7 @@ export default {
 
   data: () => ({}),
 
-  mounted() {
+  async mounted() {
     this._header = document.body.querySelector('#app > .title-bar');
     this._header.querySelector('.hide-viewer').onclick = this.hidden;
 

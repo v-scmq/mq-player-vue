@@ -56,9 +56,9 @@ export default {
       let attr = node.attributes.getNamedItem('custom-data');
 
       if ((value = attr ? attr.value : null)) {
-        let [group, id] = value.split('-');
+        let [group, id] = value.split('-'), nodes = node.parentNode.childNodes;
         this.tag[group] = id;
-        node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
+        nodes.forEach(item => item.classList.remove('active'));
         node.classList.add('active');
 
         this.$spinner.open();

@@ -16,7 +16,7 @@
           <button-base text="播放全部"/>
           <button-base text="播放全部"/>
           <button-base text="播放全部"/>
-          <button-base text="播放全部"/>
+          <button-base text="打印预览" @click="print"/>
         </div>
       </div>
     </div>
@@ -32,12 +32,26 @@
 
       <div class="tab-content v-column">
 
-        <table-view :columns="columns" :data='list' style="flex:auto;"
+        <table-view :columns="columns" :data='songList' style="flex:auto;"
                     v-show="tab===0" @row-dblclick="onCellClick"/>
 
-        <div v-show="tab===1">专辑</div>
-        <div v-show="tab===2">MV</div>
-        <div v-show="tab===3">{{ singer.introduce }}</div>
+        <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
+             v-show="tab===1" @click="onAlbumItemClicked">
+          <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :custom-data="index">
+            <img class=cover :src='item.cover' loading="lazy" alt/>
+            <div class='name'>{{ item.name }}</div>
+          </div>
+        </div>
+
+        <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
+             v-show="tab===2">
+          <div class='v-column content-box' v-for='(item,index) in mvList' :key='index' :class='item.class'>
+            <img class=cover :src='item.cover' loading="lazy" alt/>
+            <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
+          </div>
+        </div>
+
+        <div v-show="tab===3" class="label">{{ singer.introduce }}</div>
       </div>
     </div>
   </div>
@@ -51,7 +65,9 @@ export default {
 
   data: () => ({
     tab: 0,
-    list: [],
+    songList: [],
+    albumList: [],
+    mvList: [],
     tabArray: ['歌曲', '专辑', 'MV', '详情'],
     page: {current: 1, size: 30, total: 1},
     singer: {mid: '', name: '', cover: '', songCount: '-', albumCount: '-', mvCount: '-', fansCount: '-'},
@@ -62,38 +78,76 @@ export default {
       {title: '专辑', valueGetter: item => item.album ? item.album.name : null},
       {title: '时长', property: 'duration', width: 100},
       {title: '大小', property: 'size', width: 100}
-    ],
+    ]
   }),
 
   mounted() {
-    console.info(this.$route);
-    this.setSinger(this.query);
+    if (this.singer.mid !== this.query.mid) {
+      this.songUpdatable = this.albumUpdatable = this.mvUpdatable = true;
+      this.setSinger(this.query);
+    }
   },
 
   watch: {
     query(newValue) {
-      this.setSinger(newValue);
+      if (this.singer.mid !== newValue.mid) {
+        this.songUpdatable = this.albumUpdatable = this.mvUpdatable = true;
+        this.setSinger(newValue);
+      }
+    },
+
+    tab(newTab) {
+      if (newTab === 0) {
+        if (!this.songUpdatable) {
+          return;
+        }
+
+        this.$spinner.open();
+        this.songUpdatable = false;
+
+        return this.$source.impl.handleSingerInfo(this.singer).then(success =>
+            success ? this.$source.impl.singerSongList(this.singer, this.page) : null
+        ).then(res => this.songList = res || []).finally(this.$spinner.close);
+      }
+
+      if (newTab === 1) {
+        if (!this.albumUpdatable) {
+          return;
+        }
+
+        this.$spinner.open();
+        this.albumUpdatable = false;
+
+        return this.$source.impl.singerAlbumList(this.singer, this.page)
+            .then(res => this.albumList = res || []).finally(this.$spinner.close);
+      }
+
+      if (newTab === 2) {
+        if (!this.mvUpdatable) {
+          return;
+        }
+
+        this.$spinner.open();
+        this.mvUpdatable = false;
+
+        return this.$source.impl.singerMvList(this.singer, this.page)
+            .then(res => this.mvList = res || []).finally(this.$spinner.close);
+      }
     }
   },
 
   methods: {
     setSinger(value) {
-      if (this.singer.mid !== value.mid) {
-        this.singer.mid = value.mid;
-        this.singer.name = value.name;
-        this.singer.cover = value.cover;
-        this.singer.songCount = value.songCount;
-        this.singer.albumCount = value.albumCount;
-        this.singer.mvCount = value.mvCount;
-        this.singer.fansCount = value.fansCount;
+      this.singer.mid = value.mid;
+      this.singer.name = value.name;
+      this.singer.cover = value.cover;
+      this.singer.songCount = value.songCount;
+      this.singer.albumCount = value.albumCount;
+      this.singer.mvCount = value.mvCount;
+      this.singer.fansCount = value.fansCount;
 
-        this.tab = 0;
-        this.$spinner.open();
-        let api = this.$source.impl;
-        api.handleSingerInfo(this.singer).then(success =>
-            success ? api.singerSongList(this.singer, this.page) : null
-        ).then(res => this.list = res || []).finally(this.$spinner.close);
-      }
+      this.tab = -1;
+      this.$nextTick(() => this.tab = 0);
     },
 
     /**
@@ -101,38 +155,76 @@ export default {
      * @param row {Number} 行单元格索引
      */
     onCellClick(row) {
-      let item = this.list[row];
-      if (!item.path) {
-        this.$spinner.open()
-        this.$source.impl.handleMusicInfo(item).then(success => {
-          if (success) {
-            let player = this.$player, playList = player.playList;
-            player.index = row;
-            playList.splice(0, playList.length, ...this.list);
-            if (player.prepare(item)) {
-              player.play();
-            }
+      let item = this.songList[row];
+
+      if (item.path) {
+        let player = this.$player, playList = player.playList;
+        player.index = row;
+        playList.splice(0, playList.length, ...this.songList);
+        return player.prepare(item) ? player.play() : null;
+      }
+
+      this.$spinner.open();
+      this.$source.impl.handleMusicInfo(item).then(success => {
+        if (success) {
+          let player = this.$player, playList = player.playList;
+          player.index = row;
+          playList.splice(0, playList.length, ...this.songList);
+          if (player.prepare(item)) {
+            player.play();
+          } else {
+            this.$message.warning('媒体资源加载失败！');
           }
+        } else {
+          this.$message.warning('网络资源获取失败！');
+        }
 
-        }).finally(this.$spinner.close);
-        return;
-      }
-
-      let player = this.$player, playList = player.playList;
-      player.index = row;
-      playList.splice(0, playList.length, ...this.list);
-      if (player.prepare(item)) {
-        player.play();
-      }
+      }).finally(this.$spinner.close);
     },
+
+    print: () => print(),
+
+    /**
+     * 专辑列表项点击
+     * @param event {MouseEvent} 鼠标点击事件
+     */
+    onAlbumItemClicked(event) {
+      let node = event.target, classList = node.classList;
+      if (classList.contains('cover') || classList.contains('name')) {
+        let attr = node.parentNode.attributes.getNamedItem('custom-data');
+        let index = attr.value - 0, album = index >= 0 ? this.albumList[index] : null;
+        return album ? this.$router.push({path: '/album-view', query: album}) : null;
+      }
+    }
   }
 }
 </script>
 
 <style scoped>
-.cover {
+.image-container {
+  padding: 1em 0 0 0;
+  margin: 0.5em 0 0 0;
+}
+
+.image-container > .content-box {
+  align-items: center;
+  margin: 0 3em 3em 0;
+}
+
+.cover, .content-box .cover {
   width: 13em;
   height: 13em;
+  cursor: pointer;
   border-radius: 8em;
+  transition: transform .75s cubic-bezier(0, 1, .75, 1);
+}
+
+.content-box .name {
+  max-width: 13em;
+  /*默认换行white-space: normal;*/
+}
+
+.content-box:hover .cover {
+  transform: scale(1.07);
 }
 </style>

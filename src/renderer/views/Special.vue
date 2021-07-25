@@ -1,22 +1,15 @@
 <template>
   <div class="v-column">
     <div class="v-row option-flex">
-      <el-button type="primary">播放全部</el-button>
-      <el-button @click="multiple=!multiple">批量操作</el-button>
-      <el-input class="align-end" v-model="inputKey" placeholder="搜索本地歌曲" suffix-icon="el-icon-search"></el-input>
-      <el-button class="align-end" @click="$refs.file_import.click()">导入歌曲</el-button>
-      <el-button class="align-end">排序方式</el-button>
+      <button-base type="primary">播放全部</button-base>
+      <button-base @click="multiple=!multiple">批量操作</button-base>
+      <text-field class="align-end" v-model="inputKey" placeholder="搜索本地歌曲"></text-field>
+      <button-base class="align-end" @click="$refs.file_import.click()">导入歌曲</button-base>
+      <button-base class="align-end">排序方式</button-base>
       <input type="file" style="display: none" ref="file_import" multiple accept="audio/*" @change="importData"/>
     </div>
 
-    <el-table :data="dataList" border stripe height="auto" highlight-current-row @row-dblclick="onCellClick">
-      <el-table-column type="index" width="60" :index="toIndex" :label="dataList.length+''"/>
-      <el-table-column prop="title" label="歌曲"></el-table-column>
-      <el-table-column prop="singer.name" label="歌手"></el-table-column>
-      <el-table-column prop="album" label="专辑"></el-table-column>
-      <el-table-column prop="duration" label="时长" width="180"></el-table-column>
-      <el-table-column prop="size" label="大小" width="180"></el-table-column>
-    </el-table>
+    <table-view :columns="columns" :data="list" style="flex:1;overflow: hidden"/>
   </div>
 </template>
 
@@ -27,14 +20,19 @@ export default {
   data: () => ({
     inputKey: "",
     visible: true,
-    dataList: [],
-    multiple: null
+    multiple: null,
+    columns: [
+      {type: 'index', width: 100},
+      {title: '歌曲', property: 'title'},
+      {title: '歌手', property: 'singer'},
+      {title: '专辑', property: 'album'},
+      {title: '时长', property: 'duration', width: 100},
+      {title: '大小', property: 'size', width: 100}
+    ],
+    list: []
   }),
 
   created() {
-    this.dataList.push({title: 'xxxx', singer: {name: '歌手名称', id: 1}, album: {name: '专辑名', id: 1}})
-    this.dataList.push({title: 'xxxx', singer: null, album: {name: '专辑名', id: 1}})
-    this.dataList.push({title: 'xxxx',   album: {name: '专辑名', id: 1}})
   },
 
   methods: {
@@ -124,10 +122,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.el-input {
-  width: unset;
-  margin: 0 10px 0 auto;
-}
-</style>

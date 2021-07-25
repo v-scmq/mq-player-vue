@@ -281,27 +281,56 @@ export default {
 
     /** 媒体已播放完成 */
     finished() {
-      this.play(this.getIndex(true));
+      this.play(this.getIndex(true), true);
     },
 
     /**
      * 播放指定索引的歌曲列表
      * @param index{Number} 媒体资源索引
+     * @param playNext {Boolean | null} 指定遇到错误时是否继续播放下一首
      */
-    play(index) {
+    play(index, playNext = null) {
       let player = this.$player, list = player.playList;
       // 暂停当前播放的媒体
       player.pause();
       if (!list || list.length === 0 || index === -1 || index >= list.length) {
-        this.$message.warning("没有播放数据源，请选择一个播放源！");
-        return;
+        return this.$message.warning("没有播放数据源，请选择一个播放源！");
       }
+
       player.index = index;
       // 若index==-2,则是列表播放模式,且列表播放已完成,不播放下一首,
       // 可以不处理,因为index==-2在下面的执行中无法通过
       // 若播放索引在正常范围内,则准备播放媒体
-      if (index >= 0 && index < list.length && player.prepare(list[index])) {
-        player.play();
+      if (index >= 0 && index < list.length) {
+        let media = list[index];
+        if (!(media instanceof Object)) {
+          this.$message.info('媒体信息不存在，即将播放下一首');
+          return playNext ? this.play(++index, true) : null;
+        }
+
+        // 媒体资源路径已经存在
+        if (media.path) {
+          if (player.prepare(media)) {
+            return player.play();
+          }
+          this.$message.error('媒体加载失败，即将播放下一首');
+          return playNext ? this.play(++index, true) : null;
+        }
+
+        // 若媒体资源路径不存在
+        this.$spinner.open();
+        this.$source.impl.handleMusicInfo(media).then(success => {
+          if (success && player.prepare(media)) {
+            return player.play();
+          }
+          this.$message.error('获取网络资源失败，即将播放下一首');
+          return playNext ? this.play(++index, true) : null;
+
+        }).catch(reason => {
+          this.$message.error(`${reason.message}，即将播放下一首`);
+          return playNext ? this.play(++index, true) : null;
+
+        }).finally(this.$spinner.close);
       }
     },
 

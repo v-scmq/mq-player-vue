@@ -6,12 +6,12 @@
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
       <div class="user-icon container" v-else>
-        <svg class="icon" viewBox="0 0 16 16" @click="openLoginModal">
+        <svg class="icon" viewBox="0 0 16 16" @click="login">
           <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
         </svg>
       </div>
 
-      <span class="user-name" :title="user.nickName">{{ user.uin ? user.nickName : '未登录' }}</span>
+      <span class="user-name" :title="user.nickName" @click="login">{{ user.uin ? user.nickName : '点击登录' }}</span>
     </div>
 
     <div class="v-row option-container no-drag" style="margin:0 4px 0 16px;">
@@ -80,10 +80,27 @@
     </div>
 
     <modal title="QQ登录" ref="loginModal" id="login-modal" width="600px" height="400px">
-      <template v-slot:content style="align-items:center">
-        <textarea spellcheck="false" id="qq-input" placeholder="请输入QQ音乐COOKIE信息" :disabled="!!user.uin"/>
-        <button-base :text="user.uin ? '退出' : '登录'" :disabled="user.uin"
-                     @click="user.uin ? loginOut($event) : login($event)"/>
+      <template v-slot:content>
+        <div class="v-column" style="color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;">
+          <div>账号：{{ user.uin }}</div>
+          <div>昵称：{{ user.nickName }}</div>
+          <template v-if="user.greenDiamondLevel">
+            <div class="v-row">
+              豪华绿钻等级：<img alt style="margin:-0.5em 0 0 0;" :src="user.greenLevelCover"/>
+            </div>
+            <div>会员开通时间：{{ user.greenDiamondStartTime }}</div>
+            <div>会员到期时间：{{ user.greenDiamondEndTime }}</div>
+          </template>
+
+          <template v-if="user.payBillLevel">
+            <div class="v-row">
+              付费包等级：<img alt style="margin:-0.5em 0 0 0;" :src="user.payBillLevelCover"/>
+            </div>
+            <div>会员开通时间：{{ user.payBillStartTime }}</div>
+            <div>会员到期时间：{{ user.payBillEndTime }}</div>
+          </template>
+        </div>
+        <button-base text="退出" @click="logout"/>
       </template>
     </modal>
   </div>
@@ -115,7 +132,7 @@ export default {
   created() {
     let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
     if (ipcRender) {
-      ipcRender.invoke('request-window-state').then(state => {
+      ipcRender.invoke('get-window-state').then(state => {
         this.icon = state ? MAXIMIZED_ICON : MAXIMIZE_ICON;
         this.$el.classList.toggle('un-maximized', state);
       });
@@ -150,7 +167,7 @@ export default {
       if (this.backLength === 0) {
         this.forwardLength = 0;
         let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-        ipcRender ? ipcRender.invoke('request-clear-history') : null;
+        ipcRender ? ipcRender.invoke('clear-history') : null;
       }
       ++this.backLength;
     });
@@ -232,47 +249,46 @@ export default {
     /**
      * 开始登录
      *
-     * @param event {MouseEvent} 鼠标事件,若没有鼠标事件,则认为主动调用
+     * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
      */
     login(event) {
-      // 存储用户信息的数据库表名称
-      let tableName = this.$db.tables.user.name;
+      let param = {
+        db: this.$db,                                                   // indexDB
+        channel: 'open-modal',                                          // ipc通信标记
+        isManual: event instanceof MouseEvent,                          // 是否是手动调用登录
+        ipcRender: this.$electron ? this.$electron.ipcRenderer : null,  // ipc渲染进程通信API
+      };
 
-      // 若是从登录模态框点击登录按钮时触发,则需要做验证
-      if (event instanceof MouseEvent) {
-        this.$refs.loginModal.close();
-        let value = this.$el.querySelector('#qq-input').value;
-
-        this.$source.impl.login(value).then(user => {
-          // (typeof null) => 'object' ; (null instanceof Object) => true
-          this.user = user instanceof Object ? user : {};
-          this.$db.delete(tableName, user.uin).then(() => this.$db.insert(tableName, user));
-
-        }).catch(reason => this.$message.error(reason.message));
-        return;
-      }
-
-      // 主动调用从数据库获取用户信息
-      this.$db.open().then(() => this.$db.queryAll(tableName)).then(userInfo => {
-        if ((userInfo = userInfo ? userInfo[0] : null) && userInfo.uin) {
-          this.user = userInfo;
-          this.$source.impl.cookie = userInfo.cookieValue;
-        }
-      });
+      this.$spinner.open();
+      this.$source.impl.login(param)
+          .then(user => this.user = user || {})
+          .catch(reason => this.$message.error(reason.message))
+          .finally(this.$spinner.close);
     },
 
     /**
      * 开始退出登录
-     * @param event {MouseEvent} 鼠标事件,若没有鼠标事件,则认为主动调用
+     * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
      */
-    loginOut(event) {
-      // 存储用户信息的数据库表名称
-      let tableName = this.$db.tables.user.name;
-      let uin = this.user.uin;
-      uin ? this.$db.delete(tableName, uin) : null;
-      // 清除用户信息
+    logout(event) {
+      let uin = this.user ? this.user.uin : null;
       this.user = {};
-      (event instanceof MouseEvent) ? this.$refs.loginModal.close() : null;
+
+      if (!uin) {
+        return;
+      }
+
+      let param = {
+        uin,
+        db: this.$db,                                                   // indexDB
+        channel: 'remove-all-cookie',                                   // ipc通信标记
+        isManual: event instanceof MouseEvent,                          // 是否是手动调用退出登录
+        ipcRender: this.$electron ? this.$electron.ipcRenderer : null   // ipc渲染进程通信API
+      };
+
+      // 若是手动调用模式,则先关闭登录模态框
+      param.isManual ? this.$refs.loginModal.close() : null;
+      this.$source.impl.logout(param);
     }
   }
 }

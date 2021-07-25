@@ -580,10 +580,21 @@ html, body, #app {
     background: rgb(255, 102, 102);
 }
 
+.modal .titled-pane .close-icon > path {
+    pointer-events: none;
+}
+
 .modal > .modal-content > .content {
     flex: 1;
     padding: 1em;
     overflow: hidden auto;
+}
+
+.label {
+    font-size: 1.125em;
+    white-space: pre-line;
+    overflow: hidden auto;
+    color: var(--text-base);
 }
 
 /*======================Message==================*/

@@ -197,7 +197,7 @@ export default {
         duration: this.$player.toTime(meta.format.duration),
         size: this.toFileSize(2, file.size),
         bitrate: meta.format.bitrate,
-        sampleRate: meta.format.sampleRate,
+        sampleRate: meta.format.sampleRate
         // codec: meta.format.codec, // "MPEG 1 Layer 3"
         // codecProfile: meta.format.codecProfile,
         //container: meta.format.container,
@@ -205,34 +205,33 @@ export default {
         // numberOfChannels: meta.format.numberOfChannels,
       };
 
-      let fs = this._fs;
-      if (!fs) {
+      if (!this.$fs) {
         meta = meta.common = meta.format = null;
         return data;
       }
 
       path = 'E:/picture/album';
-      if (!fs.existsSync(path)) {
-        fs.mkdirSync(path);
+      if (!this.$fs.existsSync(path)) {
+        this.$fs.mkdirSync(path);
       }
 
       path = `${path}/${this.resolveFileName(data.album || data.title)}.jpg`;
       // 注意必须先检测存在才能判断是文件还是目录,否则抛出异常
-      let exists = fs.existsSync(path);
-      let isDirectory = exists && fs.statSync(path).isDirectory();
+      let exists = this.$fs.existsSync(path);
+      let isDirectory = exists && this.$fs.statSync(path).isDirectory();
       // 若文件路径不存在,或者是目录
       if (!exists || isDirectory) {
         // 是目录则强制删除目录
-        isDirectory ? fs.rmSync(path, {force: true}) : null;
+        isDirectory ? this.$fs.rmSync(path, {force: true}) : null;
 
         let buffer = meta.common.picture;
         buffer = buffer && buffer.length ? buffer[0].data : null;
-        buffer ? fs.writeFileSync(data.cover = path, buffer) : null;
+        buffer ? this.$fs.writeFileSync(data.cover = path, buffer) : null;
 
       } else {
         data.cover = path;
       }
-      fs = meta = meta.common = meta.format = null;
+      meta = meta.common = meta.format = null;
       return data;
     },
 
@@ -255,8 +254,7 @@ export default {
       }
 
       this.$spinner.open(this.$el);
-      let path, savedList = [];
-      this._fs = window.require ? window.require('fs') : null;
+      let path, savedList = [], meta = null;
       out: for (let file of files) {
         // 若是外部环境,只能使用URL类创建临时的文件访问地址
         path = file.path || URL.createObjectURL(file);
@@ -267,10 +265,16 @@ export default {
           }
         }
 
-        let meta = this.$metadata ? await this.$metadata.parseFile(path) : null;
+        if (this.$metadata) {
+          // try {
+            meta = await this.$metadata.parseFile(path);
+          // } catch (error) {
+          //   console.info('file=>', file, ' error=>', error.message);
+          //   meta = null;
+          // }
+        }
         savedList.push(this.parse(path, file, meta));
       }
-      this._fs = undefined;
 
       if (savedList.length) {
         this.list.push(...savedList);

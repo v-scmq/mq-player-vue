@@ -1,41 +1,15 @@
 <template>
   <div class="v-column">
     <div class="v-row option-flex">
-      <el-button type="primary">播放全部</el-button>
-      <el-button @click="handleClicked">批量操作</el-button>
-      <el-input class="align-end" v-model="inputKey" placeholder="搜索本地歌曲" suffix-icon="el-icon-search"></el-input>
-      <el-button class="align-end" @click="$refs.file_import.click()">导入歌曲</el-button>
-      <el-button class="align-end">排序方式</el-button>
+      <button-base>播放全部</button-base>
+      <button-base @click="handleClicked">批量操作</button-base>
+      <text-field class="align-end" v-model="inputKey" placeholder="搜索本地歌曲"></text-field>
+      <button-base class="align-end" @click="$refs.file_import.click()">导入歌曲</button-base>
+      <button-base class="align-end">排序方式</button-base>
       <input type="file" style="display: none" ref="file_import" multiple accept="audio/*" @change="importData"/>
     </div>
 
-    <!--    <el-table :data="dataList" border stripe height="auto" highlight-current-row @row-dblclick="onCellClick">-->
-    <!--      <el-table-column type="index" width="60" :index="toIndex" :label="dataList.length+''"></el-table-column>-->
-    <!--      <el-table-column prop="title" label="歌曲"></el-table-column>-->
-    <!--      <el-table-column prop="singer" label="歌手"></el-table-column>-->
-    <!--      <el-table-column prop="album" label="专辑"></el-table-column>-->
-    <!--      <el-table-column prop="duration" label="时长" width="180"></el-table-column>-->
-    <!--      <el-table-column prop="size" label="大小" width="180"></el-table-column>-->
-    <!--    </el-table>-->
-    <div class="v-column" style="flex:1;overflow: hidden">
-      <vxe-table
-          border
-          auto-resize
-          height="auto"
-          show-overflow
-          highlight-hover-row
-          ref="table"
-          :sort-config="{trigger: 'cell'}"
-          :data="dataList">
-        <vxe-table-column type="checkbox" width="80" :visible="multiple"/>
-        <vxe-table-column type="seq" width="80" :visible="!multiple" :title="`${dataList.length}`"/>
-        <vxe-table-column field="title" title="歌曲" sortable/>
-        <vxe-table-column field="singer" title="歌手"/>
-        <vxe-table-column field="album" title="专辑"/>
-        <vxe-table-column field="duration" title="时长" width="180"/>
-        <vxe-table-column field="size" title="大小" width="180"/>
-      </vxe-table>
-    </div>
+    <table-view :columns="columns" :data="list" style="flex:1;overflow: hidden"/>
   </div>
 </template>
 
@@ -44,16 +18,21 @@ export default {
   name: "Favorite",
   data: () => ({
     inputKey: "",
-    dataList: [],
     multiple: false,
     visible: true,
+    columns: [
+      {type: 'index', width: 100},
+      {title: '歌曲', property: 'title'},
+      {title: '歌手', property: 'singer'},
+      {title: '专辑', property: 'album'},
+      {title: '时长', property: 'duration', width: 100},
+      {title: '大小', property: 'size', width: 100}
+    ],
+    list: [],
   }),
 
   methods: {
     handleClicked() {
-      this.multiple = !this.multiple;
-      let table = this.$refs.table;
-      this.$nextTick(() => table.refreshColumn())
     },
     toIndex(index) {
       return ++index < 10 ? '0' + index : index;
@@ -132,21 +111,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-.el-input {
-  width: unset;
-  margin: 0 10px 0 auto;
-}
-
-.el-table {
-  background: none;
-  margin: 10px 0 0 0;
-  width: calc(100% - 1px);
-}
-
-.el-table::before {
-  display: none;
-}
-</style>
