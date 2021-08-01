@@ -11,7 +11,9 @@
         </svg>
       </div>
 
-      <span class="user-name" :title="user.nickName" @click="login">{{ user.uin ? user.nickName : '点击登录' }}</span>
+      <span class="user-name" :title="user.nickName" @click="user.uin ? openLoginModal() : login($event)">
+        {{ user.uin ? user.nickName : '点击登录' }}
+      </span>
     </div>
 
     <div class="v-row option-container no-drag" style="margin:0 4px 0 16px;">
@@ -32,7 +34,9 @@
         <path
             d="M911.40249 607.60166c-21.244813-4.248963-46.738589 8.497925-50.987552 29.742738-42.489627 174.207469-195.452282 293.178423-373.908714 293.178424-212.448133 0-386.655602-174.207469-386.655602-386.655602s174.207469-386.655602 386.655602-386.655602c97.726141 0 195.452282 38.240664 263.435685 106.224067h-178.456432c-21.244813 0-42.489627 16.995851-42.489626 42.489626 0 21.244813 16.995851 42.489627 42.489626 42.489627h263.435685c21.244813 0 42.489627-16.995851 42.489626-42.489627v-263.435684c0-21.244813-16.995851-42.489627-42.489626-42.489627-21.244813 0-42.489627 16.995851-42.489627 42.489627v148.713693c-84.979253-76.481328-195.452282-118.970954-310.174274-118.970955-259.186722 0-471.634855 212.448133-471.634854 471.634855s212.448133 471.634855 471.634854 471.634855c216.697095 0 403.651452-148.713693 458.887967-356.912863 4.248963-21.244813-8.497925-42.489627-29.742738-50.987552z"/>
       </svg>
-      <text-field style="margin:0 0 0 8px" placeholder="请输入内容" v-model="searchInput"/>
+
+      <text-field style="margin:0 0 0 8px" placeholder="请输入内容" v-model="searchInput"
+                  @keyup.native.enter="openNetSearchView"/>
     </div>
 
     <div class="v-row window-tool no-drag" style="flex:1;justify-content:flex-end;">
@@ -289,6 +293,20 @@ export default {
       // 若是手动调用模式,则先关闭登录模态框
       param.isManual ? this.$refs.loginModal.close() : null;
       this.$source.impl.logout(param);
+    },
+
+    /** 打开资源搜索页面 */
+    openNetSearchView() {
+      let value = this.searchInput;
+      if (!value) {
+        return;
+      }
+
+      const viewPath = '/net-search-view', {path, query} = this.$route;
+
+      // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
+      return (path === viewPath && query.value === value) ? null :
+          this.$router.push({path: viewPath, query: {value}});
     }
   }
 }

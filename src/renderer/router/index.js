@@ -67,6 +67,11 @@ export default new VueRouter({
             props: route => ({query: route.query})
         },
         {
+            path: '/net-search-view',
+            component: () => import('../views/NetSearchView'),
+            props: route => ({query: route.query})
+        },
+        {
             path: '/favorite',
             component: () => import('../views/Favorite'),
             meta: {

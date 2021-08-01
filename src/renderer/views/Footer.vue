@@ -144,6 +144,7 @@
 
 <script>
 import MusicViewer from "./MusicViewer";
+import {TimeUtil} from '../utils';
 
 const DEFAULT_ALBUM = 'icon/default_album.jpg';
 const PLAY_ICON = 'M511.35350613 6.02636267C231.4001792 6.02636267 4.65202773 232.77451413 4.65202773 512.72784107S231.4001792 1019.42789227 511.35350613 1019.42789227s506.7014784-226.74672427 506.7014784-506.7000512S791.30683307 6.02636267 511.35350613 6.02636267z m-101.3382976 734.71407466V284.71381653l304.0191744 228.01402454-304.0191744 228.01259626z m0 0';
@@ -213,7 +214,7 @@ export default {
 
     /**
      * 播放器当前时间改变回调
-     * @param time 播放器时间(已格式化标准时间字符串)
+     * @param time 播放进度时间(单位秒)
      */
     timeChanged(time) {
       // 当滑动条没有再拖动时,才同步播放进度到滑动条视图
@@ -225,10 +226,10 @@ export default {
 
     /**
      * 播放器时长改变回调
-     * @param duration 播放器时长(已格式化为标准时间字符串)
+     * @param duration 播放器时长(单位秒)
      */
     durationChanged(duration) {
-      this.durationText = duration;
+      this.durationText = TimeUtil.secondToTime(duration);
     },
 
     /**
@@ -238,7 +239,10 @@ export default {
     mediaChanged(media) {
       this.title = media.title;
       let singer = media.singer, album = media.album;
-      this.singer = (typeof singer) === 'string' ? singer : singer.name;
+
+      this.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
+          ((singer instanceof Object ? singer.name : singer) || '未知');
+
       this.albumPath = (!album || !album.cover) ? DEFAULT_ALBUM : album.cover;
       this.isDefaultAlbum = this.albumPath === DEFAULT_ALBUM;
       // 重新媒体后需要重新设置播放速率
@@ -353,7 +357,7 @@ export default {
      */
     valueChanged(newValue, seek) {
       let player = this.$player;
-      this.timeText = player.toTime(newValue * player.getDuration());
+      this.timeText = TimeUtil.secondToTime(newValue * player.getDuration());
       if (seek && player.status !== player.$statusType.UNKNOWN) {
         this.$player.seek(newValue * player.getDuration());
       }

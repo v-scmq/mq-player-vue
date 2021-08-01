@@ -1,6 +1,7 @@
 <template>
   <div class='v-column'>
-    <div class="v-row singer-info-container">
+
+    <div class="v-row singer-info-container" v-if="singer">
       <img alt class="cover" :src="singer.cover"/>
       <div class="v-column">
         <div>{{ singer.name || '-' }}</div>
@@ -14,8 +15,8 @@
 
         <div class="v-row">
           <button-base text="播放全部"/>
-          <button-base text="下载"/>
-          <button-base text="批量操作"/>
+          <button-base text="播放全部"/>
+          <button-base text="播放全部"/>
           <button-base text="打印预览" @click="print"/>
         </div>
       </div>
@@ -24,16 +25,16 @@
     <div class='tab-pane v-column'>
       <div class='v-row tab-container' style='justify-content:center;'>
 
-        <div class="tab" v-for='(item,index) in tabArray' :key='index'
-             :class="tab===index?'active':null" @click='tab=index'>
-          {{ item }}
+        <div class="tab" v-for='(tabItem,index) in tabList' :key='index'
+             :class="tab===tabItem?'active':null" @click='tab=tabItem'>
+          {{ tabItem.title }}
         </div>
       </div>
 
       <div class="tab-content v-column">
 
         <table-view :columns="columns" :data='songList' style="flex:auto;"
-                    v-show="tab===0" @row-dblclick="onCellClick">
+                    v-show="tab===songTab" @row-dblclick="onCellClick">
           <template v-slot:title="{item}">
             {{ item.title }}
             <svg class="icon mv-icon" v-if="item.vid" width="1em" height="1em" viewBox="0 0 16 16">
@@ -47,16 +48,10 @@
               {{ singer.name }}
             </span>
           </template>
-
-          <template v-slot:album="{item}">
-            <span class="link" v-if="item.album" :data="item.album.mid">
-              {{ singer.name }}
-            </span>
-          </template>
         </table-view>
 
         <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-             v-show="tab===1" @click="onAlbumItemClicked">
+             v-show="tab===albumTab" @click="onAlbumItemClicked">
           <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :custom-data="index">
             <img class=cover :src='item.cover' loading="lazy" alt/>
             <div class='name'>{{ item.name }}</div>
@@ -64,14 +59,14 @@
         </div>
 
         <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-             v-show="tab===2">
+             v-show="tab===mvTab">
           <div class='v-column content-box' v-for='(item,index) in mvList' :key='index' :class='item.class'>
             <img class=cover :src='item.cover' loading="lazy" alt/>
             <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
           </div>
         </div>
 
-        <div v-show="tab===3" class="label">{{ singer.introduce }}</div>
+        <div v-show="tab===specialTab" class="label">歌单list</div>
       </div>
     </div>
   </div>
@@ -79,94 +74,99 @@
 
 <script>
 export default {
-  name: "SingerView",
+  name: "NetSearchView",
 
   props: {query: null},
 
   data: () => ({
-    tab: 0,
+    singer: null,
+    mvList: [],
     songList: [],
     albumList: [],
-    mvList: [],
-    tabArray: ['歌曲', '专辑', 'MV', '详情'],
+    specialList: [],
+
+    tab: null,
+    tabList: [],
+    mvTab: {title: 'MV', update: true, error: null},
+    songTab: {title: '歌曲', update: true, error: null},
+    albumTab: {title: '专辑', update: true, error: null},
+    specialTab: {title: '歌单', update: true, error: null},
+
     page: {current: 1, size: 30, total: 1},
-    singer: {mid: '', name: '', cover: '', songCount: '-', albumCount: '-', mvCount: '-', fansCount: '-'},
+
     columns: [
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
-      {title: '歌手', property: 'singer',},
+      {title: '歌手', property: 'singer'},
       {title: '专辑', valueGetter: item => item.album ? item.album.name : null},
       {title: '时长', property: 'duration', width: 100}
     ]
   }),
 
-  mounted() {
-    if (this.singer.mid !== this.query.mid) {
-      this.songUpdatable = this.albumUpdatable = this.mvUpdatable = true;
-      this.setSinger(this.query);
-    }
+  created() {
+    this.tabList = [this.songTab, this.albumTab, this.mvTab, this.specialTab];
+    this['$query'] = this.query.value;
+    this.tab = this.songTab;
   },
 
   watch: {
-    query(newValue) {
-      if (this.singer.mid !== newValue.mid) {
-        this.songUpdatable = this.albumUpdatable = this.mvUpdatable = true;
-        this.setSinger(newValue);
+    query() {
+      if (this.$query !== this.query.value) {
+        this.tab = null;
+        this['$query'] = this.query.value;
+        this.tabList.forEach(tab => tab.update = true);
+        this.$nextTick(() => this.tab = this.songTab);
       }
     },
 
     tab(newTab) {
-      if (newTab === 0) {
-        if (!this.songUpdatable) {
-          return;
-        }
-
-        this.$spinner.open();
-        this.songUpdatable = false;
-
-        return this.$source.impl.handleSingerInfo(this.singer).then(success =>
-            success ? this.$source.impl.singerSongList(this.singer, this.page) : null
-        ).then(res => this.songList = res || []).finally(this.$spinner.close);
+      // 若未选定任何一个选项卡 或 当前选项卡无需更新数据, 则什么也不做
+      if (!newTab || !newTab.update) {
+        return;
       }
 
-      if (newTab === 1) {
-        if (!this.albumUpdatable) {
-          return;
-        }
+      // 打开进度指示器
+      this.$spinner.open();
+      // 立刻重置为无需更新状态
+      newTab.update = false;
 
-        this.$spinner.open();
-        this.albumUpdatable = false;
+      let api = this.$source.impl;
 
-        return this.$source.impl.singerAlbumList(this.singer, this.page)
-            .then(res => this.albumList = res || []).finally(this.$spinner.close);
+      // 若选定歌曲选项卡
+      if (newTab === this.songTab) {
+        // 搜索歌手 => 处理歌手基本数据 => 捕捉异常 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
+        api.singerSearch(this.$query)
+            .then(this.handleSingerInfo)
+            .catch(() => this.singer = null)
+            .then(() => api.songSearch(this.$query, this.page))
+            .then(list => this.songList = list)
+            .finally(this.$spinner.close);
       }
 
-      if (newTab === 2) {
-        if (!this.mvUpdatable) {
-          return;
-        }
+      if (newTab === this.albumTab) {
+        this.$source.impl.albumSearch(this.$query, this.page)
+            .then(list => this.albumList = list)
+            .finally(this.$spinner.close);
+      }
 
-        this.$spinner.open();
-        this.mvUpdatable = false;
+      if (newTab === this.mvTab) {
+        this.$source.impl.mvSearch(this.$query, this.page)
+            .then(list => this.mvList = list)
+            .finally(this.$spinner.close);
+      }
 
-        return this.$source.impl.singerMvList(this.singer, this.page)
-            .then(res => this.mvList = res || []).finally(this.$spinner.close);
+      if (newTab === this.specialTab) {
+        this.$source.impl.specialSearch(this.$query, this.page)
+            .then(list => this.specialList = list)
+            .finally(this.$spinner.close);
       }
     }
   },
 
   methods: {
-    setSinger(value) {
-      this.singer.mid = value.mid;
-      this.singer.name = value.name;
-      this.singer.cover = value.cover;
-      this.singer.songCount = value.songCount;
-      this.singer.albumCount = value.albumCount;
-      this.singer.mvCount = value.mvCount;
-      this.singer.fansCount = value.fansCount;
-
-      this.tab = -1;
-      this.$nextTick(() => this.tab = 0);
+    handleSingerInfo(list) {
+      this.singer = list && list[0] ? list[0] : null;
+      return this.singer ? this.$source.impl.handleSingerInfo(this.singer) : null;
     },
 
     /**

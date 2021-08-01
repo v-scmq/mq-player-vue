@@ -304,30 +304,6 @@ const player = {
         if (!this.isPlaying()) {
             cancelAnimationFrame(this.spectrumTimer);
         }
-    },
-
-    /**
-     * 将毫秒时间值转为标准时间字符串
-     * @param value{Number} 时间值，单位秒
-     */
-    toTime(value) {
-        // 浮点数转换为整数可以使用 0 ^ 1.23232 = 1
-        value = 0 ^ value;
-        let v = '', number;
-        // 获取总秒数包含的小时数
-        if (value >= 3600) {
-            number = 0 ^ value / 3600;
-            v += number < 10 ? '0' + number + ':' : number + ':';
-            // 计算剩余的总秒数
-            value %= 3600;
-        }
-        // 计算包含的分钟数如果小于60,则分钟数为0
-        number = value < 60 ? 0 : 0 ^ value / 60;
-        // 如果数字小于10,补0
-        v += number < 10 ? '0' + number + ':' : number + ':';
-        // 计算秒数如果小于60,则秒数为time,否则为 time % 60
-        number = value < 60 ? value : value % 60;
-        return number < 10 ? v + '0' + number : v + number;
     }
 };
 
@@ -335,7 +311,7 @@ const player = {
 player.nativePlayer.ondurationchange = () => {
     let listener = player.eventListener;
     if (listener && listener.durationChanged) {
-        listener.durationChanged(player.toTime(player.nativePlayer.duration));
+        listener.durationChanged(player.nativePlayer.duration);
     }
 };
 

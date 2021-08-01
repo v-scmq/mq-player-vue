@@ -46,6 +46,8 @@
 </template>
 
 <script>
+import {TimeUtil, FileUtil} from '../utils';
+
 export default {
   name: "LocalMusic",
   data: () => ({
@@ -147,28 +149,6 @@ export default {
     },
 
     /**
-     * 解决字符序列不能用于Windows操作系统平台的文件或文件夹名称. <br>
-     * 对于Windows平台,文件或文件夹名称一定不能包含 “{@code / \ * ? " : | < >}”中的任一字符.
-     *
-     * @param name {String | Array | Object} 文件或文件夹名称
-     * @return String 标准的文件或文件夹名称
-     */
-    resolveFileName(name) {
-      if (!name) return name;
-
-      let replace, values = [...name];
-      for (let index = values.length - 1; index >= 0; --index) {
-        let c = values[index] = name.charAt(index);
-        if (c === '/' || c === '\\' || c === '*' || c === '?' || c === '"'
-            || c === ':' || c === '|' || c === '<' || c === '>') {
-          values[index] = '~';
-          replace = true;
-        }
-      }
-      return replace ? values.join('') : name;
-    },
-
-    /**
      * 通过文件对象生成音乐信息
      * @param path {String} 文件路径
      * @param file {File}文件对象
@@ -194,8 +174,8 @@ export default {
         year: meta.common.year,
         album: meta.common.album,
         cover: null,
-        duration: this.$player.toTime(meta.format.duration),
-        size: this.toFileSize(2, file.size),
+        duration: TimeUtil.secondToTime(meta.format.duration),
+        size: FileUtil.toFileSize(2, file.size),
         bitrate: meta.format.bitrate,
         sampleRate: meta.format.sampleRate
         // codec: meta.format.codec, // "MPEG 1 Layer 3"
@@ -215,7 +195,7 @@ export default {
         this.$fs.mkdirSync(path);
       }
 
-      path = `${path}/${this.resolveFileName(data.album || data.title)}.jpg`;
+      path = `${path}/${FileUtil.resolveFileName(data.album || data.title)}.jpg`;
       // 注意必须先检测存在才能判断是文件还是目录,否则抛出异常
       let exists = this.$fs.existsSync(path);
       let isDirectory = exists && this.$fs.statSync(path).isDirectory();
@@ -266,12 +246,7 @@ export default {
         }
 
         if (this.$metadata) {
-          // try {
-            meta = await this.$metadata.parseFile(path);
-          // } catch (error) {
-          //   console.info('file=>', file, ' error=>', error.message);
-          //   meta = null;
-          // }
+          meta = await this.$metadata.parseFile(path);
         }
         savedList.push(this.parse(path, file, meta));
       }
@@ -283,33 +258,6 @@ export default {
       this.$spinner.close();
     },
 
-    /**
-     * 文件大小格式化
-     *
-     * @param scale 精度
-     * @param size 文件字节大小
-     * @return {string}返回格式化后的文件大小的字符串表示
-     */
-    // 注意这里的除法运算必须有一个是浮点数,否则计算精度相差较大(这里将size参数用double类型接收)
-    toFileSize(scale, size) {
-      let B = 1024;
-      if (size < B) {
-        return `${size}B`;
-      }
-      let KB = 1048576;
-      if (size < KB) {
-        return `${(size / B).toFixed(2)}KB`;
-      }
-      let MB = 1073741824;
-      if (size < MB) {
-        return `${(size / KB).toFixed(2)}MB`;
-      }
-      // let GB = 1099511627776L;
-      if (size < 1099511627776) {
-        return `${(size / MB).toFixed(2)}GB`;
-      }
-      return "";
-    }
   }
 }
 </script>

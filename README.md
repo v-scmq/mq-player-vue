@@ -1,18 +1,53 @@
-# mq-player-vue
+# mq-player-vue <a href="https://gitee.com/scmq/mq-player/"><img src="https://img.shields.io/badge/Gitee-blue.svg" alt></a>
 
-#### 介绍
+MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
-MQ音乐是一个基于Electron+Vue构建的一个桌面音乐播放器
+### 项目技术栈
 
-#### 软件架构
+<div>
+    <img src="https://img.shields.io/badge/Electron-13-success.svg" alt>
+    <img src="https://img.shields.io/badge/Vue-2.6-success.svg" alt>
+    <img src="https://img.shields.io/badge/NodeJS-14-blue.svg" alt>
+</div>
 
-软件架构说明
+### 特性
 
-#### 安装教程
+1. 支持音乐频谱
+2. 界面友好，支持皮肤切换
+3. 跨平台，可打包Windows、Mac、Linux
+4. 良好的架构模式和代码风格
+5. 提供支持主流的第三方音乐平台
 
-1. xxxx
-2. xxxx
-3. xxxx
+### 效果预览
+
++ 本地音乐
+
+![本地音乐](preview/local-music.png "本地音乐")
+
++ 播放详情
+
+![播放详情](preview/music-viewer.png "背景虚化")
+
++ 歌手分类
+
+![歌手分类](preview/net-music-singer.png "歌手分类")
+
++ MV分类
+
+![MV分类](preview/net-music-mv.png "MV分类")
+
++ 榜单分类
+
+![榜单分类](preview/net-music-rank.png "榜单分类")
+
++ 歌手详情
+
+![歌手详情](preview/singer-view.png "歌手详情")
+
++ 歌曲搜索
+
+![歌曲搜索](preview/net-search-singer.png "歌曲搜索")
+
 
 #### 问题汇集
 
