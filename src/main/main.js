@@ -146,7 +146,7 @@ let readyToShow = () => {
     let playIcon = `${iconPath}/play.png`, pauseIcon = `${iconPath}/pause.png`;
     let playing = false;
 
-    /** @type {[{tooltip: string, icon: string|NativeImage, click: (function(): void)}]} */
+    /** @type {[{tooltip: string, icon: Electron.NativeImage|string, click: (function(): void)}]} */
     let buttons = [
         {tooltip: '上一曲', icon: prevIcon, click: () => console.info("prev...")},
         {
@@ -162,8 +162,8 @@ let readyToShow = () => {
 
 /**
  * 处理来自渲染进程准备发起的网络请求,最后将响应信息返回到渲染进程
- * @param event {IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
- * @param options {ClientRequestConstructorOptions | Object} 从渲染进程传递过来的参数
+ * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
+ * @param options {ClientRequestConstructorOptions | any} 从渲染进程传递过来的参数
  * @return {Promise<{data:Buffer, headers, statusCode, statusMessage}>} 异步Promise对象
  */
 const handleNetRequest = (event, options) => new Promise(resolve => {
@@ -222,7 +222,7 @@ const handleNetRequest = (event, options) => new Promise(resolve => {
     // 当前网络请求发生错误时
     request.on('error', error => {
         console.info('error=>', error);
-        resolve(error.toString());
+        resolve({data: null, headers: null, statusCode: 0, statusMessage: error.message});
     });
 
     let data = options['data'];
@@ -241,7 +241,7 @@ const handleNetRequest = (event, options) => new Promise(resolve => {
 
 /**
  * 处理来自渲染进程请求打开模态框,最后将页面的Cookie信息返回到渲染进程
- * @param event {IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
+ * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
  * @param options {String | Object} 从渲染进程传递过来的参数
  * @return {Promise<String>} 异步Promise对象
  */
@@ -306,7 +306,7 @@ const handleOpenModal = (event, options) => new Promise(resolve => {
 
 /**
  * 处理来自渲染进程请求删除指定URL下的cookie信息
- * @param event {IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
+ * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
  * @param url {String} cookie对应的URL
  * @return {Promise<String>} 异步Promise对象
  */
