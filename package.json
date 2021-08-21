@@ -1,8 +1,10 @@
 {
+  "author": "SCMQ",
+  "appId": "com.scmq.player",
+  "main": "background.js",
   "name": "mq-player-vue",
   "description": "MQ音乐",
   "version": "1.0.0",
-  "author": "SCMQ",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -14,8 +16,6 @@
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
   },
-  "main": "background.js",
-  "appId": "com.scmq.player",
   "dependencies": {
     "axios": "^0.21.1",
     "electron": "^13.1.7",
