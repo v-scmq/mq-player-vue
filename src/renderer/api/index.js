@@ -36,7 +36,6 @@ export default {
                     'application/json;charset=UTF-8' : 'application/x-www-form-urlencoded;charset=UTF-8';
             }
 
-
             let postJSON = options.headers.postJSON
             delete options.headers.postJSON;
 
