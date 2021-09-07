@@ -136,12 +136,14 @@ const player = {
             return false;
         }
 
-        // let isWindows = navigator.platform.toLowerCase().includes('win');
+        // this.nativePlayer.src = path;
+
+        // let isWindows = navigator.platform === 'Win32';
         // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
         // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
 
-        // this.nativePlayer.src = isLocalFile ? `media:///${path}` : path;
-        this.nativePlayer.src = path;
+        this.nativePlayer.src = path.charAt(1) === ':' || path.charAt(0) === '/'
+            ? `media:///${path}` : `hs://${path}`;
 
         let listener = this.eventListener;
         if (listener && listener.mediaChanged) {
@@ -252,6 +254,11 @@ const player = {
      * @param listener{Object} 事件监听器
      */
     setEventListener(listener) {
+        // 若是第一次调用注册监听器
+        if (!this.eventListener) {
+            // 默认先回调一次状态改变事件
+            listener.statusChanged(null);
+        }
         this.eventListener = listener;
     },
 

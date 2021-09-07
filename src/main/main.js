@@ -20,14 +20,12 @@ if (isProduction) {
     protocol.registerSchemesAsPrivileged([scheme]);
 }
 
-let appPath = app.getAppPath();
-app.setPath('logs', `${appPath}/logs`);
-app.setPath('temp', `${appPath}/temp`);
-app.setPath('cache', `${appPath}/cache`);
-app.setPath('appData', `${appPath}/appData`);
-app.setPath('userData', `${appPath}/userData`);
-app.setPath('crashDumps', `${appPath}/crashDumps`);
-
+app.setPath('logs', `${app.getAppPath()}/logs`);
+app.setPath('temp', `${app.getAppPath()}/temp`);
+app.setPath('cache', `${app.getAppPath()}/cache`);
+app.setPath('appData', `${app.getAppPath()}/appData`);
+app.setPath('userData', `${app.getAppPath()}/userData`);
+app.setPath('crashDumps', `${app.getAppPath()}/crashDumps`);
 
 /****************************************************************
  *   监听应用程序就绪事件,就绪后后创建浏览器窗口和注册自定义的协议等  *
@@ -40,8 +38,12 @@ let mainWindow = null, tray = null, modal = null;
 app.on('ready', () => {
     // 注册自定义文件协议,解决高版本electron不能加载本地文件的问题,同时此方案仍然保留web安全策略
     // request请求包含原始请求URL和header等信息,callback回调用于将文件绝对路径传入并做响应信息处理
-    // let handler = (request, callback) => callback(decodeURI(request.url.replace('media://', '')));
-    // protocol.registerFileProtocol('media', handler);
+    protocol.registerFileProtocol('media', (request, callback) =>
+        callback(decodeURI(request.url.replace('media://', ''))));
+
+    // 注册自定义http协议,解决跨域问题
+    protocol.registerHttpProtocol('hs', (request, callback) =>
+        callback({url: request.url.replace('hs://', '')}));
 
     // 创建浏览器主窗口
     mainWindow = new BrowserWindow({
@@ -50,13 +52,15 @@ app.on('ready', () => {
         show: false,
         frame: false,
         backgroundColor: 'rgb(236, 236, 236)',
-        webPreferences: {
-            nodeIntegration: true,          // 开启NodeJS集成
-            contextIsolation: false,        // 关闭上下文隔离限制(从版本12.0开始默认为true)
-            webSecurity: false,             // 默认为true,设置为false将关闭web安全策略(如同源策略)
-            // enableRemoteModule: false,   // 关闭远程模块,(最佳方案:使用ipcMain和ipcRender代替)
-            // zoomFactor: 0.8,             // 设置浏览器窗口为80%的默认缩放比例(窗口显示后设置,否则很容易失效)
-        }
+        webPreferences: {preload: `${__dirname}/preload.js`}
+        // webPreferences: {
+        //     nodeIntegration: false,             // 关闭NodeJS集成
+        //     contextIsolation: true,             // 开启上下文隔离限制(从版本12.0开始默认为true)
+        //     webSecurity: true,                  // 默认为true,设置为false将关闭web安全策略(如同源策略)
+        //     enableRemoteModule: false,          // 关闭远程模块,(最佳方案:使用ipcMain和ipcRender代替)
+        //     zoomFactor: 0.8,                    // 设置浏览器窗口为80%的默认缩放比例(窗口显示后设置,否则很容易失效)
+        //     preload: `${__dirname}/preload.js`
+        // }
     });
 
     // 若在生产环境
@@ -96,6 +100,9 @@ app.on('ready', () => {
     ipcMain.handle('open-modal', handleOpenModal);
     // 在渲染进程中,请求主进程删除指定URL下的所有Cookie信息
     ipcMain.handle('remove-all-cookie', handleRemoveAllCookie);
+
+    // 获取应用程序运行时进程所在的根路径
+    ipcMain.handle('get-app-path', async () => app.getAppPath());
 });
 
 // 当所有窗口关闭后结束进程
@@ -146,7 +153,7 @@ let readyToShow = () => {
     let playIcon = `${iconPath}/play.png`, pauseIcon = `${iconPath}/pause.png`;
     let playing = false;
 
-    /** @type {[{tooltip: string, icon: string|NativeImage, click: (function(): void)}]} */
+    /** @type {[{tooltip: string, icon: string|Electron.NativeImage, click: (function(): void)}]} */
     let buttons = [
         {tooltip: '上一曲', icon: prevIcon, click: () => console.info("prev...")},
         {
@@ -162,8 +169,8 @@ let readyToShow = () => {
 
 /**
  * 处理来自渲染进程准备发起的网络请求,最后将响应信息返回到渲染进程
- * @param event {IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
- * @param options {ClientRequestConstructorOptions | Object} 从渲染进程传递过来的参数
+ * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
+ * @param options {Electron.ClientRequestConstructorOptions | any} 从渲染进程传递过来的参数
  * @return {Promise<{data:Buffer, headers, statusCode, statusMessage}>} 异步Promise对象
  */
 const handleNetRequest = (event, options) => new Promise(resolve => {
@@ -241,7 +248,7 @@ const handleNetRequest = (event, options) => new Promise(resolve => {
 
 /**
  * 处理来自渲染进程请求打开模态框,最后将页面的Cookie信息返回到渲染进程
- * @param event {IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
+ * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
  * @param options {String | Object} 从渲染进程传递过来的参数
  * @return {Promise<String>} 异步Promise对象
  */
@@ -272,11 +279,8 @@ const handleOpenModal = (event, options) => new Promise(resolve => {
         if (options.indexURL === url) {
             let _resolve = resolve, url = options.indexURL, cookies = modal.webContents.session.cookies;
             cookies.get({url}).then(cookieArray => {
-                /** @type {{url, name, value, domain, path, secure, httpOnly, expirationDate, sameSite}  | null} */
-                let detail = null;
                 cookieArray.forEach(cookie => {
-                    detail = {...cookie, url, sameSite: 'no_restriction', secure: true};
-                    cookies.set(detail).then();
+                    cookies.set({...cookie, url, sameSite: 'no_restriction', secure: true}).then();
                 });
                 _resolve(JSON.stringify(cookieArray));
             });
@@ -306,7 +310,7 @@ const handleOpenModal = (event, options) => new Promise(resolve => {
 
 /**
  * 处理来自渲染进程请求删除指定URL下的cookie信息
- * @param event {IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
+ * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
  * @param url {String} cookie对应的URL
  * @return {Promise<String>} 异步Promise对象
  */
@@ -315,4 +319,3 @@ const handleRemoveAllCookie = (event, url) => new Promise(resolve => {
     cookies.get({url}).then(cookieArray => cookieArray.forEach(cookie => cookies.remove(url, cookie.name)));
     resolve(null);
 });
-
