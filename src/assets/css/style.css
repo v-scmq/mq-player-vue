@@ -696,7 +696,7 @@ html, body, #app {
     fill: #909399;
 }
 
-.message-fade-enter, .message-fade-leave-active {
+.message-fade-enter-from, .message-fade-leave-to {
     opacity: 0;
     transform: translate(-50%, -100%);
 }

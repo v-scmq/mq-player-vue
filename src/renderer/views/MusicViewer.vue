@@ -17,7 +17,7 @@ export default {
   data: () => ({}),
 
   async mounted() {
-    this._header = document.body.querySelector('#app > .title-bar');
+    this._header = document.body.querySelector('.title-bar');
     this._header.querySelector('.hide-viewer').onclick = this.hidden;
 
     this._canvas = this.$el.querySelector('#canvas-view');
@@ -36,11 +36,13 @@ export default {
 
     // 进行首次渲染
     // this.$player.setAudioSpectrumListener(this.rectRenderFrame);
-    document.body.appendChild(this.$el);
+
+    // Vue3中无需手动将组件放到某个特定节点(如body)之下,使用<teleport to="body"><component></component></teleport>
+    // document.body.appendChild(this.$el);、、
   },
 
-  beforeDestroy() {
-    this.$el.remove();
+  beforeUnmount() {
+    // this.$el.remove();
     this.$player.setAudioSpectrumListener(null);
     if (this._header) {
       document.body.querySelector('#app >.tab-pane').before(this._header);
@@ -51,7 +53,7 @@ export default {
     visible(value) {
       let listener = value ? this.rectRenderFrame : null;
       this.$player.setAudioSpectrumListener(listener);
-      value ? document.body.appendChild(this.$el) : this.$el.remove();
+      // value ? document.body.appendChild(this.$el) : this.$el.remove();
 
       this._header.classList.toggle('viewer', value);
       let node = value ? this.$el.querySelector('#background-cover')

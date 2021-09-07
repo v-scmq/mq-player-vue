@@ -1,7 +1,6 @@
 <template>
   <div class="text-field">
-
-    <input class="input" autocomplete="off" v-model="inputValue" :placeholder="placeholder"
+    <input class="input" autocomplete="off" ref="inputNode" :placeholder="placeholder"
            :type="type" @input="handleInput" @change="handleChange"/>
 
     <svg class="icon" viewBox="0 0 16 16" v-if="suffixIcon">
@@ -11,11 +10,13 @@
 </template>
 
 <script>
+import {watch, getCurrentInstance} from "vue";
+
 export default {
   name: "TextField",
 
   props: {
-    value: [String, Number],
+    modelValue: [String, Number],
     type: {type: String, default: 'text'},
     placeholder: null,
     suffixIcon: {
@@ -24,21 +25,14 @@ export default {
     },
   },
 
-  data: (vm) => ({inputValue: vm.value}),
+  setup(props) {
+    const vc = getCurrentInstance();
 
-  watch: {
-    value(newValue) {
-      this.inputValue = newValue;
-    }
-  },
+    watch(() => props.modelValue, value => vc.refs.inputNode.value = value);
 
-  methods: {
-    handleInput(event) {
-      this.$emit('input', event.target.value)
-    },
-
-    handleChange(event) {
-      this.$emit('change', event.target.value)
+    return {
+      handleInput: event => vc.emit('update:modelValue', event.target.value),
+      handleChange: event => vc.emit('change', event.target.value)
     }
   }
 }

@@ -1,73 +1,70 @@
 <template>
-  <div class='v-column'>
+  <div class="v-row singer-info-container" v-if="singer">
+    <img alt class="cover" :src="singer.cover"/>
+    <div class="v-column">
+      <div>{{ singer.name || '-' }}</div>
 
-    <div class="v-row singer-info-container" v-if="singer">
-      <img alt class="cover" :src="singer.cover"/>
-      <div class="v-column">
-        <div>{{ singer.name || '-' }}</div>
+      <div class="v-row base-info">
+        <span class="count-info">单曲：{{ singer.songCount || '-' }}</span>
+        <span class="count-info">专辑：{{ singer.albumCount || '-' }}</span>
+        <span class="count-info">MV：{{ singer.mvCount || '-' }}</span>
+        <span class="count-info">粉丝：{{ singer.fansCount || '-' }}</span>
+      </div>
 
-        <div class="v-row base-info">
-          <span class="count-info">单曲：{{ singer.songCount || '-' }}</span>
-          <span class="count-info">专辑：{{ singer.albumCount || '-' }}</span>
-          <span class="count-info">MV：{{ singer.mvCount || '-' }}</span>
-          <span class="count-info">粉丝：{{ singer.fansCount || '-' }}</span>
-        </div>
+      <div class="v-row">
+        <button-base text="播放全部"/>
+        <button-base text="播放全部"/>
+        <button-base text="播放全部"/>
+        <button-base text="打印预览" @click="print"/>
+      </div>
+    </div>
+  </div>
 
-        <div class="v-row">
-          <button-base text="播放全部"/>
-          <button-base text="播放全部"/>
-          <button-base text="播放全部"/>
-          <button-base text="打印预览" @click="print"/>
-        </div>
+  <div class='tab-pane v-column'>
+    <div class='v-row tab-container' style='justify-content:center;'>
+
+      <div class="tab" v-for='(tabItem,index) in tabList' :key='index'
+           :class="tab===tabItem?'active':null" @click='tab=tabItem'>
+        {{ tabItem.title }}
       </div>
     </div>
 
-    <div class='tab-pane v-column'>
-      <div class='v-row tab-container' style='justify-content:center;'>
+    <div class="tab-content v-column">
 
-        <div class="tab" v-for='(tabItem,index) in tabList' :key='index'
-             :class="tab===tabItem?'active':null" @click='tab=tabItem'>
-          {{ tabItem.title }}
-        </div>
-      </div>
+      <table-view :columns="columns" :data='songList' style="flex:auto;"
+                  v-show="tab===songTab" @row-dblclick="onCellClick">
+        <template v-slot:title="{item}">
+          {{ item.title }}
+          <svg class="icon mv-icon" v-if="item.vid" width="1em" height="1em" viewBox="0 0 16 16">
+            <path
+                d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+          </svg>
+        </template>
 
-      <div class="tab-content v-column">
-
-        <table-view :columns="columns" :data='songList' style="flex:auto;"
-                    v-show="tab===songTab" @row-dblclick="onCellClick">
-          <template v-slot:title="{item}">
-            {{ item.title }}
-            <svg class="icon mv-icon" v-if="item.vid" width="1em" height="1em" viewBox="0 0 16 16">
-              <path
-                  d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
-            </svg>
-          </template>
-
-          <template v-slot:singer="{item}">
+        <template v-slot:singer="{item}">
             <span class="link" v-for="(singer,index) in item.singer" :key="index" :data="singer.mid">
               {{ singer.name }}
             </span>
-          </template>
-        </table-view>
+        </template>
+      </table-view>
 
-        <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-             v-show="tab===albumTab" @click="onAlbumItemClicked">
-          <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :custom-data="index">
-            <img class=cover :src='item.cover' loading="lazy" alt/>
-            <div class='name'>{{ item.name }}</div>
-          </div>
+      <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
+           v-show="tab===albumTab" @click="onAlbumItemClicked">
+        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :custom-data="index">
+          <img class=cover :src='item.cover' loading="lazy" alt/>
+          <div class='name'>{{ item.name }}</div>
         </div>
-
-        <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-             v-show="tab===mvTab">
-          <div class='v-column content-box' v-for='(item,index) in mvList' :key='index' :class='item.class'>
-            <img class=cover :src='item.cover' loading="lazy" alt/>
-            <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
-          </div>
-        </div>
-
-        <div v-show="tab===specialTab" class="label">歌单list</div>
       </div>
+
+      <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
+           v-show="tab===mvTab">
+        <div class='v-column content-box' v-for='(item,index) in mvList' :key='index' :class='item.class'>
+          <img class=cover :src='item.cover' loading="lazy" alt/>
+          <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
+        </div>
+      </div>
+
+      <div v-show="tab===specialTab" class="label">歌单list</div>
     </div>
   </div>
 </template>

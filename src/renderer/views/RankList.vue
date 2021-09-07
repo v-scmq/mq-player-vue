@@ -1,11 +1,9 @@
 <template>
-  <div class='v-column'>
-    <!--  在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
-    <div class='v-row' style='align-items:stretch;height:100%;'>
-      <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick"/>
+  <!--  在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
+  <div class='v-row' style='flex:1;align-items:stretch;height:100%;'>
+    <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick"/>
 
-      <accordion :list="rankList" @change='onRankChanged' style='flex:none'/>
-    </div>
+    <accordion :list="rankList" @change='onRankChanged' style='flex:none'/>
   </div>
 </template>
 

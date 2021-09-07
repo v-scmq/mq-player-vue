@@ -8,9 +8,7 @@ const USER_AGENT_PC = navigator.userAgent;
 const USER_AGENT_MOBILE = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36';
 
 export default {
-    install(Vue) {
-        let ipcRender = Vue.prototype.$electron ? Vue.prototype.$electron.ipcRenderer : null;
-
+    install(app) {
         /**
          * 发起网络请求(默认GET请求)
          * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
@@ -36,18 +34,17 @@ export default {
                     'application/json;charset=UTF-8' : 'application/x-www-form-urlencoded;charset=UTF-8';
             }
 
-
             let postJSON = options.headers.postJSON
             delete options.headers.postJSON;
 
             // 传递请求到主进程,并等待主进程发起网络请求,然后返回响应数据
-            ipcRender.invoke('net-request', options).then(res => {
-                Vue.prototype.$message(`状态码：${res.statusCode}, 消息：${res.statusMessage}`);
+            window.electron.netRequest(options).then(res => {
+                app.config.globalProperties.$message(`状态码：${res.statusCode}, 消息：${res.statusMessage}`);
                 // 从pending状态变成resolved状态
                 resolve(res);
 
             }).catch(reason => {
-                Vue.prototype.$message(`请求失败:${reason}`);
+                app.config.globalProperties.$message(`请求失败:${reason}`);
                 resolve(reason);
 
             }).finally(() => postJSON ? options.headers.postJSON = postJSON : null);
@@ -90,7 +87,7 @@ export default {
         http.RESPONSE_TYPE = {BYTE: 2, JSON: 1, TEXT: 3};
 
         KuGouSource.http = QQMusicSource.http = http;
-        Vue.prototype["$source"] = {KuGouSource, QQMusicSource, impl: QQMusicSource};
-        Vue.prototype["$http"] = http;
+        app.config.globalProperties.$source = {KuGouSource, QQMusicSource, impl: QQMusicSource};
+        app.config.globalProperties.$http = http;
     }
 }

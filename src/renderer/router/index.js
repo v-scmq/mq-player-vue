@@ -1,37 +1,9 @@
-import Vue from "vue";
-import VueRouter from "vue-router";
+import * as VueRouter from "vue-router";
 
-Vue.use(VueRouter);
-
-// // 0. 如果使用模块化机制编程，导入Vue和VueRouter，要调用 Vue.use(VueRouter)
-
-// // 1. 定义 (路由) 组件。
-// // 可以从其他文件 import 进来
-// const Foo = {template: '<div>foo</div>'}
-// const Bar = {template: '<div>bar</div>'}
-
-// // 2. 定义路由
-// // 每个路由应该映射一个组件。 其中"component" 可以是
-// // 通过 Vue.extend() 创建的组件构造器，
-// // 或者，只是一个组件配置对象。
-// // 我们晚点再讨论嵌套路由。
-// const routes = [
-//     {path: '/foo', component: Foo},
-//     {path: '/bar', component: Bar}
-// ]
-
-// // 3. 创建 router 实例，然后传 `router` 配置
-// // 你还可以传别的配置参数, 不过先这么简单着吧。
-// const router = new VueRouter({
-//     routes // (缩写) 相当于 router: router
-// })
-
-// export default router;
-
-
-export default new VueRouter({
+export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
     // 自定义路由连接被激活的class
     linkActiveClass: 'active',
+    history: VueRouter.createWebHashHistory(),
     routes: [
         {
             path: '/local-music',
@@ -44,6 +16,7 @@ export default new VueRouter({
         {
             path: '/net-music',
             component: () => import('../views/NetMusic'),
+            redirect: '/net-music/singer-list',
             meta: {
                 title: '网络乐库',
                 icon: 'M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13c0-1.104 1.12-2 2.5-2s2.5.896 2.5 2zm9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2z M14 11V2h1v9h-1zM6 3v10H5V3h1z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4V2.905z'
@@ -52,8 +25,7 @@ export default new VueRouter({
                 {path: 'singer-list', meta: {title: '歌手'}, component: () => import('../views/SingerList')},
                 {path: 'special-list', meta: {title: '歌单'}, component: () => import('../views/SpecialList')},
                 {path: 'mv-list', meta: {title: 'MV'}, component: () => import('../views/MVList')},
-                {path: 'rank-list', meta: {title: '排行榜'}, component: () => import('../views/RankList')},
-                {path: '', redirect: 'singer-list'}
+                {path: 'rank-list', meta: {title: '排行榜'}, component: () => import('../views/RankList')}
             ]
         },
         {

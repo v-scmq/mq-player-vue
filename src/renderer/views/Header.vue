@@ -35,8 +35,7 @@
             d="M911.40249 607.60166c-21.244813-4.248963-46.738589 8.497925-50.987552 29.742738-42.489627 174.207469-195.452282 293.178423-373.908714 293.178424-212.448133 0-386.655602-174.207469-386.655602-386.655602s174.207469-386.655602 386.655602-386.655602c97.726141 0 195.452282 38.240664 263.435685 106.224067h-178.456432c-21.244813 0-42.489627 16.995851-42.489626 42.489626 0 21.244813 16.995851 42.489627 42.489626 42.489627h263.435685c21.244813 0 42.489627-16.995851 42.489626-42.489627v-263.435684c0-21.244813-16.995851-42.489627-42.489626-42.489627-21.244813 0-42.489627 16.995851-42.489627 42.489627v148.713693c-84.979253-76.481328-195.452282-118.970954-310.174274-118.970955-259.186722 0-471.634855 212.448133-471.634854 471.634855s212.448133 471.634855 471.634854 471.634855c216.697095 0 403.651452-148.713693 458.887967-356.912863 4.248963-21.244813-8.497925-42.489627-29.742738-50.987552z"/>
       </svg>
 
-      <text-field style="margin:0 0 0 8px" placeholder="请输入内容" v-model="searchInput"
-                  @keyup.native.enter="openNetSearchView"/>
+      <text-field style="margin:0 0 0 8px" placeholder="请输入内容" v-model="searchInput" @keyup.enter="openNetSearchView"/>
     </div>
 
     <div class="v-row window-tool no-drag" style="flex:1;justify-content:flex-end;">
@@ -134,21 +133,20 @@ export default {
   }),
 
   created() {
-    let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-    if (ipcRender) {
-      ipcRender.invoke('get-window-state').then(state => {
+    if (window.electron) {
+      window.electron.getWindowState().then(state => {
         this.icon = state ? MAXIMIZED_ICON : MAXIMIZE_ICON;
         this.$el.classList.toggle('un-maximized', state);
       });
 
       // 当窗口最大化时,显示为已经最大化的图标
-      ipcRender.on('maximized', () => {
+      window.electron.setOnWindowMaximized(() => {
         this.icon = MAXIMIZED_ICON;
         this.$el.classList.toggle('un-maximized', false);
       });
 
       // 当窗口未最大化时,显示为需要最大化图标
-      ipcRender.on('restored', () => {
+      window.electron.setOnWindowRestore(() => {
         this.icon = MAXIMIZE_ICON;
         this.$el.classList.toggle('un-maximized', true);
       });
@@ -170,8 +168,7 @@ export default {
 
       if (this.backLength === 0) {
         this.forwardLength = 0;
-        let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-        ipcRender ? ipcRender.invoke('clear-history') : null;
+        window.electron ? window.electron.clearHistory() : null;
       }
       ++this.backLength;
     });
@@ -208,16 +205,13 @@ export default {
 
     /** 最小化窗口 */
     minimize() {
-      let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      ipcRender ? ipcRender.invoke('window-minimize') : null;
+      window.electron ? window.electron.setWindowMinimize() : null;
     },
 
     /** 最大化或还原窗口 */
     maximizeOrRestore() {
-      let ipcRender = this.$electron ? this.$electron.ipcRenderer : null;
-      if (ipcRender) {
-        ipcRender.invoke('window-maximize-restore');
-
+      if (window.electron) {
+        window.electron.setWindowMaximizeOrRestore();
       } else {
         if (document.fullscreenElement) {
           document.exitFullscreen();
@@ -258,9 +252,7 @@ export default {
     login(event) {
       let param = {
         db: this.$db,                                                   // indexDB
-        channel: 'open-modal',                                          // ipc通信标记
         isManual: event instanceof MouseEvent,                          // 是否是手动调用登录
-        ipcRender: this.$electron ? this.$electron.ipcRenderer : null,  // ipc渲染进程通信API
       };
 
       this.$spinner.open();
@@ -285,9 +277,7 @@ export default {
       let param = {
         uin,
         db: this.$db,                                                   // indexDB
-        channel: 'remove-all-cookie',                                   // ipc通信标记
         isManual: event instanceof MouseEvent,                          // 是否是手动调用退出登录
-        ipcRender: this.$electron ? this.$electron.ipcRenderer : null   // ipc渲染进程通信API
       };
 
       // 若是手动调用模式,则先关闭登录模态框

@@ -1,9 +1,6 @@
-const path = require('path')
+// webpack默认配置可以通过 "vue inspect > output.js" 命令查看
+const path = require('path');
 const isProd = process.env.NODE_ENV === 'production'
-
-function resolve(dir) {
-    return path.join(__dirname, dir)
-}
 
 module.exports = {
     runtimeCompiler: true,
@@ -13,14 +10,15 @@ module.exports = {
     // 打包输出路径
     outputDir: 'dist_electron',
 
+    // 关闭语法检查
+    // lintOnSave: false,
+
     // webpack的相关配置
     configureWebpack: {
         entry: './src/renderer/main.js',
         resolve: {
             extensions: ['.js', '.vue', '.json', '.ts', '.less'],
-            alias: {
-                '@': resolve('src/renderer')
-            }
+            alias: {'@': path.join(__dirname, 'src/renderer')}
         },
 
         // 性能警告修改
@@ -87,6 +85,7 @@ module.exports = {
     pluginOptions: {
         // vue-cli-plugin-electron-builder配置
         electronBuilder: {
+            preload: 'src/main/preload.js',
             builderOptions: {
                 win: {
                     // icon: 'src/assets/icons/icon.ico',
@@ -95,34 +94,17 @@ module.exports = {
                         // 打包成一个独立的 exe 安装程序
                         target: 'nsis',
                         // 这个意思是打出来32 bit + 64 bit的包，但是要注意：这样打包出来的安装包体积比较大，所以建议直接打32的安装包。
-                        'arch': [
-                            'x64'
-                            // 'ia32'
-                        ]
+                        'arch': ['x64'] // 'ia32'
                     }]
                 },
                 dmg: {
-                    'contents': [
-                        {
-                            'x': 410,
-                            'y': 150,
-                            'type': 'link',
-                            'path': '/Applications'
-                        },
-                        {
-                            'x': 130,
-                            'y': 150,
-                            'type': 'file'
-                        }
+                    contents: [
+                        {x: 410, y: 150, type: 'link', path: '/Applications'},
+                        {x: 130, y: 150, type: 'file'}
                     ]
                 },
-                linux: {
-                    icon: 'src/assets/icons/icon.png',
-                    target: 'AppImage'
-                },
-                mac: {
-                    icon: 'src/assets/icons/icon.icns'
-                },
+                linux: {icon: 'src/assets/icons/icon.png', target: 'AppImage'},
+                mac: {icon: 'src/assets/icons/icon.icns'},
                 files: ['**/*'],
                 asar: false,
                 nsis: {

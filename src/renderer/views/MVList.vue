@@ -1,16 +1,11 @@
 <template>
-  <div class='v-column'>
-    <!--    <div class='v-row list-view' @click='onListViewClicked'>-->
-    <!--      <div class='item' v-for='(tag,index) in tagType' :key='index'>{{ tag.name }}</div>-->
-    <!--    </div>-->
-    <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
-      <div class='item' v-for='tag in children' :key='tag.id' :custom-data='tag.value'>{{ tag.name }}</div>
-    </div>
-    <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
-      <div class='v-column content-box' v-for='(item,index) in list' :key='index' :class='item.class'>
-        <img class=cover :src='item.cover' loading="lazy" alt/>
-        <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
-      </div>
+  <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
+    <div class='item' v-for='tag in children' :key='tag.id' :custom-data='tag.value'>{{ tag.name }}</div>
+  </div>
+  <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
+    <div class='v-column content-box' v-for='(item,index) in list' :key='index' :class='item.class'>
+      <img class=cover :src='item.cover' loading="lazy" alt/>
+      <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
     </div>
   </div>
 </template>
@@ -46,7 +41,8 @@ export default {
         this.list = data.list;
 
         this.$nextTick(() => {
-          let nodes = this.$el.querySelectorAll('.list-view .item:first-child');
+          let el = this.$refs.el.parentNode;
+          let nodes = el.querySelectorAll('.list-view .item:first-child');
           nodes.forEach(node => node.classList.add('active'));
         });
       }

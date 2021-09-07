@@ -1,5 +1,5 @@
 <template>
-  <div class="check-box" @click.stop="$emit('input', !value)">
+  <div class="check-box" @click.stop="$emit('update:value', !value)">
     <div class="indeterminate-icon " v-if="indeterminate">
       <span class="indeterminate"/>
     </div>

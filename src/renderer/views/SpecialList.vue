@@ -1,26 +1,27 @@
 <template>
-  <div class='v-column'>
-    <div class='v-row list-view' @click='onListViewClicked'>
-      <div class='item' v-for='(tag, index) in visibleTags' :key='index' :custom-data='tag.id'>{{ tag.name }}</div>
-      <div class="item" id="more">更多</div>
+  <div class='v-row list-view' @click='onListViewClicked'>
+    <div class='item' v-for='(tag, index) in visibleTags' :key='index' :custom-data='tag.id'>{{ tag.name }}</div>
+    <div class="item" id="more">更多</div>
+  </div>
+  <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
+    <div class='v-column content-box' v-for='(item,index) in list' :key='index'>
+      <img class=cover :src='item.cover' loading="lazy" alt/>
+      <div class='name'>{{ item.name }}</div>
     </div>
-    <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
-      <div class='v-column content-box' v-for='(item,index) in list' :key='index'>
-        <img class=cover :src='item.cover' loading="lazy" alt/>
-        <div class='name'>{{ item.name }}</div>
-      </div>
-    </div>
+  </div>
+
+  <teleport to="body">
     <modal modality title="全部分类" ref="tagModal" width="90%" height="80%">
       <template v-slot:content>
-        <template v-for="(item, _index) in tags">
+        <template v-for="(item, _index) in tags" :key='_index'>
           {{ item.title }}
-          <div class='v-row list-view' :key='_index'>
+          <div class='v-row list-view'>
             <div class='item' v-for='(tag, index) in item.items' :key='index' :custom-data='index'>{{ tag.name }}</div>
           </div>
         </template>
       </template>
     </modal>
-  </div>
+  </teleport>
 </template>
 
 <script>
@@ -49,7 +50,8 @@ export default {
           tag ? this.visibleTags.push(tag) : null;
         });
         this.$nextTick(() => {
-          let nodes = this.$el.querySelectorAll('.list-view > .item:first-child');
+          let el = this.$refs.el.parentNode;
+          let nodes = el.querySelectorAll('.list-view > .item:first-child');
           nodes.forEach(node => node.classList.add('active'));
         });
       }

@@ -8,6 +8,7 @@
 <script>
 export default {
   name: "ButtonBase",
-  props: {text: null}
+  props: {text: null},
+  emits: {'click': null}
 }
 </script>
