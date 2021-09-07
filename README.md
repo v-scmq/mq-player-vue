@@ -5,9 +5,10 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 ### 项目技术栈
 
 <div>
-    <img src="https://img.shields.io/badge/Electron-13-success.svg" alt>
-    <img src="https://img.shields.io/badge/Vue-2.6-success.svg" alt>
-    <img src="https://img.shields.io/badge/NodeJS-14-blue.svg" alt>
+    <img src="https://img.shields.io/badge/Electron-14.0-success.svg" alt>
+    <img src="https://img.shields.io/badge/Vue-3.2-success.svg" alt>
+    <img src="https://img.shields.io/badge/NodeJS-14.17-blue.svg" alt>
+    <img src="https://img.shields.io/badge/MusicMetadata-7.9-blue.svg" alt>
 </div>
 
 ### 特性
@@ -74,13 +75,13 @@ app.whenReady().then(() => {
 
 > 2.Electron环境中的各种问题
 
-  1) 在渲染进程中,不能导入electron </br>
+  1) 在渲染进程中,不能导入electron <br>
         使用window.require代替require,因为require会被webpack将其替换为__webpack_require__
 
-  2) 导入music-metadata库打包后在electron中报错 </br>
+  2) 导入music-metadata库打包后在electron中报错 <br>
      若是直接在渲染进程中导入,需要在以下2个文件中将require('fs')替换为window.require('fs')
          %project_home%\node_modules\strtok3\lib\FsPromise.js (
-         %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js
+         %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js <br>
      目前最佳方案:在preload.js中引入music-metadata,并且将preload.js在electron-builder插件配置选项中引入
 
 > 3.文件上传总结
