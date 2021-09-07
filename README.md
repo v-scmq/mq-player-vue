@@ -48,7 +48,6 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ![歌曲搜索](preview/net-search-singer.png "歌曲搜索")
 
-
 #### 问题汇集
 
 > 1.electron不能加载本地资源(即使关闭webSecurity安全策略)
@@ -73,7 +72,18 @@ app.whenReady().then(() => {
 
 ```
 
-> 2.文件上传总结
+> 2.Electron环境中的各种问题
+
+  1) 在渲染进程中,不能导入electron </br>
+        使用window.require代替require,因为require会被webpack将其替换为__webpack_require__
+
+  2) 导入music-metadata库打包后在electron中报错 </br>
+     若是直接在渲染进程中导入,需要在以下2个文件中将require('fs')替换为window.require('fs')
+         %project_home%\node_modules\strtok3\lib\FsPromise.js (
+         %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js
+     目前最佳方案:在preload.js中引入music-metadata,并且将preload.js在electron-builder插件配置选项中引入
+
+> 3.文件上传总结
 
 不论以下哪一种方式,form表单中的按钮默认有提交功能,若需要显示按钮,则应该用`<input type='button' value='按钮文本'/>`
 
@@ -84,7 +94,7 @@ app.whenReady().then(() => {
 <html lang>
 <head>
     <title></title>
-    <style type='text/css'>
+    <style>
         .v-row {
             display: flex;
             align-items: center;
@@ -118,11 +128,13 @@ app.whenReady().then(() => {
     </form>
 </div>
 
-<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<!-- 引入jquery -->
+<!-- <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script> -->
 <script>
     document.querySelector('#submit-button').onclick = () => {
         let formData = new FormData(document.querySelector('#form-upload'));
-        $.ajax({
+        let ajax = $ ? $['ajax'] : () => ({}); 
+        ajax({
             type: 'POST',
             data: formData,
             url: "http://localhost:8080/api/upload",
@@ -170,6 +182,40 @@ public class BaseController {
         // ......
         return true;
     }
+}
+
+```
+
+### 位运算总结
+
+```ecmascript 6
+
+// 1.判断一个整数是偶数还是奇数 a & 1 == 0 ? 偶数 : 奇数
+const isEvenNumber = value => value & 1 == 0;
+
+// 2.取模(取余)运算,仅对 a % b (b = 2 ^ n)适用
+const mod = (a, b) => a & --b;
+
+// 3.两个整数交换 a = 1 , b = 2 => b = 1 , a = 2
+const swap = (a, b) => {
+    // a = a ^ b; b = a ^ b; a = a ^ b;
+    a = (a ^ b) ^ (b = a);
+};
+
+// 4.判断一个数是否为2的n次方
+// const isPowerOfTwo = value => (value & --value) == 0 && value != 0;
+const isPowerOfTwo = value => value && (value & --value) == 0;
+
+// 5.计算一个数的相反数
+const opposite = value => ~value + 1;
+
+// 6.计算2个数的平均数(有问题)
+const average = (a, b) => (a & b) + ((a ^ b) >> 1);
+
+// 7.计算一个数的绝对值(有问题)
+const abs = a => {
+    let b = a >> 31;
+    return (a + b) ^ b; // ( a ^ b ) - b
 }
 
 ```
