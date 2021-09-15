@@ -50,6 +50,36 @@ const player = {
     },
 
     /**
+     * 从一个包含媒体信息的列表中指定位置的媒体资源播放
+     *
+     * @param list 媒体资源信息列表
+     * @param index 指定开始播放的索引
+     */
+    playMediaList(list, index) {
+        if (!list || list.length < 1)
+            throw new Error('指定的媒体资源列表必须包含媒体信息!')
+        if (index < 0 || index > list.length)
+            throw new Error('指定的播放索引无效!');
+
+        this.index = index;
+        this.playList = [...list];
+
+        // TODO 待解决播放列表问题
+        let handle = state => {
+            if (state) {
+                handle = null;
+                this.play()
+            } else {
+                setTimeout(() => {
+                    let media = this.playList[++this.index];
+                    media ? this.prepare(media).then(handle) : null;
+                }, 100);
+            }
+        }
+        this.prepare(list[index]).then(handle);
+    },
+
+    /**
      * 暂停播放媒体
      */
     pause() {
@@ -127,9 +157,22 @@ const player = {
     /**
      * 准备媒体资源
      * @param media{Object} 媒体资源路径
+     * @return {Promise<boolean>} 异步Promise对象
      */
-    prepare(media) {
-        let path = media && media.path ? media.path : '';
+    async prepare(media) {
+        if (!media) {
+            return false;
+        }
+
+        let listener = this.eventListener;
+        if (!media.path && !media.notReady) {
+            if (!await listener.prepareBefore(media)) {
+                media.notReady = true;
+                return false;
+            }
+        }
+
+        let path = media.path ? media.path : '';
         // 路径至少包含2个字符
         if (path.length < 2) {
             this.nativePlayer.src = '';
@@ -143,9 +186,8 @@ const player = {
         // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
 
         this.nativePlayer.src = path.charAt(1) === ':' || path.charAt(0) === '/'
-            ? `media:///${path}` : `hs://${path}`;
+            ? `fs://${path}` : `hs://${path}`;
 
-        let listener = this.eventListener;
         if (listener && listener.mediaChanged) {
             listener.mediaChanged(media);
         }
