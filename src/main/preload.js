@@ -57,7 +57,7 @@ contextBridge.exposeInMainWorld('electron', {
      * @param options {mm.IOptions} 解析配置选项
      * @returns {Promise<mm.IAudioMetadata>} 媒体元数据信息
      */
-    parseFile: (path, options) => mm.parseFile(path, options),
+    parseFile: (path, options = undefined) => mm.parseFile(path, options),
 
     /**
      * 创建指定路径的目录(文件夹)
