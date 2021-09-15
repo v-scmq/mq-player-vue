@@ -64,6 +64,10 @@ export default {
     const list = reactive([]);
     const multiple = ref(false);
     const inputKey = ref('');
+
+    const vc = getCurrentInstance();
+    const {$db, $player, $spinner, $message} = vc.appContext.config.globalProperties;
+
     // 用于在indexDB中存储本地音乐信息的数据量(非响应式)
     let maxSize = 0;
 
@@ -101,7 +105,7 @@ export default {
       }
 
       let fs = window.electron, name = data.album || file.name;
-      let path = `${basePath}/${FileUtil.resolveFileName(name)}.jpg`;
+      let path = `${basePath}/${FileUtil.resolveFileName(name)}`;
       // 注意必须先检测存在才能判断是文件还是目录,否则抛出异常
       let exists = fs.exists(path), isDirectory;
 
@@ -132,11 +136,9 @@ export default {
           (item.singer && item.singer.indexOf(value) >= 0);
     };
 
-    const vc = getCurrentInstance();
-    let propObj = vc.appContext.config.globalProperties;
-
     const playSelect = () => {
-      propObj.$message({message: "播放所选音乐", showClose: true, type: 'success'});
+      list.push({title:'梨花落',singer:'魏新雨',path:'https://webfs.cloud.kugou.com/202109132248/96a82d145684cdb45a6df12c5d49956a/KGTX/CLTX001/320d2afe0cffb176c45f224f6abc331e.mp3'})
+      $message({message: "播放所选音乐", showClose: true, type: 'success'});
     };
 
     /** 开始执行本地歌曲模糊搜索(使用事件防抖原理,避免频繁调用过滤逻辑) */
@@ -148,16 +150,16 @@ export default {
       if (!handleMusicFilter.$method) {
         handleMusicFilter.$method = () => {
           let limited = maxSize > 1024;
-          limited ? propObj.$spinner.open() : null;
+          limited ? $spinner.open() : null;
 
-          let db = propObj.$db, table = db.tables.localMusic.name;
+          let table = $db.tables.localMusic.name;
           // 若输入了搜索关键词,则调用过滤,否则查询所有
-          let promise = inputKey.value ? db.queryOfFilter(table, filter) : db.queryAll(table);
+          let promise = inputKey.value ? $db.queryOfFilter(table, filter) : $db.queryAll(table);
           promise.then(data => {
             inputKey.value ? (maxSize = data.length) : null;
             list.splice(0, list.length, ...data);
           });
-          promise.finally(limited ? propObj.$spinner.close : null);
+          promise.finally(limited ? $spinner.close : null);
         }
       }
       // 开始计时,在指定时间后执行数据过滤
@@ -169,17 +171,7 @@ export default {
      * @param row {Number} 行单元格索引
      */
     const onCellClick = row => {
-      let item = list[row];
-      if (!item.path) {
-        return;
-      }
-
-      let player = propObj.$player, playList = player.playList;
-      player.index = row;
-      playList.splice(0, playList.length, ...list);
-      if (player.prepare(item)) {
-        player.play();
-      }
+      $player.playMediaList(list, row);
     };
 
     /** 导入音乐信息 */
@@ -189,7 +181,7 @@ export default {
         return;
       }
 
-      propObj.$spinner.open();
+      $spinner.open();
       let savedList = [];
 
       if (window.electron) {
@@ -221,24 +213,24 @@ export default {
 
       if (savedList.length) {
         list.push(...savedList);
-        await propObj.$db.insert(propObj.$db.tables.localMusic.name, savedList);
+        await $db.insert($db.tables.localMusic.name, savedList);
         maxSize += savedList.length;
       }
 
-      propObj.$spinner.close();
+      $spinner.close();
     };
 
-    onBeforeUnmount(propObj.$db.close);
+    onBeforeUnmount(() => $db.close());
 
     /************ 加载表格视图数据 START ************/
         // 获取数据库表名称
-    let tableNamed = propObj.$db.tables.localMusic.name;
+    let tableNamed = $db.tables.localMusic.name;
 
-    propObj.$spinner.open();
-    propObj.$db.open()
-        .then(() => propObj.$db.queryAll(tableNamed))
+    $spinner.open();
+    $db.open()
+        .then(() => $db.queryAll(tableNamed))
         .then(data => maxSize = list.push(...data))
-        .finally(propObj.$spinner.close);
+        .finally($spinner.close);
     /************ 加载表格视图数据   END ************/
 
     return {

@@ -1,6 +1,6 @@
 <template>
   <div class='v-row list-view' @click='onListViewClicked'>
-    <div class='item' v-for='(tag, index) in visibleTags' :key='index' :custom-data='tag.id'>{{ tag.name }}</div>
+    <div class='item' v-for='(tag, index) in visibleTags' :key='index' :data-tag='tag.id'>{{ tag.name }}</div>
     <div class="item" id="more">更多</div>
   </div>
   <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
@@ -10,74 +10,87 @@
     </div>
   </div>
 
-  <teleport to="body">
-    <modal modality title="全部分类" ref="tagModal" width="90%" height="80%">
-      <template v-slot:content>
-        <template v-for="(item, _index) in tags" :key='_index'>
-          {{ item.title }}
-          <div class='v-row list-view'>
-            <div class='item' v-for='(tag, index) in item.items' :key='index' :custom-data='index'>{{ tag.name }}</div>
-          </div>
-        </template>
+  <modal modality title="全部分类" ref="tagModal" width="70%" height="60%">
+    <template v-slot:content>
+      <template v-for="(item, _index) in tags" :key='_index'>
+        {{ item.title }}
+        <div class='v-row list-view'>
+          <div class='item' v-for='(tag, index) in item.items' :key='index' :data-index='index'>{{ tag.name }}</div>
+        </div>
       </template>
-    </modal>
-  </teleport>
+    </template>
+  </modal>
 </template>
 
 <script>
+import {getCurrentInstance, nextTick, onMounted, reactive} from "vue";
+
 export default {
   name: 'SpecialList',
-  data: () => ({
-    tags: [],
-    list: [],
-    tag: {},
-    visibleTags: [],
-    page: {current: 1, size: 30},
-  }),
 
-  mounted() {
-    this.$spinner.open();
-    this.$source.impl.specialList(null, this.page).then(res => {
-      if (res instanceof Array) {
-        this.list = res;
-      } else {
-        this.tags = res.tags;
-        this.list = res.list;
-        let random = Math.random();
-        res.tags.forEach(item => {
-          let items = item.items, size = items.length;
-          let tag = size > 0 ? items[Math.floor(random * size)] : null;
-          tag ? this.visibleTags.push(tag) : null;
-        });
-        this.$nextTick(() => {
-          let el = this.$refs.el.parentNode;
-          let nodes = el.querySelectorAll('.list-view > .item:first-child');
-          nodes.forEach(node => node.classList.add('active'));
-        });
-      }
-    }).finally(this.$spinner.close);
-  },
+  data: () => ({}),
+  setup() {
 
-  methods: {
-    onListViewClicked(event) {
-      let node = event.target;
-      if (node.id === 'more') {
-        this.$refs.tagModal.open();
-        return;
-      }
+    const /** @type {any} */ tags = reactive([]);
+    const /** @type {any} */ list = reactive([]);
+    const /** @type {any} */ visibleTags = reactive([]);
+    const page = reactive({current: 1, size: 30});
+    const tag = {};
 
-      let attr = node.attributes.getNamedItem('custom-data');
-      if (node.classList.contains('item')) {
-        node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
-        node.classList.add('active');
+    const vc = getCurrentInstance();
+    const {$spinner, $source} = vc.appContext.config.globalProperties;
 
-        if ((this.tag.id = attr ? attr.value : null)) {
-          this.$spinner.open();
-          this.$source.impl.specialList(this.tag, this.page)
-              .then(data => this.list = data).finally(this.$spinner.close);
+    onMounted(() => {
+      let el = vc.refs.el;
+      $spinner.open();
+      $source.impl.specialList(null, page).then(res => {
+        if (res instanceof Array) {
+          list.splice(0, list.length, ...res);
+
+        } else {
+          tags.splice(0, tags.length, ...res.tags);
+          list.splice(0, list.length, ...res.list);
+          let random = Math.random();
+
+          res.tags.forEach(item => {
+            let items = item.items, size = items.length;
+            let tag = size > 0 ? items[Math.floor(random * size)] : null;
+            tag ? visibleTags.push(tag) : null;
+          });
+
+          nextTick(() => {
+            let nodes = el.querySelectorAll('.list-view > .item:first-child');
+            nodes.forEach(node => node.classList.add('active'));
+          });
+        }
+      }).finally($spinner.close);
+
+    });
+
+    return {
+      tags, list, visibleTags, page,
+      onListViewClicked(event) {
+        let node = event.target;
+        if (node.id === 'more') {
+          vc.refs.tagModal.open();
+          return;
+        }
+
+        let attr = node.attributes.getNamedItem('custom-data');
+        if (node.classList.contains('item')) {
+          node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
+          node.classList.add('active');
+
+          if ((tag.id = attr ? attr.value : null)) {
+            $spinner.open();
+            $source.impl.specialList(tag, page)
+                .then(data => list.splice(0, list.length, ...data))
+                .finally($spinner.close);
+          }
         }
       }
-    }
+    };
+
   }
 }
 </script>

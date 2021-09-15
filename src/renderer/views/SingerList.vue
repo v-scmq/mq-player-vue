@@ -1,9 +1,9 @@
 <template>
   <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
-    <div class='item' v-for='tag in children' :key='tag.id' :custom-data='tag.value'>{{ tag.name }}</div>
+    <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'>{{ tag.name }}</div>
   </div>
   <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
-    <div class='v-column singer-box' v-for='(item,index) in list' :key='index' :class='item.class'>
+    <div class='v-column singer-box' v-for='(item,index) in list' :key='index'>
       <img alt class=cover :src='item.cover' @click="navigateTo(item)"/>
       <div @click="navigateTo(item)">{{ item.name }}</div>
     </div>
@@ -11,65 +11,77 @@
 </template>
 
 <script>
+import {reactive, nextTick, getCurrentInstance, onMounted} from "vue";
+import {useRouter} from "vue-router";
+
 export default {
   name: 'SingerListView',
 
-  data: () => ({
-    tags: [],
-    list: [],
-    page: {current: 1, size: 30},
-    tag: {en: null, area: null, sex: null, genre: null, group: null}
-  }),
+  setup() {
+    const tags = reactive([]);
+    /** @type {any} */
+    const list = reactive([]);
+    const page = reactive({current: 1, size: 30});
+    const tag = reactive({en: null, area: null, sex: null, genre: null, group: null});
 
-  mounted() {
-    this.$spinner.open();
-    this.$source.impl.singerList(null, this.page).then(data => {
-      if (data instanceof Array) {
-        this.list = data;
+    const vc = getCurrentInstance();
+    const {$spinner, $source} = vc.appContext.config.globalProperties;
+    const router = useRouter();
 
-      } else {
-        let tagList = [];
-        let array = Object.keys(data.tags);
-        array.forEach(key => {
-          //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => {en:id, area:id, sex:id}
-          this.tag[key] = null;
-          data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
-          //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => [[], [], []]
-          tagList.push(data.tags[key]);
-        });
-        this.tags = tagList;
-        this.list = data.list;
+    onMounted(() => {
+      $spinner.open();
+      $source.impl.singerList(null, page).then(data => {
+        debugger;
+        if (data instanceof Array) {
+          list.splice(0, list.length, ...data);
 
-        this.$nextTick(() => {
-          let el = this.$refs.el.parentNode;
-          let nodes = el.querySelectorAll('.list-view .item:first-child');
-          nodes.forEach(node => node.classList.add('active'));
-        });
+        } else {
+          let tagList = [];
+          let array = Object.keys(data.tags);
+          array.forEach(key => {
+            //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => {en:id, area:id, sex:id}
+            tag[key] = null;
+            data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
+            //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => [[], [], []]
+            tagList.push(data.tags[key]);
+          });
+          tags.splice(0, tags.length, ...tagList);
+          list.splice(0, list.length, ...data.list);
+
+          nextTick(() => {
+            let el = vc.refs.el.parentNode;
+            let nodes = el.querySelectorAll('.list-view .item:first-child');
+            nodes.forEach(node => node.classList.add('active'));
+          });
+        }
+
+      }).finally($spinner.close);
+    });
+
+    return {
+      tags, list, page, tag,
+      onListViewClicked(event) {
+        let node = event.target, value;
+        let attr = node.attributes.getNamedItem('data-tag');
+
+        if ((value = attr ? attr.value : null)) {
+          let [group, id] = value.split('-'), nodes = node.parentNode.childNodes;
+          tag[group] = id;
+          nodes.forEach(item => item.classList.remove('active'));
+          node.classList.add('active');
+
+          $spinner.open();
+          $source.impl.singerList(tag, page)
+              .then(data => list.splice(0, list.length, ...data))
+              .finally($spinner.close);
+        }
+      },
+
+      navigateTo(singer) {
+        router.push({path: '/singer-view', query: singer});
       }
-
-    }).finally(this.$spinner.close);
+    };
   },
-  methods: {
-    onListViewClicked(event) {
-      let node = event.target, value;
-      let attr = node.attributes.getNamedItem('custom-data');
-
-      if ((value = attr ? attr.value : null)) {
-        let [group, id] = value.split('-'), nodes = node.parentNode.childNodes;
-        this.tag[group] = id;
-        nodes.forEach(item => item.classList.remove('active'));
-        node.classList.add('active');
-
-        this.$spinner.open();
-        this.$source.impl.singerList(this.tag, this.page)
-            .then(data => this.list = data).finally(this.$spinner.close);
-      }
-    },
-
-    navigateTo(singer) {
-      this.$router.push({path: '/singer-view', query: singer});
-    }
-  }
 }
 </script>
 

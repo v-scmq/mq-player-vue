@@ -58,10 +58,7 @@ export default {
     data: {type: Array, default: () => []}
   },
 
-  emits: {
-    'row-click': null,
-    'row-dblclick': null
-  },
+  emits: ['row-click', 'row-dblclick'],
 
   setup(props, context) {
     let resizeObserve, el, scrollWrapper, contentWrapper;
@@ -398,8 +395,7 @@ export default {
       onTableRowClicked,
       onItemCheckChanged,
       onKeydown,
-      headerCheckChange,
-
+      headerCheckChange
     };
   }
 }

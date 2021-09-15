@@ -1,5 +1,5 @@
 <template>
-  <div class="title-bar v-row">
+  <div class="title-bar v-row" ref="el">
     <div class="v-row no-drag fixed-left-bar" style="padding:4px;">
       <!--  用户头像图片 -->
       <img alt draggable="false" class="user-icon image" :src="user.headURL" v-if="user.uin" @click="openLoginModal"/>
@@ -111,6 +111,9 @@
 
 <script>
 // 未最大化时的图标
+import {nextTick, reactive, ref, getCurrentInstance} from "vue";
+import {useRoute, useRouter} from "vue-router";
+
 const MAXIMIZE_ICON = 'M209.37187512 209.37187512v605.25624975h605.25624975V209.37187512H209.37187512zM133.71484392 133.71484392h756.57031216v756.57031216H133.71484392V133.71484392z';
 // 已最大化是的图标
 const MAXIMIZED_ICON = 'M865 107H341.5c-27.8 0-50.3 22.5-50.3 50.3v100.6H160.6c-27.8 0-50.3 22.5-50.3 50.3v553.4c0 27.8 22.5 50.3 50.3 50.3H714c27.8 0 50.3-22.5 50.3-50.3V730.4H865c27.8 0 50.3-22.5 50.3-50.3V157.3c0-27.8-22.5-50.3-50.3-50.3zM704.1 680.1v171.6H170.6V319.3H704v360.8z m149.9-9l-89.6-1V308.3c0-27.8-22.5-50.3-50.3-50.3H351.5v-90.6H856l-2 503.7z m9-1';
@@ -122,182 +125,188 @@ const FULLED_SCREEN_ICON = 'M22 12v2h-6v-6h2v2.669l5.658-5.658 1.331 1.331-5.658
 export default {
   name: "Header",
 
-  data: () => ({
-    icon: null,
-    backLength: 0,
-    forwardLength: 0,
-    screenStateIcon: null,
-    searchInput: '',
-    // 用户基本信息
-    user: {uin: '', headURL: '', nickName: ''}
-  }),
+  setup() {
+    const icon = ref(null);
+    const backLength = ref(0);
+    const forwardLength = ref(0);
+    const screenStateIcon = ref(null);
+    const searchInput = ref('');
+    /** @type {any} 用户基本信息 */
+    const user = reactive({uin: '', nickName: '', headURL: ''});
 
-  created() {
-    if (window.electron) {
-      window.electron.getWindowState().then(state => {
-        this.icon = state ? MAXIMIZED_ICON : MAXIMIZE_ICON;
-        this.$el.classList.toggle('un-maximized', state);
-      });
+    const vc = getCurrentInstance();
+    const {$message, $spinner, $db, $source} = vc.appContext.config.globalProperties;
 
-      // 当窗口最大化时,显示为已经最大化的图标
-      window.electron.setOnWindowMaximized(() => {
-        this.icon = MAXIMIZED_ICON;
-        this.$el.classList.toggle('un-maximized', false);
-      });
+    const router = useRouter(), route = useRoute();
 
-      // 当窗口未最大化时,显示为需要最大化图标
-      window.electron.setOnWindowRestore(() => {
-        this.icon = MAXIMIZE_ICON;
-        this.$el.classList.toggle('un-maximized', true);
-      });
-
-    } else {
-      // 当窗口最大化时,显示为已经最大化的图标
-      this.icon = document.fullscreenElement ? MAXIMIZED_ICON : MAXIMIZE_ICON;
-    }
-
-    // 初始检测是否进入全屏状态
-    this.screenStateIcon = document.fullscreenElement ? FULLED_SCREEN_ICON : FULL_SCREEN_ICON;
-
-    this._routeable = null;
-    this.$router.afterEach((to, from) => {
-      if (from.path === '/' || !this._routeable) {
-        this._routeable = true;
-        return;
-      }
-
-      if (this.backLength === 0) {
-        this.forwardLength = 0;
-        window.electron ? window.electron.clearHistory() : null;
-      }
-      ++this.backLength;
-    });
-
-    // 尝试登录
-    this.$nextTick(this.login);
-  },
-
-  methods: {
-    /** 后退 */
-    back() {
-      if (this.backLength) {
-        this._routeable = false;
-        this.$router.back();
-        ++this.forwardLength;
-        --this.backLength;
-      }
-    },
-
-    /** 前进 */
-    forward() {
-      if (this.forwardLength) {
-        this._routeable = false;
-        this.$router.forward();
-        --this.forwardLength;
-        ++this.backLength;
-      }
-    },
-
-    /** 刷新 */
-    refresh() {
-      location.reload();
-    },
-
-    /** 最小化窗口 */
-    minimize() {
-      window.electron ? window.electron.setWindowMinimize() : null;
-    },
-
-    /** 最大化或还原窗口 */
-    maximizeOrRestore() {
-      if (window.electron) {
-        window.electron.setWindowMaximizeOrRestore();
-      } else {
-        if (document.fullscreenElement) {
-          document.exitFullscreen();
-          // 当窗口未最大化时,显示为需要最大化图标
-          this.icon = MAXIMIZE_ICON;
-        } else {
-          document.documentElement.requestFullscreen();
-          // 当窗口最大化时,显示为已经最大化的图标
-          this.icon = MAXIMIZED_ICON;
-        }
-      }
-    },
-
-    /** 关闭窗口 */
-    closeWindow() {
-      window.close();
-    },
-
-    /** 设置全屏或退出全屏 */
-    setScreenState() {
-      let node = document.querySelector('#music-viewer');
-      let state = !(document.fullscreenElement || !node);
-      state ? node.requestFullscreen() : document.exitFullscreen();
-      this.screenStateIcon = state ? FULLED_SCREEN_ICON : FULL_SCREEN_ICON;
-      this.$el.classList.toggle('full-screen', state);
-    },
-
-    /** 打开登录模态框 */
-    openLoginModal() {
-      this.$refs.loginModal.open();
-    },
+    let navigation = null;
 
     /**
      * 开始登录
      *
      * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
      */
-    login(event) {
+    const login = event => {
       let param = {
-        db: this.$db,                                                   // indexDB
-        isManual: event instanceof MouseEvent,                          // 是否是手动调用登录
+        db: $db,                                                   // indexDB
+        isManual: event instanceof MouseEvent,                     // 是否是手动调用登录
       };
 
-      this.$spinner.open();
-      this.$source.impl.login(param)
-          .then(user => this.user = user || {})
-          .catch(reason => this.$message.error(reason.message))
-          .finally(this.$spinner.close);
-    },
+      $spinner.open();
+      $source.impl.login(param)
+          .then(userObj => userObj ? Object.assign(user, userObj) : null)
+          .catch(reason => $message.error(reason.message))
+          .finally($spinner.close);
+    };
 
-    /**
-     * 开始退出登录
-     * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
-     */
-    logout(event) {
-      let uin = this.user ? this.user.uin : null;
-      this.user = {};
+    if (window.electron) {
+      window.electron.getWindowState().then(/** @param state {boolean}*/state => {
+        icon.value = state ? MAXIMIZED_ICON : MAXIMIZE_ICON;
+        vc.refs.el.classList.toggle('un-maximized', state);
+      });
 
-      if (!uin) {
-        return;
-      }
+      // 当窗口最大化时,显示为已经最大化的图标
+      window.electron.setOnWindowMaximized(() => {
+        icon.value = MAXIMIZED_ICON;
+        vc.refs.el.classList.toggle('un-maximized', false);
+      });
 
-      let param = {
-        uin,
-        db: this.$db,                                                   // indexDB
-        isManual: event instanceof MouseEvent,                          // 是否是手动调用退出登录
-      };
+      // 当窗口未最大化时,显示为需要最大化图标
+      window.electron.setOnWindowRestore(() => {
+        icon.value = MAXIMIZE_ICON;
+        vc.refs.el.classList.toggle('un-maximized', true);
+      });
 
-      // 若是手动调用模式,则先关闭登录模态框
-      param.isManual ? this.$refs.loginModal.close() : null;
-      this.$source.impl.logout(param);
-    },
-
-    /** 打开资源搜索页面 */
-    openNetSearchView() {
-      let value = this.searchInput;
-      if (!value) {
-        return;
-      }
-
-      const viewPath = '/net-search-view', {path, query} = this.$route;
-
-      // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
-      return (path === viewPath && query.value === value) ? null :
-          this.$router.push({path: viewPath, query: {value}});
+    } else {
+      // 当窗口最大化时,显示为已经最大化的图标
+      icon.value = document.fullscreenElement ? MAXIMIZED_ICON : MAXIMIZE_ICON;
     }
+
+    router.afterEach((to, from) => {
+      if (from.path === '/' || !navigation) {
+        navigation = true;
+        return;
+      }
+
+      if (backLength.value === 0) {
+        forwardLength.value = 0;
+        // window.electron ? window.electron.clearHistory() : null;
+      }
+      ++backLength.value;
+    });
+
+    // 尝试登录
+    nextTick(login);
+
+    // 初始检测是否进入全屏状态
+    screenStateIcon.value = document.fullscreenElement ? FULLED_SCREEN_ICON : FULL_SCREEN_ICON;
+
+    return {
+      icon, backLength, forwardLength, screenStateIcon, searchInput, user,
+      /** 后退 */
+      back() {
+        if (backLength.value) {
+          navigation = false;
+          router.back();
+          ++forwardLength.value;
+          --backLength.value;
+        }
+      },
+
+      /** 前进 */
+      forward() {
+        if (forwardLength.value) {
+          navigation = false;
+          router.forward();
+          --forwardLength.value;
+          ++backLength.value;
+        }
+      },
+
+      /** 刷新 */
+      refresh() {
+        location.reload();
+      },
+
+      /** 最小化窗口 */
+      minimize() {
+        window.electron ? window.electron.setWindowMinimize() : null;
+      },
+
+      /** 最大化或还原窗口 */
+      maximizeOrRestore() {
+        if (window.electron) {
+          window.electron.setWindowMaximizeOrRestore();
+        } else {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+            // 当窗口未最大化时,显示为需要最大化图标
+            icon.value = MAXIMIZE_ICON;
+          } else {
+            document.documentElement.requestFullscreen();
+            // 当窗口最大化时,显示为已经最大化的图标
+            icon.value = MAXIMIZED_ICON;
+          }
+        }
+      },
+
+      /** 关闭窗口 */
+      closeWindow() {
+        window.close();
+      },
+
+      /** 设置全屏或退出全屏 */
+      setScreenState() {
+        let node = document.querySelector('#music-viewer');
+        let state = !(document.fullscreenElement || !node);
+        state ? node.requestFullscreen() : document.exitFullscreen();
+        screenStateIcon.value = state ? FULLED_SCREEN_ICON : FULL_SCREEN_ICON;
+        vc.refs.el.classList.toggle('full-screen', state);
+      },
+
+      /** 打开登录模态框 */
+      openLoginModal() {
+        vc.refs.loginModal.open();
+      },
+
+      login,
+
+      /**
+       * 开始退出登录
+       * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
+       */
+      logout(event) {
+        let uin = user ? user.uin : null;
+        if (!uin) {
+          return;
+        }
+        user.uin = '';
+
+        let param = {
+          uin,
+          db: $db,                                                   // indexDB
+          isManual: event instanceof MouseEvent,                     // 是否是手动调用退出登录
+        };
+
+        // 若是手动调用模式,则先关闭登录模态框
+        param.isManual ? vc.refs.loginModal.close() : null;
+        $source.impl.logout(param);
+      },
+
+      /** 打开资源搜索页面 */
+      openNetSearchView() {
+        let value = searchInput.value;
+        if (!value) {
+          return;
+        }
+
+        const viewPath = '/net-search-view', {path, query} = route;
+
+        // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
+        return (path === viewPath && query.value === value) ? null :
+            router.push({path: viewPath, query: {value}});
+      }
+    };
   }
 }
 </script>

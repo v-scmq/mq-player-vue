@@ -34,7 +34,7 @@ export default {
     buffering: {type: Number, default: null}
   },
 
-  emits: ['change'],
+  emits: ['update:modelValue', 'change'],
 
   setup: (props, {emit}) => {
     let el = null;

@@ -237,29 +237,15 @@ export default {
           return playNext ? play(++index, true) : null;
         }
 
-        // 媒体资源路径已经存在
-        if (media.path) {
-          if ($player.prepare(media)) {
-            return $player.play();
+        // 准备加载媒体资源
+        $player.prepare(media).then(state => {
+          if (state) {
+            $player.play();
+          } else {
+            $message.error('媒体加载失败，即将播放下一首');
+            playNext ? play(++index, true) : null;
           }
-          $message.error('媒体加载失败，即将播放下一首');
-          return playNext ? play(++index, true) : null;
-        }
-
-        // 若媒体资源路径不存在
-        $spinner.open();
-        $source.impl.handleMusicInfo(media).then(success => {
-          if (success && $player.prepare(media)) {
-            return $player.play();
-          }
-          $message.error('获取网络资源失败，即将播放下一首');
-          return playNext ? play(++index, true) : null;
-
-        }).catch(reason => {
-          $message.error(`${reason.message}，即将播放下一首`);
-          return playNext ? play(++index, true) : null;
-
-        }).finally($spinner.close);
+        });
       }
     };
 
@@ -382,7 +368,7 @@ export default {
 
         let cover = (album instanceof Object) ? album.cover : $media.cover;
         media.cover = (cover && (cover.charAt(1) === ':' || cover.charAt(0) === '/') ?
-            `media://${cover}` : cover) || DEFAULT_COVER;
+            `fs://${cover}` : cover) || DEFAULT_COVER;
 
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
@@ -400,6 +386,29 @@ export default {
       finished() {
         play(getIndex(true), true);
       },
+
+      /**
+       * 准备媒体资源之前的回调处理, 这通常用来处理来自网络媒体资源的路径.
+       *
+       * @param media 媒体资源信息对象
+       * @return {Promise<boolean>} 是否获得网络资源路径
+       */
+      prepareBefore(media) {
+        $spinner.open();
+        return new Promise(resolve => {
+          $source.impl.handleMusicInfo(media).then(state => {
+            if (!state) {
+              $message.warning('网络资源获取失败！');
+            }
+            resolve(state);
+
+          }).catch(() => {
+            $message.error('获取网络资源出现错误！');
+            resolve(null);
+
+          }).finally($spinner.close);
+        });
+      }
     });
 
     // 释放媒体资源

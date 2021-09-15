@@ -23,16 +23,16 @@
   <div class='tab-pane v-column'>
     <div class='v-row tab-container' style='justify-content:center;'>
 
-      <div class="tab" v-for='(item,index) in tabArray' :key='index'
-           :class="tab===index?'active':null" @click='tab=index'>
-        {{ item }}
+      <div class="tab" v-for='(item,index) in tabMap.tabList' :key='index'
+           :class="tabMap.value === item ? 'active':null" @click='tabMap.value = item'>
+        {{ item.title }}
       </div>
     </div>
 
     <div class="tab-content v-column">
 
       <table-view :columns="columns" :data='songList' style="flex:auto;"
-                  v-show="tab===0" @row-dblclick="onCellClick">
+                  v-show="tabMap.value===tabMap.SONG_TAB" @row-dblclick="onCellClick">
         <template v-slot:title="{item}">
           {{ item.title }}
           <svg class="icon mv-icon" v-if="item.vid" width="1em" height="1em" viewBox="0 0 16 16">
@@ -42,177 +42,162 @@
         </template>
 
         <template v-slot:singer="{item}">
-            <span class="link" v-for="(singer,index) in item.singer" :key="index" :data="singer.mid">
+            <span class="link" v-for="(singer,index) in item.singer" :key="index" :data-mid="singer.mid">
               {{ singer.name }}
             </span>
         </template>
 
         <template v-slot:album="{item}">
-            <span class="link" v-if="item.album" :data="item.album.mid">
+            <span class="link" v-if="item.album" :data-mid="item.album.mid">
               {{ singer.name }}
             </span>
         </template>
       </table-view>
 
       <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show="tab===1" @click="onAlbumItemClicked">
-        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :custom-data="index">
+           v-show="tabMap.value===tabMap.ALBUM_TAB" @click="onAlbumItemClicked">
+        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :data-index="index">
           <img class=cover :src='item.cover' loading="lazy" alt/>
           <div class='name'>{{ item.name }}</div>
         </div>
       </div>
 
       <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show="tab===2">
-        <div class='v-column content-box' v-for='(item,index) in mvList' :key='index' :class='item.class'>
+           v-show="tabMap.value===tabMap.MV_TAB">
+        <div class='v-column content-box' v-for='(item,index) in mvList' :key='index'>
           <img class=cover :src='item.cover' loading="lazy" alt/>
           <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
         </div>
       </div>
 
-      <div v-show="tab===3" class="label">{{ singer.introduce }}</div>
+      <div v-show="tabMap.value===tabMap.DETAIL_TAB" class="label">{{ singer.introduce }}</div>
     </div>
   </div>
 </template>
 
 <script>
+import {reactive, watch, getCurrentInstance} from "vue";
+import {useRouter} from "vue-router";
+
 export default {
   name: "SingerView",
 
-  props: {query: null},
+  props: {query: Object},
 
-  data: () => ({
-    tab: 0,
-    songList: [],
-    albumList: [],
-    mvList: [],
-    tabArray: ['歌曲', '专辑', 'MV', '详情'],
-    page: {current: 1, size: 30, total: 1},
-    singer: {mid: '', name: '', cover: '', songCount: '-', albumCount: '-', mvCount: '-', fansCount: '-'},
-    columns: [
+  setup(props) {
+    const songList = reactive([]);
+    const /** @type [{name, cover}] */ albumList = reactive([]);
+    const /** @type {[{title, cover, singer}]} */ mvList = reactive([]);
+
+    const SONG_TAB = {title: '歌曲', update: true, error: null};
+    const ALBUM_TAB = {title: '专辑', update: true, error: null};
+    const MV_TAB = {title: 'MV', update: true, error: null};
+    const DETAIL_TAB = {title: '详情', update: true, error: null};
+    const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB];
+    const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB});
+
+    const page = reactive({current: 1, size: 30, total: 1});
+
+    const singer = reactive({
+      mid: '', name: '', cover: '', introduce: '',
+      songCount: '-', albumCount: '-', mvCount: '-', fansCount: '-'
+    });
+
+    const columns = reactive([
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer',},
       {title: '专辑', valueGetter: item => item.album ? item.album.name : null},
       {title: '时长', property: 'duration', width: 100}
-    ]
-  }),
+    ]);
 
-  mounted() {
-    if (this.singer.mid !== this.query.mid) {
-      this.songUpdatable = this.albumUpdatable = this.mvUpdatable = true;
-      this.setSinger(this.query);
-    }
-  },
-
-  watch: {
-    query(newValue) {
-      if (this.singer.mid !== newValue.mid) {
-        this.songUpdatable = this.albumUpdatable = this.mvUpdatable = true;
-        this.setSinger(newValue);
-      }
-    },
-
-    tab(newTab) {
-      if (newTab === 0) {
-        if (!this.songUpdatable) {
-          return;
-        }
-
-        this.$spinner.open();
-        this.songUpdatable = false;
-
-        return this.$source.impl.handleSingerInfo(this.singer).then(success =>
-            success ? this.$source.impl.singerSongList(this.singer, this.page) : null
-        ).then(res => this.songList = res || []).finally(this.$spinner.close);
-      }
-
-      if (newTab === 1) {
-        if (!this.albumUpdatable) {
-          return;
-        }
-
-        this.$spinner.open();
-        this.albumUpdatable = false;
-
-        return this.$source.impl.singerAlbumList(this.singer, this.page)
-            .then(res => this.albumList = res || []).finally(this.$spinner.close);
-      }
-
-      if (newTab === 2) {
-        if (!this.mvUpdatable) {
-          return;
-        }
-
-        this.$spinner.open();
-        this.mvUpdatable = false;
-
-        return this.$source.impl.singerMvList(this.singer, this.page)
-            .then(res => this.mvList = res || []).finally(this.$spinner.close);
-      }
-    }
-  },
-
-  methods: {
-    setSinger(value) {
-      this.singer.mid = value.mid;
-      this.singer.name = value.name;
-      this.singer.cover = value.cover;
-      this.singer.songCount = value.songCount;
-      this.singer.albumCount = value.albumCount;
-      this.singer.mvCount = value.mvCount;
-      this.singer.fansCount = value.fansCount;
-
-      this.tab = -1;
-      this.$nextTick(() => this.tab = 0);
-    },
+    const {$spinner, $source, $player} = getCurrentInstance().appContext.config.globalProperties;
+    const router = useRouter();
 
     /**
-     * 表格行单元格双击时的回调方法
-     * @param row {Number} 行单元格索引
+     *  处理选项卡改变事件
+     *  @param newTab { UnwrapRef<{update: boolean, title: string, error: null}>} 新选定的选项卡
+     *  @return {any} 任意值
      */
-    onCellClick(row) {
-      let item = this.songList[row];
+    const handleTabChanged = newTab => {
+      if (!newTab || !newTab.update) return;
 
-      if (item.path) {
-        let player = this.$player, playList = player.playList;
-        player.index = row;
-        playList.splice(0, playList.length, ...this.songList);
-        return player.prepare(item) ? player.play() : null;
+      newTab.update = false;
+
+      if (newTab === tabMap.SONG_TAB) {
+        $spinner.open();
+        return $source.impl.handleSingerInfo(singer).then(success =>
+            success ? $source.impl.singerSongList(singer, page) : null)
+            .then(res => songList.splice(0, songList.length, ...res))
+            .finally($spinner.close);
       }
 
-      this.$spinner.open();
-      this.$source.impl.handleMusicInfo(item).then(success => {
-        if (success) {
-          let player = this.$player, playList = player.playList;
-          player.index = row;
-          playList.splice(0, playList.length, ...this.songList);
-          if (player.prepare(item)) {
-            player.play();
-          } else {
-            this.$message.warning('媒体资源加载失败！');
-          }
+      if (newTab === tabMap.ALBUM_TAB) {
+        $spinner.open();
+        return $source.impl.singerAlbumList(singer, page)
+            .then(res => albumList.splice(0, albumList.length, ...res))
+            .finally($spinner.close);
+      }
+
+      if (newTab === tabMap.MV_TAB) {
+        $spinner.open();
+        return $source.impl.singerMvList(singer, page)
+            .then(res => mvList.splice(0, mvList.length, ...res))
+            .finally($spinner.close);
+      }
+    };
+
+    // 监听查询参数改变
+    watch(() => props.query, value => {
+      if (singer.mid !== value.mid && value.mid) {
+        singer.mid = value.mid;
+        singer.name = value.name;
+        singer.cover = value.cover;
+        singer.songCount = value.songCount;
+        singer.albumCount = value.albumCount;
+        singer.mvCount = value.mvCount;
+        singer.fansCount = value.fansCount;
+
+        tabMap.tabList.forEach(tab => tab.error = !(tab.update = true))
+        // 若当前是歌曲选项卡,则手动调用handleChange方法处理
+        if (tabMap.value === tabMap.SONG_TAB) {
+          handleTabChanged(tabMap.SONG_TAB);
         } else {
-          this.$message.warning('网络资源获取失败！');
+          // 否则通过改变选项卡 触发handleChange方法
+          tabMap.value = tabMap.SONG_TAB;
         }
-
-      }).finally(this.$spinner.close);
-    },
-
-    print: () => print(),
-
-    /**
-     * 专辑列表项点击
-     * @param event {MouseEvent} 鼠标点击事件
-     */
-    onAlbumItemClicked(event) {
-      let node = event.target, classList = node.classList;
-      if (classList.contains('cover') || classList.contains('name')) {
-        let attr = node.parentNode.attributes.getNamedItem('custom-data');
-        let index = attr.value - 0, album = index >= 0 ? this.albumList[index] : null;
-        return album ? this.$router.push({path: '/album-view', query: album}) : null;
       }
-    }
+    }, {immediate: true});
+
+    // 监听选项卡选择改变
+    watch(() => tabMap.value, handleTabChanged);
+
+    return {
+      tabMap, singer, columns, songList, albumList, mvList, page,
+
+      /**
+       * 表格行单元格双击时的回调方法
+       * @param index {Number} 行单元格索引
+       */
+      onCellClick(index) {
+        $player.playMediaList(songList, index);
+      },
+
+      print: () => print(),
+
+      /**
+       * 专辑列表项点击
+       * @param event {MouseEvent} 鼠标点击事件
+       */
+      onAlbumItemClicked(event) {
+        let node = event.target, classList = node.classList;
+        if (classList.contains('cover') || classList.contains('name')) {
+          let attr = node.parentNode.attributes.getNamedItem('data-index');
+          let index = attr.value - 0, album = index >= 0 ? albumList[index] : null;
+          return album ? router.push({path: '/album-view', query: {...album}}) : null;
+        }
+      }
+    };
   }
 }
 </script>

@@ -1,9 +1,9 @@
 <template>
-  <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
-    <div class='item' v-for='tag in children' :key='tag.id' :custom-data='tag.value'>{{ tag.name }}</div>
+  <div ref='el' class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
+    <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'>{{ tag.name }}</div>
   </div>
   <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
-    <div class='v-column content-box' v-for='(item,index) in list' :key='index' :class='item.class'>
+    <div class='v-column content-box' v-for='(item,index) in list' :key='index'>
       <img class=cover :src='item.cover' loading="lazy" alt/>
       <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
     </div>
@@ -11,65 +11,75 @@
 </template>
 
 <script>
+import {reactive, nextTick, onMounted, getCurrentInstance} from "vue";
+
 export default {
   name: 'MVList',
 
-  data: () => ({
-    tags: [],
-    list: [],
-    tag: {},
-    page: {current: 1, size: 30},
-  }),
+  setup() {
+    const tags = reactive([]);
+    /** @type {any} */
+    const list = reactive([]);
+    const page = reactive({current: 1, size: 30});
+    const tag = {};
 
-  mounted() {
-    this.$spinner.open();
-    this.$source.impl.mvList(null, this.page).then(data => {
-      if (data instanceof Array) {
-        this.list = data;
+    const {$spinner, $source} = getCurrentInstance().appContext.config.globalProperties;
 
-      } else {
-        let tagList = [];
-        let array = Object.keys(data.tags);
-        array.forEach(key => {
-          //  {area:[{id:1,name:'A'}] .....]} => {en:id, ......}
-          this.tag[key] = null;
-          data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
-          //  {area:[{id:1,name:'A'}] .....]} => [[], []]
-          tagList.push(data.tags[key]);
-        });
-        this.tags = tagList;
-        this.list = data.list;
+    onMounted(() => {
+      let el = getCurrentInstance().refs.el;
+      $spinner.open();
+      $source.impl.mvList(null, page).then(data => {
+        if (data instanceof Array) {
+          this.list = data;
 
-        this.$nextTick(() => {
-          let el = this.$refs.el.parentNode;
-          let nodes = el.querySelectorAll('.list-view .item:first-child');
-          nodes.forEach(node => node.classList.add('active'));
-        });
+        } else {
+          let tagList = [];
+          let array = Object.keys(data.tags);
+          array.forEach(key => {
+            //  {area:[{id:1,name:'A'}] .....]} => {en:id, ......}
+            tag[key] = null;
+            data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
+            //  {area:[{id:1,name:'A'}] .....]} => [[], []]
+            tagList.push(data.tags[key]);
+          });
+          tags.splice(0, tags.length, ...tagList);
+          list.splice(0, list.length, ...data.list);
+
+          nextTick(() => {
+            let nodes = el.querySelectorAll('.list-view .item:first-child');
+            nodes.forEach(node => node.classList.add('active'));
+            el = null;
+          });
+        }
+
+      }).finally($spinner.close);
+    });
+
+    return {
+      tags, list, tag, page,
+
+      /**
+       * ListView被点击时,设置被点击的列表项的class
+       * @param event {MouseEvent} 鼠标事件
+       */
+      onListViewClicked(event) {
+        let node = event.target, value;
+        let attr = node.attributes.getNamedItem('data-tag');
+
+        if ((value = attr ? attr.value : null)) {
+          let [group, id] = value.split('-');
+          tag[group] = id;
+          node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
+          node.classList.add('active');
+
+          $spinner.open();
+          $source.impl.mvList(tag, page)
+              .then(data => list.splice(0, list.length, ...data))
+              .finally($spinner.close);
+        }
       }
+    };
 
-    }).finally(this.$spinner.close);
-  },
-
-  methods: {
-    /**
-     * ListView被点击时,设置被点击的列表项的class
-     * @param event {MouseEvent} 鼠标事件
-     */
-    onListViewClicked(event) {
-      let node = event.target, value;
-      let attr = node.attributes.getNamedItem('custom-data');
-
-      if ((value = attr ? attr.value : null)) {
-        let [group, id] = value.split('-');
-        this.tag[group] = id;
-        node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
-        node.classList.add('active');
-
-        this.$spinner.open();
-        this.$source.impl.mvList(this.tag, this.page)
-            .then(data => this.list = data).finally(this.$spinner.close);
-      }
-    }
   }
 }
 </script>
