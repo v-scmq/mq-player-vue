@@ -3,8 +3,12 @@ import * as VueRouter from "vue-router";
 export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
     // 自定义路由连接被激活的class
     linkActiveClass: 'active',
-    history: VueRouter.createWebHashHistory(),
+    history: VueRouter.createWebHashHistory('/'),
     routes: [
+        {
+            path: '/', // 主页自动重定向到本地音乐页面
+            redirect: '/local-music'
+        },
         {
             path: '/local-music',
             component: () => import('../views/LocalMusic'),
@@ -22,10 +26,10 @@ export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
                 icon: 'M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13c0-1.104 1.12-2 2.5-2s2.5.896 2.5 2zm9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2z M14 11V2h1v9h-1zM6 3v10H5V3h1z M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3L5 4V2.905z'
             },
             children: [
-                {path: 'singer-list', meta: {title: '歌手'}, component: () => import('../views/SingerList')},
-                {path: 'special-list', meta: {title: '歌单'}, component: () => import('../views/SpecialList')},
-                {path: 'mv-list', meta: {title: 'MV'}, component: () => import('../views/MVList')},
-                {path: 'rank-list', meta: {title: '排行榜'}, component: () => import('../views/RankList')}
+                {path: '/net-music/singer-list', meta: {title: '歌手'}, component: () => import('../views/SingerList')},
+                {path: '/net-music/special-list', meta: {title: '歌单'}, component: () => import('../views/SpecialList')},
+                {path: '/net-music/mv-list', meta: {title: 'MV'}, component: () => import('../views/MVList')},
+                {path: '/net-music/rank-list', meta: {title: '排行榜'}, component: () => import('../views/RankList')}
             ]
         },
         {
@@ -66,11 +70,6 @@ export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
                 title: '下载管理',
                 icon: 'M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z'
             }
-        },
-        // 主页自动重定向到本地音乐页面
-        {
-            path: '/',
-            redirect: '/local-music'
         }
     ]
 });
