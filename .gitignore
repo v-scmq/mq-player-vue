@@ -83,5 +83,6 @@ typings/
 .idea
 build
 dist_electron
+.vscode
 
 package-lock.json
