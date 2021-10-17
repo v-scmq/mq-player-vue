@@ -1,12 +1,12 @@
-# mq-player-vue <a href="https://gitee.com/scmq/mq-player/"><img src="https://img.shields.io/badge/Gitee-blue.svg" alt></a>
+# mq-player-vue <a href="https://github.com/v-scmq/mq-player-vue"><img src="https://img.shields.io/badge/Github-green.svg" alt></a> <a href="https://gitee.com/scmq/mq-player/"><img src="https://img.shields.io/badge/Gitee-blue.svg" alt></a>
 
 MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ### 项目技术栈
 
 <div>
-    <img src="https://img.shields.io/badge/Electron-14.0-success.svg" alt>
-    <img src="https://img.shields.io/badge/Vue-3.2-success.svg" alt>
+    <img src="https://img.shields.io/badge/Electron-15-success.svg" alt>
+    <img src="https://img.shields.io/badge/Vue-3-success.svg" alt>
     <img src="https://img.shields.io/badge/NodeJS-14.17-blue.svg" alt>
     <img src="https://img.shields.io/badge/MusicMetadata-7.9-blue.svg" alt>
 </div>
@@ -53,7 +53,7 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 > 1.electron不能加载本地资源(即使关闭webSecurity安全策略)
 
-问题在于electron版本自身的bug,关闭网页安全仍然不能解决,反而出现了file协议不认识的情况,该问题解决方案在
+问题在于electron版本自身存在的问题,关闭Web安全策略仍然不能解决,反而出现了file协议不认识的情况,该问题解决方案在
 [问题发现](https://github.com/electron/electron/issues/23664)
 [问题解决](https://github.com/electron/electron/issues/23757) . 从解决的方案衍生一个不使用file协议,注册自定义文件协议,这样可以不关闭安全策略 且可以访问本地文件.
 
@@ -64,7 +64,7 @@ app.whenReady().then(() => {
     // 注册文件协议必须在应用程序就绪后才能执行
     protocol.registerFileProtocol('fs', (request, callback) => {
         // request请求包含原始请求URL和header等信息
-        const pathname = request.url.replace('fs:///', '');
+        const pathname = request.url.replace('fs://', '');
 
         // callback回调用于将文件(必须)绝对路径传入并做响应信息处理
         callback(pathname);
