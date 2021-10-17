@@ -35,10 +35,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     let mainWindow = null, modal = null, tray = null;
 
     // 监听第2个应用程序实例,当程序被再次打开,那么聚焦显示主窗口
-    app.on('second-instance', (event, argv, workDir) => {
-        console.info('event=>', event, ' argv=>', argv, ' workDir=>', workDir);
-        mainWindow.focus();
-    });
+    app.on('second-instance', () => mainWindow.focus());
 
     // 当Electron完成初始化并准备创建浏览器窗口时，将调用此方法 有些API只能在事件发生后使用
     app.on('ready', () => {
@@ -54,16 +51,16 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         if (isProduction) {
             const MIME_TYPE = {
                 '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.svg': 'image/svg+xml',
-                'svgz': 'image/svg+xml', '.json': 'application/json', '.wasm': 'application/wasm'
+                '.svgz': 'image/svg+xml', '.json': 'application/json', '.wasm': 'application/wasm'
             }
 
             const {URL} = require('url');
-            protocol.registerBufferProtocol('app', (request, respond) => {
+            protocol.registerBufferProtocol('app', (request, callback) => {
                     let pathName = decodeURI(new URL(request.url).pathname);
                     readFile(path.join(__dirname, pathName), (error, data) => {
                         error ? console.error(`在app协议上读取 ${pathName} 失败 => `, error) : null;
                         let extension = path.extname(pathName).toLowerCase();
-                        respond({mimeType: MIME_TYPE[extension] || '', data});
+                        callback({mimeType: MIME_TYPE[extension] || '', data});
                     });
                 }
             );
@@ -254,10 +251,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         });
 
         // 当前网络请求发生错误时
-        request.on('error', error => {
-            console.info('error=>', error);
-            resolve(error.toString());
-        });
+        request.on('error', error => resolve(error.toString()));
 
         let data = options['data'];
         // post请求时且存在数据时,将数据通过输出流管道发送到目标服务器
@@ -268,8 +262,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
             request.write(data);
         }
 
-        // 当网络请求完成后
-        request.on('finish', () => console.info('请求完成！'));
+        // 当网络请求完成后 // request.on('finish', () => console.info('请求完成！'));
         request.end();
     });
 
@@ -288,9 +281,9 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
         // 若模态框未初始化,则先初始化(窗口圆角效果, 需要设置窗口透明且不能打开开发者工具,否则无效果)
         modal = modal || new BrowserWindow({
-            width: options.width, height: options.height, parent: mainWindow,
-            modal: true, show: false, resizable: false, frame: false,
-            transparent: true, webPreferences: {webSecurity: false, preload}
+            width: options.width, height: options.height, parent: mainWindow, modal: true,
+            show: false, resizable: false, frame: false, transparent: true,
+            webPreferences: {webSecurity: false, preload, nativeWindowOpen: true}
         });
 
         // 加载指定的URL
