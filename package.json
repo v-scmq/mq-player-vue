@@ -1,6 +1,9 @@
 {
+  "appId": "com.scmq.player",
   "name": "mq-player-vue",
+  "productName": "MQ音乐",
   "description": "MQ音乐",
+  "main": "background.js",
   "version": "1.0.0",
   "author": "SCMQ",
   "private": true,
@@ -14,11 +17,9 @@
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
   },
-  "main": "background.js",
-  "appId": "com.scmq.player",
   "dependencies": {
     "axios": "^0.21.1",
-    "electron": "^14.0.0",
+    "electron": "^15.0.0",
     "music-metadata": "^7.9.1",
     "vue": "^3.2.4",
     "vue-router": "^4.0.11"
