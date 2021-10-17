@@ -82,7 +82,7 @@
       </svg>
     </div>
 
-    <modal title="QQ登录" ref="loginModal" id="login-modal" width="600px" height="400px">
+    <modal title="QQ登录" id="login-modal" ref="loginModal" width="600px" height="400px">
       <template v-slot:content>
         <div class="v-column" style="color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;">
           <div>账号：{{ user.uin }}</div>

@@ -1,19 +1,19 @@
 /** 播放器状态枚举 */
 const STATUS = {
     /**未知*/
-    UNKNOWN: 'UNKNOWN',
+    UNKNOWN: 0,
     /**准备就绪*/
-    READY: 'READY',
+    READY: 1,
     /**播放中*/
-    PLAYING: 'PLAYING',
+    PLAYING: 2,
     /**已暂停*/
-    PAUSED: 'PAUSED',
+    PAUSED: 3,
     /**已停止*/
-    STOPPED: 'STOPPED',
+    STOPPED: 4,
     /**由于某些原因而发生阻塞(例如网络不佳)*/
-    STALLED: 'STALLED',
+    STALLED: 5,
     /**播放器已被释放*/
-    RELEASED: 'RELEASED'
+    RELEASED: 6
 };
 
 /** 播放器对象 */

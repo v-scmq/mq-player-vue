@@ -12,9 +12,8 @@ import {createVNode, render, ref, getCurrentInstance} from "vue";
 const MessageComponent = {
     template: `
       <transition name="message-fade" @before-leave="onClose" @after-leave="$emit('destroy')">
-      <div class="message" ref="el" v-show="visible"
-           :class="[type, center?'center':null, showClose?'closeable':null, customClass]"
-           :style="{'top': topOffset+'px', 'z-index':zIndex}">
+      <div class="message" ref="el" v-show="visible" :style="{top: topOffset+'px'}"
+           :class="[type, center?'center':null, showClose?'closeable':null, customClass]">
 
         <svg width="1em" height="1em" viewBox="0 0 16 16" class="message-icon">
           <path :d="icon"></path>
@@ -33,7 +32,7 @@ const MessageComponent = {
     `,
 
     props: {
-        message: null, showClose: null, topOffset: 0, zIndex: 0,
+        message: null, showClose: null, topOffset: 0,
         duration: {type: Number, default: 5000},
         onClose: {type: Function, default: null}
     },

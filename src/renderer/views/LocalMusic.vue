@@ -87,13 +87,13 @@ export default {
         year: meta.common.year,
         album: meta.common.album,
         cover: null,
-        duration: TimeUtil.secondToTime(meta.format.duration),
+        duration: TimeUtil.secondToString(meta.format.duration),
         size: FileUtil.toFileSize(2, file.size),
         bitrate: meta.format.bitrate,
         sampleRate: meta.format.sampleRate
         // codec: meta.format.codec, // "MPEG 1 Layer 3"
         // codecProfile: meta.format.codecProfile,
-        //container: meta.format.container,
+        // container: meta.format.container,
         // lossless: false,
         // numberOfChannels: meta.format.numberOfChannels,
       };
@@ -136,10 +136,7 @@ export default {
           (item.singer && item.singer.indexOf(value) >= 0);
     };
 
-    const playSelect = () => {
-      list.push({title:'梨花落',singer:'魏新雨',path:'https://webfs.cloud.kugou.com/202109132248/96a82d145684cdb45a6df12c5d49956a/KGTX/CLTX001/320d2afe0cffb176c45f224f6abc331e.mp3'})
-      $message({message: "播放所选音乐", showClose: true, type: 'success'});
-    };
+    const playSelect = () => $message({message: "播放所选音乐", showClose: true, type: 'success'});
 
     /** 开始执行本地歌曲模糊搜索(使用事件防抖原理,避免频繁调用过滤逻辑) */
     const handleMusicFilter = () => {

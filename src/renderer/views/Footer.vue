@@ -20,9 +20,38 @@
       <!-- 中间部分 -->
       <div class="v-row">
         <!-- 播放模式 -->
-        <svg viewBox="0 0 1024 1024" width='2em' height='2em' class="icon" id="mode" @mouseenter="computePosition">
-          <path :d="modeIcon"/>
-        </svg>
+        <div class="popup-container">
+          <svg viewBox="0 0 1024 1024" width='2em' height='2em' class="icon" id="mode">
+            <path :d="modeIcon"/>
+          </svg>
+
+          <div class="v-column popup-pane mode">
+            <div class="v-row" @click="modeIcon=ModeEnum.LIST_LOOP">
+              <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
+                <path :d="ModeEnum.LIST_LOOP"/>
+              </svg>
+              <span class="title">列表循环</span>
+            </div>
+            <div class="v-row" @click="modeIcon=ModeEnum.ORDER">
+              <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
+                <path :d="ModeEnum.ORDER"/>
+              </svg>
+              <span class="title">顺序播放</span>
+            </div>
+            <div class="v-row" @click="modeIcon=ModeEnum.SINGLE_LOOP">
+              <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
+                <path :d="ModeEnum.SINGLE_LOOP"/>
+              </svg>
+              <span class="title">单曲循环</span>
+            </div>
+            <div class="v-row" @click="modeIcon=ModeEnum.RANDOM">
+              <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
+                <path :d="ModeEnum.RANDOM"/>
+              </svg>
+              <span class="title">随机播放</span>
+            </div>
+          </div>
+        </div>
 
         <!-- 上一首 -->
         <svg viewBox="0 0 1024 1024" width='2em' height='2em' class="icon" @click="play(getIndex(false))">
@@ -42,26 +71,28 @@
         </svg>
 
         <!-- 音量 -->
-        <svg viewBox="0 0 30 30" width="2em" height="2em" class="icon" id="volume" @mouseenter="computePosition">
-          <path :d="volume===0 ? MUTE_ICON : VOLUME_ICON"/>
-        </svg>
-
-        <!--        <svg viewBox="0 0 30 30" width="2em" height="2em">
-                  <path
-                      d="M23 25h-4v-2h2.63l-5.753-5.658 1.354-1.331 5.769 5.674v-2.685h2v6h-2zm0-15.669l-5.658 5.658-1.331-1.331 5.658-5.658h-2.669v-2h6v6h-2v-2.669zm-15.027 15.669h4.027v-2h-2.676l5.676-5.658-1.335-1.331-5.692 5.674v-2.685h-1.973v6h1.973zm0-15.669l5.581 5.658 1.313-1.331-5.582-5.658h2.715v-2h-6v6h1.973v-2.669z"/>
-                </svg>
-
-                <svg viewBox="0 0 30 30" width="2em" height="2em">
-                  <path
-                      d="M22 12v2h-6v-6h2v2.669l5.658-5.658 1.331 1.331-5.658 5.658h2.669zm-10 7.331l-5.658 5.658-1.331-1.331 5.658-5.658h-2.669v-2h6v6h-2v-2.669zm-4-7.331h2.669l-5.658-5.658 1.331-1.331 5.658 5.658v-2.669h2v6h-6v-2zm14 6h-2.669l5.658 5.658-1.331 1.331-5.658-5.658v2.669h-2v-6h6v2z"/>
-                </svg>-->
+        <div class="popup-container">
+          <svg viewBox="0 0 30 30" width="2em" height="2em" class="icon" id="volume">
+            <path :d="volume===0 ? MUTE_ICON : VOLUME_ICON"/>
+          </svg>
+          <div class="v-column popup-pane volume" @wheel="onVolumeScroll">
+            <slider vertical v-model="volume" style="flex:1" @change="handleVolumeChange"/>
+            <span>{{ (volume * 100).toFixed(0) }}%</span>
+          </div>
+        </div>
       </div>
 
       <!--  右侧部分 -->
       <div class="v-row" style="flex:1;justify-content:flex-end;">
-        <div class="icon" id="speed" @mouseenter="computePosition">
+        <div class="popup-container">
           <!-- 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」-->
-          {{ (1.5 * speed + 0.5).toFixed(1) }}X
+          <div class="icon" id="speed">{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
+          <div class="v-row popup-pane speed" @wheel="onSpeedPaneScroll">
+            <slider vertical v-model="speed" style="height:100%" @change="handleSpeedChange"/>
+            <div class="v-column" style="height:100%;justify-content:space-between;line-height:0.5">
+              <span>2.0</span><span>1.5</span><span>1.0</span><span>0.5</span>
+            </div>
+          </div>
         </div>
 
         <svg width="2em" height="2em" viewBox="0 0 16 16" class="icon">
@@ -69,21 +100,15 @@
               d="M8 6.236l.894-1.789c.222-.443.607-1.08 1.152-1.595C10.582 2.345 11.224 2 12 2c1.676 0 3 1.326 3 2.92 0 1.211-.554 2.066-1.868 3.37-.337.334-.721.695-1.146 1.093C10.878 10.423 9.5 11.717 8 13.447c-1.5-1.73-2.878-3.024-3.986-4.064-.425-.398-.81-.76-1.146-1.093C1.554 6.986 1 6.131 1 4.92 1 3.326 2.324 2 4 2c.776 0 1.418.345 1.954.852.545.515.93 1.152 1.152 1.595L8 6.236zm.392 8.292a.513.513 0 0 1-.784 0c-1.601-1.902-3.05-3.262-4.243-4.381C1.3 8.208 0 6.989 0 4.92 0 2.755 1.79 1 4 1c1.6 0 2.719 1.05 3.404 2.008.26.365.458.716.596.992a7.55 7.55 0 0 1 .596-.992C9.281 2.049 10.4 1 12 1c2.21 0 4 1.755 4 3.92 0 2.069-1.3 3.288-3.365 5.227-1.193 1.12-2.642 2.48-4.243 4.38z"/>
         </svg>
 
-        <!--        <svg width="2em" height="2em" viewBox="0 0 16 16" class="icon">-->
-        <!--          <path-->
-        <!--              d="M4 1c2.21 0 4 1.755 4 3.92C8 2.755 9.79 1 12 1s4 1.755 4 3.92c0 3.263-3.234 4.414-7.608 9.608a.513.513 0 0 1-.784 0C3.234 9.334 0 8.183 0 4.92 0 2.755 1.79 1 4 1z"/>-->
-        <!--        </svg>-->
-
         <!-- 来自 https://icons.getbootstrap.com/ -->
         <svg width="2em" height="2em" viewBox="0 0 16 16" class="icon">
           <path
               d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2zm2.354 6.854l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708z"/>
         </svg>
 
-        <!--        <svg width="2em" height="2em" viewBox="0 0 16 16" class="icon">-->
-        <!--          <path-->
-        <!--              d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z M7.646 10.854a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 9.293V5.5a.5.5 0 0 0-1 0v3.793L6.354 8.146a.5.5 0 1 0-.708.708l2 2z"/>-->
-        <!--        </svg>-->
+        <!-- <svg width="2em" height="2em" viewBox="0 0 16 16" class="icon">
+          <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z M7.646 10.854a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 9.293V5.5a.5.5 0 0 0-1 0v3.793L6.354 8.146a.5.5 0 1 0-.708.708l2 2z"/>
+        </svg> -->
 
         <svg width="2em" height="2em" viewBox="0 0 16 16" class="icon">
           <path
@@ -91,51 +116,6 @@
         </svg>
       </div>
     </div>
-
-    <teleport to="body" v-if="modePopup">
-      <div tabindex="0" class="v-column popup-pane mode" @blur="modePopup=null">
-        <div class="v-row" @click="modePopup=null;modeIcon=ModeEnum.LIST_LOOP">
-          <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
-            <path :d="ModeEnum.LIST_LOOP"/>
-          </svg>
-          <span class="title">列表循环</span>
-        </div>
-        <div class="v-row" @click="modePopup=null;modeIcon=ModeEnum.ORDER">
-          <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
-            <path :d="ModeEnum.ORDER"/>
-          </svg>
-          <span class="title">顺序播放</span>
-        </div>
-        <div class="v-row" @click="modePopup=null;modeIcon=ModeEnum.SINGLE_LOOP">
-          <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
-            <path :d="ModeEnum.SINGLE_LOOP"/>
-          </svg>
-          <span class="title">单曲循环</span>
-        </div>
-        <div class="v-row" @click="modePopup=null;modeIcon=ModeEnum.RANDOM">
-          <svg viewBox="0 0 1024 1024" width='2em' height='2em'>
-            <path :d="ModeEnum.RANDOM"/>
-          </svg>
-          <span class="title">随机播放</span>
-        </div>
-      </div>
-    </teleport>
-
-    <teleport to="body" v-if="volumePopup">
-      <div tabindex="0" class="v-column popup-pane volume" @blur="volumePopup=null" @wheel="onVolumeScroll">
-        <slider vertical v-model="volume" style="flex:1" @change="handleVolumeChange"/>
-        <span>{{ (volume * 100).toFixed(0) }}%</span>
-      </div>
-    </teleport>
-
-    <teleport to="body" v-if="speedPopup">
-      <div tabindex="0" class="v-row popup-pane speed" @blur="speedPopup=null" @wheel="onSpeedPaneScroll">
-        <slider vertical v-model="speed" style="height:100%" @change="handleSpeedChange"/>
-        <div class="v-column" style="height:100%;justify-content:space-between;line-height:0.5">
-          <span>2.0</span><span>1.5</span><span>1.0</span><span>0.5</span>
-        </div>
-      </div>
-    </teleport>
 
     <teleport to="body">
       <music-viewer :visible="viewerVisible" :cover="media.cover" @close="viewerVisible=false"/>
@@ -174,13 +154,10 @@ export default {
     const statusIcon = ref(PLAY_ICON);        // 播放状态(特指 未播放 或 播放)
 
     const volume = ref(0.2);            // 音量大小
-    const volumePopup = ref(false);     // 音量弹出式面板可见性
 
     const modeIcon = ref(ModeEnum.LIST_LOOP); // 播放模式图标
-    const modePopup = ref(false);       // 播放模式弹出式面板可见性
 
     const speed = ref(1 / 3);           // 播放速率大小 「1 = 1.5x + 0.5 => x = 1/3」
-    const speedPopup = ref(false);      // 播放速率弹出式面板可见性
 
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
@@ -267,26 +244,10 @@ export default {
      * @param seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
      */
     const valueChanged = (newValue, seek) => {
-      media.time = TimeUtil.secondToTime(newValue * $player.getDuration());
+      media.time = TimeUtil.secondToString(newValue * $player.getDuration());
       if (seek && $player.status !== $player.$statusType.UNKNOWN) {
         $player.seek(newValue * $player.getDuration());
       }
-    };
-
-    /**
-     * 计算弹出面板的位置
-     * @param event 在某个节点说触发的鼠标事件
-     */
-    const computePosition = event => {
-      let id = event.target.id;
-      vc.proxy[`${id}Popup`] = true;
-      vc.proxy.$nextTick(() => {
-        let node = document.querySelector(`.popup-pane.${id}`);
-        let left = (node.clientWidth - event.target.clientWidth) / 2;
-        left = event.clientX - event.offsetX - left;
-        node.style.left = `${left}px`;
-        node.focus();
-      });
     };
 
     /**
@@ -351,7 +312,7 @@ export default {
        * @param duration 播放器时长(单位秒)
        */
       durationChanged(duration) {
-        media.duration = TimeUtil.secondToTime(duration);
+        media.duration = TimeUtil.secondToString(duration);
       },
 
       /**
@@ -415,13 +376,12 @@ export default {
     onBeforeUnmount(() => $player.release());
 
     return {
-      media, statusIcon, DEFAULT_COVER, viewerVisible,
-      volume, volumePopup, speed, speedPopup, ModeEnum, modeIcon, modePopup,
+      media, statusIcon, DEFAULT_COVER, viewerVisible, volume, speed, ModeEnum, modeIcon,
 
       VOLUME_ICON: 'M3 11a.842.842 0 0 1 1-1h4l5.859-4.2s2.119-1.716 2.141.2v18s-.021 1.6-1.619.7l-6.381-4.7h-4a.888.888 0 0 1-1-1v-8zm17.328-1.821a1.07 1.07 0 0 0-1.446 0 .917.917 0 0 0 0 1.357 6.056 6.056 0 0 1 0 8.939.923.923 0 0 0 0 1.362 1.072 1.072 0 0 0 1.446 0 7.9 7.9 0 0 0 0-11.658zm2.772-3.025a1.074 1.074 0 0 0-1.453 0 .927.927 0 0 0 0 1.36 10.175 10.175 0 0 1 0 15.028.924.924 0 0 0 0 1.36 1.082 1.082 0 0 0 1.453 0 12.027 12.027 0 0 0 0-17.748z',
       MUTE_ICON: 'M3 11a.842.842 0 0 1 1-1h4l5.859-4.2s2.119-1.716 2.141.2v18s-.021 1.6-1.619.7l-6.381-4.7h-4a.888.888 0 0 1-1-1v-8z M28.995 18.558l-1.387 1.455-3.608-3.594-3.608 3.595-1.387-1.455 3.571-3.559-3.571-3.558 1.387-1.455 3.608 3.594 3.608-3.595 1.387 1.455-3.571 3.559z',
 
-      getIndex, play, playOrPause, valueChanged, computePosition, handleVolumeChange, handleSpeedChange,
+      getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange,
       onVolumeScroll, onSpeedPaneScroll
     }
   }
@@ -452,30 +412,6 @@ export default {
   margin: 0 4px;
   cursor: pointer;
   fill: var(--fill-base);
-}
-
-.popup-pane {
-  bottom: 4em;
-  position: fixed;
-  align-items: center;
-  justify-content: center;
-  background: var(--fill-popup-pane);
-  color: var(--text-active);
-  border-radius: 0.5em;
-  padding: 0.25em;
-  outline: none;
-}
-
-.popup-pane:after {
-  bottom: 0;
-  content: "";
-  width: 1em;
-  height: 0.75em;
-  display: flex;
-  position: absolute;
-  background: var(--fill-popup-pane);
-  transform: translateY(100%);
-  clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0);
 }
 
 /* 音量弹出式面板 */

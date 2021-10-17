@@ -5,9 +5,9 @@ export class TimeUtil {
      * @param millis {Number} 毫秒时间值
      * @return {String} 毫秒表示的时间字符串
      */
-    static millisToTime(millis) {
+    static millisToString(millis) {
         // 先将总毫秒数转换为总秒数,然后交给总秒数转换为标准时间值的方法处理
-        return this.secondToTime(millis / 1000);
+        return this.secondToString(millis / 1000);
     }
 
     /**
@@ -16,7 +16,7 @@ export class TimeUtil {
      * @param value {Number} 总秒数
      * @return {String} 秒数表示的标准时间字符串
      */
-    static secondToTime(value) {
+    static secondToString(value) {
         // 浮点数转换为整数可以使用 0 ^ 1.23232 = 1
         value = 0 ^ value;
         let v = '', number;
