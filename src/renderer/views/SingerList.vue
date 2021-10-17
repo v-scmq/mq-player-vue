@@ -19,8 +19,7 @@ export default {
 
   setup() {
     const tags = reactive([]);
-    /** @type {any} */
-    const list = reactive([]);
+    const /** @type {any} */ list = reactive([]);
     const page = reactive({current: 1, size: 30});
     const tag = reactive({en: null, area: null, sex: null, genre: null, group: null});
 
@@ -31,7 +30,6 @@ export default {
     onMounted(() => {
       $spinner.open();
       $source.impl.singerList(null, page).then(data => {
-        debugger;
         if (data instanceof Array) {
           list.splice(0, list.length, ...data);
 
