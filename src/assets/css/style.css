@@ -543,7 +543,7 @@ html, body, #app {
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 5;
+    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -605,7 +605,7 @@ html, body, #app {
     top: 20px;
     left: 50%;
     position: fixed; /*相对于浏览器窗口固定定位*/
-
+    z-index: 9999;
     padding: 1em;
     min-width: 380px;
 
@@ -699,6 +699,55 @@ html, body, #app {
 .message-fade-enter-from, .message-fade-leave-to {
     opacity: 0;
     transform: translate(-50%, -100%);
+}
+
+/*======================PopupPane==================*/
+.popup-pane {
+    bottom: 3em;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    background: var(--fill-popup-pane);
+    color: var(--text-active);
+    border-radius: 0.5em;
+    padding: 0.25em;
+    outline: none;
+
+    /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
+    /* transition: visibility 1s ease; visibility: collapse; */
+}
+
+.popup-pane:before, .popup-pane:after {
+    content: '';
+    bottom: 0;
+    position: absolute;
+    transform: translate(0, 100%);
+}
+
+.popup-pane:before {
+    width: 100%;
+    height: 50%;
+}
+
+.popup-pane:after {
+    border-width: 12px 8px;
+    border-style: solid;
+    border-color: var(--fill-popup-pane) transparent transparent;
+    /* width: 1em; height: 0.75em; background: var(--fill-popup-pane); clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0); */
+}
+
+.popup-container {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.popup-container > .icon {
+    z-index: 1;
+}
+
+.popup-container:not(:hover) .popup-pane {
+    display: none;
 }
 
 /* 谷歌内核浏览器的滚动条样式 */
