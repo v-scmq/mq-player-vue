@@ -1,7 +1,7 @@
 <template>
   <teleport to="body">
-    <div v-show="visible" :id="id" ref="el" class="modal" :class="{'opened':opened}" @click="close">
-      <div class="v-column modal-content" :style="{width,height}">
+    <div v-show="visible" :id="id" ref="el" class="modal" :class="{'opened': opened}" @click="close">
+      <div class="v-column modal-content" :style="{width, height}">
         <div class="v-row titled-pane">
           {{ title }}
           <svg @click="close" class="close-icon">
