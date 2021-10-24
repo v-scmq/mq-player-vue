@@ -10,6 +10,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
     "electron:build": "vue-cli-service electron:build",
     "electron:serve": "vue-cli-service electron:serve",
     "service": "vue-cli-service electron:serve",
@@ -25,8 +26,12 @@
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.13",
+    "@vue/cli-plugin-eslint": "~4.5.13",
     "@vue/cli-service": "~4.5.13",
     "@vue/compiler-sfc": "^3.0.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.31.0",
+    "eslint-plugin-vue": "^7.13.0",
     "vue-cli-plugin-electron-builder": "^2.1.1",
     "vue-template-compiler": "^2.6.14"
   },
