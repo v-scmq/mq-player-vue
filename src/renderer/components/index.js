@@ -5,6 +5,7 @@ import TableView from "./TableView";
 import TextField from "./TextField";
 import Slider from "./Slider";
 import Modal from "./Modal";
+import Pagination from "./Pagination";
 
 import {createVNode, render, ref, getCurrentInstance} from "vue";
 
@@ -205,6 +206,7 @@ export default {
         Vue.component(Slider.name, Slider);
         Vue.component(Accordion.name, Accordion);
         Vue.component(Modal.name, Modal);
+        Vue.component(Pagination.name, Pagination);
 
         // 将扩展组件初始化到全局配置
         Vue.config.globalProperties.$spinner = spinner;
