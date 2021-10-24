@@ -70,6 +70,29 @@ export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
                 title: '下载管理',
                 icon: 'M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z'
             }
+        },
+        {
+            path: '/component-list',
+            component: () => import('../views/doc/ComponentList'),
+            redirect: '/component-list/Pagination',
+            meta: {
+                title: '组件示例',
+                icon: 'M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z'
+            },
+            children: [
+                {
+                    path: '/component-list/Pagination', meta: {title: '分页'},
+                    component: () => import('../views/doc/PaginationDemo')
+                },
+                {
+                    path: '/component-list/modal', meta: {title: '模态框'},
+                    component: () => import('../views/doc/ModalDemo')
+                },
+                {
+                    path: '/component-list/table-view', meta: {title: '表格'},
+                    component: () => import('../views/doc/TableViewDemo')
+                }
+            ]
         }
     ]
 });
