@@ -1,122 +1,212 @@
 <template>
-  <div class='pagination v-row' ref='el'>
-    <div>共{{ total }}页</div>
+  <div class='pagination v-row' ref='el' @click="onClick">
 
-    <div class="item prev-button" @click="$emit('update:current', current > 1 ? current - 1 : 1)">❮</div>
-    <div class="item page" v-for="(item, index) in pageButtonList" :key="index"
-         :class="{active: item.active, hide:item.hide}" @click="$emit('update:current', item.value)">{{ item.value }}
+    <!-- 上一页按钮 -->
+    <div class="item prev-button">❮</div>
+
+    <!-- 第一页 -->
+    <div class="item page" v-if="pageCount > 0" :class="{active: currentPage === 1}">1</div>
+    <!-- 前一个更多 -->
+    <div class="item prev-more-button" v-if="showPrevMore"></div>
+
+    <div class="item page" v-for="(item, index) in pagers" :key="index"
+          :class="{active: currentPage === item}">
+        {{ item }}
     </div>
-    <div class="item next-button" @click="$emit('update:current', current < total ? current + 1 : total)">❯</div>
+
+    <!-- 后一个更多 -->
+    <div class="item next-more-button" v-if="showNextMore"></div>
+    <!-- 最后一页 -->
+    <div class="item page" v-if="pageCount > 1" :class="{active: currentPage === pageCount}">{{pageCount}}</div>
+
+    <!-- 下一页按钮 -->
+    <div class="item next-button">❯</div>
   </div>
 </template>
 
 <script>
-import {reactive, watchEffect, computed} from "vue";
+import {ref, watchEffect, computed} from "vue";
 
 export default {
   name: "Pagination",
 
   props: {
     // 每页数据量
-    size: {type: Number, default: 30},
+    pageSize: {type: Number, default: 30},
     // 当前页编号
-    current: {type: Number, default: 1},
+    currentPage: {type: Number, default: 1},
     // 数据总量
-    dataCount: {type: Number, default: 1},
+    total: Number,
+    // 每页分页按钮数量
+    pageButtonCount: {type: Number, default: 7}
   },
 
   // change 和 用于更新双向绑定的当前页 事件
-  emits: ['change', 'update:current'],
+  emits: ['change', 'update:currentPage'],
 
-  setup(props) {
+  setup(props, {emit}) {
     // 总页数
-    const total = computed(() => Math.ceil(props.dataCount / props.size));
+    const pageCount = computed(() => Math.ceil(props.total / props.pageSize));
 
-    // 控制分页按钮展示
-    const pageButtonList = reactive([
-      {active: true, value: 1, hide: true},
-      {active: false, value: 2, hide: true},
-      {active: false, value: 3, hide: true},
-      {active: false, value: 4, hide: true},
-      {active: false, value: 5, hide: true}
-    ]);
+    // 控制显示前一个更多分页按钮
+    const showPrevMore = ref(false);
+    // 控制显示后一个更多分页按钮
+    const showNextMore = ref(false);
+
+    // 分页按钮数组(通过计算属性获得)
+    const pagers = computed(() => {
+      // 分页按钮数量、当前页
+      const {pageButtonCount, currentPage} = props;
+      // 总页数
+      const pageCountValue = pageCount.value;
+      // 半页计数
+      const halfPagerCount = (pageButtonCount - 1) / 2;
+      // 分页按钮编号
+      const array = [];
+
+      // 是否显示前一个更多按钮
+      let showPrevMore = false;
+      // 是否显示前一个更多按钮
+      let showNextMore = false;
+
+      // 若 总页数 > 分页按钮数量
+      if (pageCountValue > pageButtonCount) {
+        // 若 当前页 > (分页按钮数量 - 半页计数值)
+        if (currentPage > pageButtonCount - halfPagerCount) {
+          // 则前一个更多按钮显示
+          showPrevMore = true;
+        }
+
+        if (currentPage < pageCountValue - halfPagerCount) {
+          showNextMore = true;
+        }
+      }
+
+      if (showPrevMore && !showNextMore) {
+        const startPage = pageCountValue - (pageButtonCount - 2)
+        for (let i = startPage; i < pageCountValue; i++) {
+          array.push(i)
+        }
+      } else if (!showPrevMore && showNextMore) {
+        for (let i = 2; i < pageButtonCount; i++) {
+          array.push(i)
+        }
+      } else if (showPrevMore && showNextMore) {
+        const offset = Math.floor(pageButtonCount / 2) - 1
+        for (let i = currentPage - offset; i <= currentPage + offset; i++) {
+          array.push(i)
+        }
+      } else {
+        for (let i = 2; i < pageCountValue; i++) {
+          array.push(i)
+        }
+      }
+
+      return array;
+    });
 
     watchEffect(() => {
-      // 当前页、总页数
-      const current = props.current, totalValue = total.value;
+      const halfPagerCount = (props.pageButtonCount - 1) / 2;
 
-      // 左边起始页编号, 右边结束页编号
-      let left = current - 2, right = current + 2;
+      showPrevMore.value = false;
+      showNextMore.value = false;
 
-      // 如果左边页编号小于1,使其为1,同时右边结束页编号同时增加
-      while (left < 1) {
-        ++left;
-        ++right;
-      }
-
-      // 如果右边结束页编号超过总页数时,使其置为总页数
-      right = Math.min(right, totalValue);
-
-      // 如果从起始编号到结束编号没有5页,且左边页编号大于1,则左边页编号左移(逐减)
-      while (left > 1 && right - left < 4) {
-        --left;
-      }
-
-      let index = 0;
-
-      for (; left <= right; left++, index++) {
-        pageButtonList[index].hide = false;
-        pageButtonList[index].value = left;
-        pageButtonList[index].active = current === left;
-      }
-
-      // 总页数不超过5页时,多余部分不显示(不受布局容器约束,会自动不显示,且不占用有空间)
-      for (; index < 5; index++) {
-        pageButtonList[index].hide = true;
+      if (pageCount.value > props.pageButtonCount) {
+        if (props.currentPage > props.pageButtonCount - halfPagerCount) {
+          showPrevMore.value = true
+        }
+        if (props.currentPage <  pageCount.value - halfPagerCount) {
+          showNextMore.value = true
+        }
       }
     });
 
-    return {pageButtonList, total};
+    return {
+      showPrevMore, showNextMore, pagers, pageCount,
+
+      /**
+       * @param event {MouseEvent} 鼠标点击事件
+       *
+       */
+      onClick(event){
+        const element = event.target, classList = element.classList;
+        if(classList.contains('pagination')) {
+          return;
+        }
+
+        const currentPage = props.currentPage;
+        const offset = props.pageButtonCount - 2;
+
+        let newPage;
+
+        if(classList.contains('prev-button')) {
+          newPage =currentPage - 1;
+        } else if(classList.contains('next-button')) {
+          newPage = currentPage + 1;
+        } else if(classList.contains('prev-more-button')) {
+          newPage = currentPage - offset;
+        } else if(classList.contains('next-more-button')) {
+          newPage = currentPage + offset;
+        }
+
+        else {
+          // newPage = Number(element.textContent);
+          newPage = element.textContent - 0;
+        }
+
+        newPage = Math.min(Math.max(1, newPage), pageCount.value);
+        console.info('newPage => ', newPage);
+        if(newPage !== currentPage){
+          emit('update:currentPage', newPage);
+        }
+      }
+    };
   }
 }
 </script>
 
 <style scoped>
-.item {
+.pagination .item {
+  width: 3em;
+  padding: 8px 0;
   border: solid #ddd;
   border-width: 1px 1px 1px 0;
-  padding: 0.5em 1em;
-  text-align: center;
   box-sizing: border-box;
   background: white;
-  min-width: 3em;
   color: #337ab7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.item.prev-button {
+.pagination .item.prev-button {
   margin: 0 0 0 8px;
   border-width: 1px;
   border-radius: 4px 0 0 4px;
 }
 
-.item.next-button {
+.pagination .item.next-button {
   border-radius: 0 4px 4px 0;
 }
 
-.item:hover {
+.pagination .item:hover {
   cursor: pointer;
   color: #23527c;
   background-color: #eee;
 }
 
-.item.active {
+.pagination .item.active {
   color: white;
   cursor: default;
   pointer-events: none;
   background-color: #337ab7;
 }
 
-.item.hide {
-  display: none;
+.pagination .item.prev-more-button::after, .pagination .item.next-more-button::after{
+  content: '∙∙∙'; /* ••• */
 }
+
+.pagination .item.prev-more-button:hover::after{ content:'❮❮';}
+.pagination .item.next-more-button:hover::after{ content:'❯❯';}
+
 </style>
