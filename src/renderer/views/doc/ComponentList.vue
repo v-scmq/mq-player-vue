@@ -35,7 +35,7 @@ export default {
 </script>
 
 <style scoped>
-.tab-pane >>> .tab-container {
+.tab-pane :deep(.tab-container) {
   min-width: 200px;
   border: 1px solid #ddd;
   box-sizing: border-box;
@@ -43,7 +43,7 @@ export default {
   margin: 0 0 0 8px;
 }
 
-.tab-pane >>> .tab {
+.tab-pane :deep(.tab) {
   font-size: 14px;
   padding: 8px 16px;
   transition: color 0.5s ease;
@@ -51,18 +51,18 @@ export default {
   background: #caebfb;
 }
 
-.tab-pane >>> .tab:hover {
+.tab-pane :deep(.tab:hover) {
   color: #1890ff;
 }
 
-.tab-pane >>> .tab.active {
+.tab-pane :deep(.tab.active) {
   color: #1890ff;
   background: #bbe1f3;
   position: relative;
   pointer-events: none;
 }
 
-.tab-pane >>> .tab.active:before {
+.tab-pane :deep(.tab.active:before) {
   content: '';
   border-left: 2px solid #1890ff;
   position: absolute;
