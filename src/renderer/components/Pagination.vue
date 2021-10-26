@@ -1,5 +1,6 @@
 <template>
-  <div class='pagination v-row' @click="onClick" v-show="!hideOnSinglePage || pageCount > 1">
+  <div class='pagination v-row' @click="onClick" style="justify-content:center;"
+      v-show="!hideOnSinglePage || pageCount > 1">
 
     <!-- 上一页按钮 -->
     <div class="item prev-button" :class='{disabled: currentPage === 1}'>❮</div>
@@ -193,7 +194,6 @@ export default {
 }
 
 .pagination .item.prev-button {
-  margin: 0 0 0 8px;
   border-width: 1px;
   border-radius: 4px 0 0 4px;
 }
