@@ -1,7 +1,7 @@
 <template>
   <div class="text-field">
     <input class="input" autocomplete="off" ref="inputNode" :placeholder="placeholder"
-           :type="type" @input="handleInput" @change="handleChange"/>
+           :type="type" @input="handleInput" @change="handleChange" :value="modelValue"/>
 
     <svg class="icon" viewBox="0 0 16 16" v-if="suffixIcon">
       <path :d="suffixIcon"/>
@@ -10,7 +10,6 @@
 </template>
 
 <script>
-import {watch, getCurrentInstance} from "vue";
 
 export default {
   name: "TextField",
@@ -25,14 +24,47 @@ export default {
     },
   },
 
-  setup(props) {
-    const vc = getCurrentInstance();
+  setup(props, {attrs, emit}) {
 
-    watch(() => props.modelValue, value => vc.refs.inputNode.value = value);
+    /**
+     * 获取输入框值 <br>
+     *
+     * 若输入框类型是数值,那么将输入框的字符串数值转换为数值类型;
+     * 否则获取的是输入框未做任何处理的的值
+     *
+     * @param value {String} 输入框已键入的值
+     * @return {Number | String} 转换后输入框的值
+     */
+    const getValue = value => props.type === 'number' ? Number(value) : value;
 
     return {
-      handleInput: event => vc.emit('update:modelValue', event.target.value),
-      handleChange: event => vc.emit('change', event.target.value)
+
+      /**
+       * 处理输入框实时输入事件
+       *
+       * @param event {InputEvent} 输入框输入事件
+       */
+      handleInput: event => {
+        const oldValue = props.modelValue;
+        const newValue = getValue(event.target.value);
+        if (oldValue !== newValue) {
+          emit('update:modelValue', newValue);
+        }
+      },
+
+      /**
+       * 处理输入框值改变事件
+       *
+       * @param event {Event} 输入框值改变事件
+       */
+      handleChange: event => {
+        // 若指定了onChange事件
+        if (attrs.onChange) {
+          // 那么提交值到这个回调方法
+          emit('change', getValue(event.target.value));
+        }
+      }
+
     }
   }
 }
