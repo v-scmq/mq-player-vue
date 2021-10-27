@@ -1,5 +1,5 @@
 <template>
-  <div tabindex="0" class="button" @click="$emit('click',$event)">
+  <div tabindex="0" class="button">
     <slot></slot>
     {{ text }}
   </div>
@@ -9,6 +9,5 @@
 export default {
   name: "ButtonBase",
   props: {text: null},
-  emits: {'click': null}
 }
 </script>

@@ -1,7 +1,6 @@
 <template>
   <div class='tab-pane v-row' style='align-items:stretch'>
 
-    <!-- 路由匹配到的组件将渲染在这里 -->
     <div class="v-column tab-content">
       <router-view v-slot="{Component}">
         <keep-alive>

@@ -9,9 +9,7 @@
       <template v-for="(route, index) in routes" :key="index">
         <router-link custom v-slot="{navigate,isActive}" :to="route.path" v-if="route.meta">
           <div @click="navigate" :class="isActive ? 'tab active' : 'tab'">
-            <svg class="icon" width="1.2em" height="1.2em" viewBox="0 0 16 16">
-              <path :d="route.meta.icon"/>
-            </svg>
+            <icon width="1.2em" height="1.2em" :name="route.meta.icon"/>
             {{ route.meta.title }}
           </div>
         </router-link>
