@@ -18,7 +18,7 @@
       <!-- 后退 -->
       <icon class="back" name="back" :class="{'disabled':backLength===0}" style="margin-left:0" @click="back"/>
       <!-- 前进 -->
-      <icon class="forward" name="forward" style="transform:rotate(180deg)" @click="forward"
+      <icon class="forward" name="back" style="transform:rotate(180deg)" @click="forward"
             :class="{'disabled':forwardLength===0}"/>
       <!-- 刷新 -->
       <icon name="refresh" @click="refresh" style="margin:0 0 0 8px"/>
