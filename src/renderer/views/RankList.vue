@@ -1,7 +1,24 @@
 <template>
   <div class='v-row' style='flex:1;align-items:stretch;height:100%;'>
     <!--  在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
-    <table-view :columns="columns" :data='songList' style="flex:auto;" @row-dblclick="onCellClick"/>
+    <table-view :columns="columns" :data='songList' style="flex:auto;" @row-dblclick="onCellClick">
+      <template v-slot:title="{item}">
+        {{ item.title }}
+        <icon class="mv-icon" name="mv" width="1em" height="1em" v-if="item.vid"/>
+      </template>
+
+      <template v-slot:singer="{item}">
+        <span class="link" v-for="(singer,index) in item.singer" :key="index" :data-mid="singer.mid">
+          {{ singer.name }}
+        </span>
+      </template>
+
+      <template v-slot:album="{item}">
+        <span class="link" v-if="item.album" :data-mid="item.album.mid">
+          {{ item.album.name }}
+        </span>
+      </template>
+    </table-view>
     <accordion :list="rankList" @change='onRankChanged' style='flex:none'/>
   </div>
 </template>
@@ -19,10 +36,9 @@ export default {
     const columns = reactive([
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
-      {title: '歌手', valueGetter: item => item.singer ? item.singer.name : null},
-      {title: '专辑', valueGetter: item => item.album ? item.album.name : null},
+      {title: '歌手', property: 'singer'},
+      {title: '专辑', property: 'album'},
       {title: '时长', property: 'duration', width: 100},
-      {title: '大小', property: 'size', width: 100}
     ]);
 
     const {$player, $spinner, $source, $message} = getCurrentInstance().appContext.config.globalProperties;

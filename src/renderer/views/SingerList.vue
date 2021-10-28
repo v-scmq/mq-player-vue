@@ -2,8 +2,8 @@
   <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
     <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'>{{ tag.name }}</div>
   </div>
-  <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
-    <div class='v-column singer-box' v-for='(item,index) in list' :key='index'>
+  <div ref="el" class='image-container' style='flex:1;'>
+    <div class='cover-item' v-for='(item,index) in list' :key='index'>
       <img alt class=cover :src='item.cover' @click="navigateTo(item)"/>
       <div @click="navigateTo(item)">{{ item.name }}</div>
     </div>
@@ -84,51 +84,6 @@ export default {
 </script>
 
 <style scoped>
-.image-container > .singer-box {
-  /*align-items: center;*/
-  /*margin: 0 3em 3em 0;*/
-}
-
-.singer-box .cover {
-  width: 13em;
-  height: 13em;
-  border-radius: 8em;
-  cursor: pointer;
-  transition: transform .75s cubic-bezier(0, 1, .75, 1);
-}
-
-.image-container {
-  padding: 20px 0 0 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 208px);
-  column-gap: 3em; /* grid-column-gap: 3em; */
-  row-gap: 3em;
-
-  /*grid-auto-flow: row dense;*/
-
-  /*
-      justify-content属性是整个内容区域在容器里面的水平位置（左中右），align-content属性是整个内容区域的垂直位置（上中下）
-      place-content属性是align-content属性和justify-content属性的合并简写形式。
-
-      justify-content: start | end | center | stretch | space-around | space-between | space-evenly;
-      align-content: start | end | center | stretch | space-around | space-between | space-evenly;
-      place-content: <align-content> <justify-content>
-  */
-  justify-content: space-around;
-
-  /*grid-auto-columns: max-content;*/
-  /*grid-auto-rows: max-content;*/
-}
-
-.singer-box {
-  display: block;
-  text-align: center;
-}
-
-.singer-box:hover .cover {
-  transform: scale(1.07);
-}
-
 .list-view:nth-child(2n) {
   margin: 0.5em 0;
 }

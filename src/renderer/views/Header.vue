@@ -16,12 +16,12 @@
 
     <div class="v-row option-container no-drag" style="margin:0 4px 0 16px;">
       <!-- 后退 -->
-      <icon class="back" name="back" :class="{'disabled':backLength===0}" style="margin-left:0" @click="back"/>
+      <icon class="back" name="back" :class="{disabled: backLength === 0}" style="margin-left:0" @click="back"/>
       <!-- 前进 -->
       <icon class="forward" name="back" style="transform:rotate(180deg)" @click="forward"
-            :class="{'disabled':forwardLength===0}"/>
+            :class="{disabled : forwardLength === 0}"/>
       <!-- 刷新 -->
-      <icon name="refresh" @click="refresh" style="margin:0 0 0 8px"/>
+      <icon name="refresh" @click="refresh" style="margin:0 8px 0 0"/>
 
       <text-field placeholder="请输入内容" v-model="searchInput" suffixIcon="search" @keyup.enter="openNetSearchView"/>
     </div>
@@ -78,7 +78,6 @@
 </template>
 
 <script>
-// 未最大化时的图标
 import {nextTick, reactive, ref, getCurrentInstance} from "vue";
 import {useRoute, useRouter} from "vue-router";
 

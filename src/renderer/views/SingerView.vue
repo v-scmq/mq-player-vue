@@ -35,7 +35,7 @@
                   v-show="tabMap.value===tabMap.SONG_TAB" @row-dblclick="onCellClick">
         <template v-slot:title="{item}">
           {{ item.title }}
-          <icon class="mv-icon" name="mv" v-if="item.vid"/>
+          <icon class="mv-icon" name="mv" width="1em" height="1em" v-if="item.vid"/>
         </template>
 
         <template v-slot:singer="{item}">
@@ -46,7 +46,7 @@
 
         <template v-slot:album="{item}">
             <span class="link" v-if="item.album" :data-mid="item.album.mid">
-              {{ singer.name }}
+              {{ item.album.name }}
             </span>
         </template>
       </table-view>
@@ -104,7 +104,7 @@ export default {
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer',},
-      {title: '专辑', valueGetter: item => item.album ? item.album.name : null},
+      {title: '专辑', property: 'album'},
       {title: '时长', property: 'duration', width: 100}
     ]);
 

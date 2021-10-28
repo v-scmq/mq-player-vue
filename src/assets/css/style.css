@@ -385,18 +385,22 @@ html, body, #app {
     padding: 4px;
 }
 
+.accordion .list-view .titled-pane::before {
+    content: '';
+    border: 8px solid;
+    border-color: transparent transparent transparent black;
+    border-right: none;
+    transition: transform 0.5s ease;
+    margin: 0 8px;
+}
+
+.accordion .list-view.expand .titled-pane::before {
+    transform: rotate(90deg);
+}
+
 .accordion .list-view.expand .titled-pane,
 .accordion .list-view:not(.expand):last-child .titled-pane {
     border-width: 1px;
-}
-
-.accordion .list-view .icon {
-    pointer-events: none;
-    margin: 0 4px;
-}
-
-.accordion .list-view:not(.expand) .titled-pane .icon {
-    transform: rotate(-90deg);
 }
 
 .accordion .list-view .scroll-wrapper {
@@ -730,7 +734,7 @@ html, body, #app {
 }
 
 .popup-pane:after {
-    border-width: 12px 8px;
+    border-width: 12px 8px 0;
     border-style: solid;
     border-color: var(--fill-popup-pane) transparent transparent;
     /* width: 1em; height: 0.75em; background: var(--fill-popup-pane); clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0); */
@@ -911,4 +915,52 @@ html, body, #app {
 .table .table-cell .link:hover {
     cursor: pointer;
     color: rgb(226, 155, 208);
+}
+
+/****************** ImageCover ***********************/
+.image-container {
+    display: grid;
+    padding: 20px 0 0 0;
+    overflow: auto;
+    grid-template-columns: repeat(auto-fit, 13em);
+    grid-gap: 3em; /* row-gap: 3em; column-gap: 3em; grid-column-gap: 3em; */
+    justify-content: space-around;
+    /*
+        justify-content属性是整个内容区域在容器里面的水平位置（左中右），align-content属性是整个内容区域的垂直位置（上中下）
+        place-content属性是align-content属性和justify-content属性的合并简写形式。
+
+        justify-content: start | end | center | stretch | space-around | space-between | space-evenly;
+        align-content: start | end | center | stretch | space-around | space-between | space-evenly;
+        place-content: <align-content> <justify-content>
+    */
+}
+
+.image-container .cover-item {
+    text-align: center;
+}
+
+.image-container .cover-item .cover {
+    width: 13em; /* 100% */
+    height: 13em;
+    border-radius: 8em;
+    cursor: pointer;
+    transition: transform .75s cubic-bezier(0, 1, .75, 1);
+}
+
+.image-container .cover-item:hover .cover {
+    transform: scale(1.07);
+}
+
+.image-container .cover-item .name {
+    white-space: normal;
+}
+
+.image-container.arc-rect {
+    grid-template-columns: repeat(auto-fit, 16em);
+}
+
+.image-container.arc-rect .cover-item .cover {
+    width: 16em; /* 100% */
+    height: 12em;
+    border-radius: 0.75em;
 }

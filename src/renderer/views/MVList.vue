@@ -2,10 +2,10 @@
   <div ref='el' class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
     <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'>{{ tag.name }}</div>
   </div>
-  <div ref="el" class='v-row image-container' style='flex:1;flex-wrap:wrap;overflow:auto;justify-content:space-around;'>
-    <div class='v-column content-box' v-for='(item,index) in list' :key='index'>
-      <img class=cover :src='item.cover' loading="lazy" alt/>
-      <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
+  <div ref="el" class='image-container arc-rect' style='flex:1;'>
+    <div class='cover-item' v-for='(item,index) in list' :key='index'>
+      <img class='cover' :src='item.cover' loading="lazy" alt/>
+      <div class='name'>{{ item.singer }}{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
     </div>
   </div>
 </template>
@@ -85,33 +85,6 @@ export default {
 </script>
 
 <style scoped>
-.image-container {
-  padding: 1em 0 0 0;
-  margin: 0.5em 0 0 0;
-}
-
-.image-container > .content-box {
-  align-items: center;
-  margin: 0 3em 3em 0;
-}
-
-.content-box .cover {
-  width: 15em;
-  height: 10em;
-  cursor: pointer;
-  border-radius: 0.75em;
-  transition: transform .75s cubic-bezier(0, 1, .75, 1);
-}
-
-.content-box .name {
-  max-width: 13em;
-  /*默认换行white-space: normal;*/
-}
-
-.content-box:hover .cover {
-  transform: scale(1.07);
-}
-
 .list-view:nth-child(2n) {
   margin: 0.5em 0;
 }
