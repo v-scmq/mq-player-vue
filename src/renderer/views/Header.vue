@@ -21,9 +21,9 @@
       <icon class="forward" name="forward" style="transform:rotate(180deg)" @click="forward"
             :class="{'disabled':forwardLength===0}"/>
       <!-- 刷新 -->
-      <icon name="refresh" @click="refresh"/>
+      <icon name="refresh" @click="refresh" style="margin:0 0 0 8px"/>
 
-      <text-field style="margin:0 0 0 8px" placeholder="请输入内容" v-model="searchInput" @keyup.enter="openNetSearchView"/>
+      <text-field placeholder="请输入内容" v-model="searchInput" suffixIcon="search" @keyup.enter="openNetSearchView"/>
     </div>
 
     <div class="v-row window-tool no-drag" style="flex:1;justify-content:flex-end;">

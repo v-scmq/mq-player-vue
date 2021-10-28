@@ -1,11 +1,17 @@
 <template>
-  <div class="text-field">
-    <input class="input" autocomplete="off" ref="inputNode" :placeholder="placeholder"
-           :type="type" @input="handleInput" @change="handleChange" :value="modelValue"/>
+  <div class="text-field" :class="{disabled}">
 
-    <svg class="icon" viewBox="0 0 16 16" v-if="suffixIcon">
-      <path :d="suffixIcon"/>
-    </svg>
+    <slot name='prefix-icon'>
+      <icon :name="prefixIcon" v-if="prefixIcon"/>
+    </slot>
+
+    <input class="input" autocomplete="off" :placeholder="placeholder" :type="type"
+           :maxlength="maxLength" :disabled="disabled"
+           @input="handleInput" @change="handleChange" :value="modelValue"/>
+
+    <slot name="suffix-icon">
+      <icon :name="suffixIcon" v-if="suffixIcon"/>
+    </slot>
   </div>
 </template>
 
@@ -15,13 +21,20 @@ export default {
   name: "TextField",
 
   props: {
+    /* 输入框双向绑定值 */
     modelValue: [String, Number],
+    /* 输入框类型 */
     type: {type: String, default: 'text'},
-    placeholder: null,
-    suffixIcon: {
-      type: String,
-      default: 'M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'
-    },
+    /* 输入框提示内容 */
+    placeholder: String,
+    /* 前缀图标 */
+    prefixIcon: String,
+    /* 后缀图标 */
+    suffixIcon: String,
+    /* 输入最大长度 */
+    maxLength: Number,
+    /* 是否禁用 */
+    disabled: Boolean,
   },
 
   setup(props, {attrs, emit}) {
