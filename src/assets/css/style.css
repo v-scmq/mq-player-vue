@@ -542,7 +542,7 @@ html, body, #app {
 
 /*======================Modal==================*/
 .modal {
-    position: fixed;
+    position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
@@ -602,9 +602,9 @@ html, body, #app {
 
 /*======================Message==================*/
 .message {
+    position: absolute;
     top: 20px;
     left: 50%;
-    position: fixed; /*相对于浏览器窗口固定定位*/
     z-index: 9999;
     padding: 1em;
     min-width: 380px;
@@ -617,11 +617,7 @@ html, body, #app {
     background-color: #edf2fc;
     transform: translateX(-50%);
     transition: opacity .3s, transform .4s, top .4s;
-    -webkit-app-region: no-drag; /* electron独有的属性,防止message在标题栏上不能响应操作 */
-}
-
-.message.center {
-    justify-content: center;
+    -webkit-app-region: none; /* electron独有的属性,防止message在标题栏上不能响应操作 */
 }
 
 .message.success > .message-icon {
