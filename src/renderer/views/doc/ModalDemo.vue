@@ -1,6 +1,6 @@
 <template>
   <div class="v-row">
-    <button-base @click="$refs.modal.open()">打开模态框</button-base>
+    <Button @click="$refs.modal.open()" text='打开模态框'/>
   </div>
   <modal width="80%" height="60%" ref="modal">
     <template v-slot:content>
