@@ -1,12 +1,12 @@
 <template>
   <div class="v-row option-flex" style="margin:0 0 8px 0;">
-    <button-base @click="multiple=!multiple">批量操作</button-base>
+    <Button @click="multiple=!multiple">批量操作</Button>
 
-    <button-base class="align-end" @click="doAdd">添加数据</button-base>
-    <button-base class="align-end" @click="doUpd">修改数据</button-base>
-    <button-base class="align-end" @click="doDel">删除数据</button-base>
-    <button-base class="align-end" @click="doAddAll">批量添加</button-base>
-    <button-base class="align-end" @click="doDelAll">全部删除</button-base>
+    <Button class="align-end" @click="doAdd">添加数据</Button>
+    <Button class="align-end" @click="doUpd">修改数据</Button>
+    <Button class="align-end" @click="doDel">删除数据</Button>
+    <Button class="align-end" @click="doAddAll">批量添加</Button>
+    <Button class="align-end" @click="doDelAll">全部删除</Button>
   </div>
 
   <table-view :columns="columns" :data="dataList" style="flex:1;overflow: hidden"/>

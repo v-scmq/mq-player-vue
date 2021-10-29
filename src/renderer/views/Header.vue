@@ -71,7 +71,7 @@
             <div>会员到期时间：{{ user.payBillEndTime }}</div>
           </template>
         </div>
-        <button-base text="退出" @click="logout"/>
+        <Button text="退出" @click="logout"/>
       </template>
     </modal>
   </div>

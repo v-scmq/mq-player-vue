@@ -1,5 +1,5 @@
 import Accordion from "./Accordion";
-import Button from './ButtonBase';
+import Button from './Button';
 import CheckBox from "./CheckBox";
 import TableView from "./TableView";
 import TextField from "./TextField";

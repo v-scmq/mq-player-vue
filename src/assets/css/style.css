@@ -143,7 +143,7 @@ html, body, #app {
 
 /*======================Button===================*/
 .button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 
@@ -167,7 +167,7 @@ html, body, #app {
     /*box-shadow: 0 0 0.25em 0 #409eff;*/
 }
 
-.button > svg {
+.button > .icon {
     fill: var(--button-text-base);
     margin: 0 4px 0 0;
 }

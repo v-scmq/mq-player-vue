@@ -1,11 +1,11 @@
 <template>
   <div class="v-column">
     <div class="v-row option-flex">
-      <button-base>播放全部</button-base>
-      <button-base @click="handleClicked">批量操作</button-base>
+      <Button>播放全部</Button>
+      <Button @click="handleClicked">批量操作</Button>
       <text-field class="align-end" v-model="inputKey" placeholder="搜索本地歌曲"></text-field>
-      <button-base class="align-end" @click="$refs.file_import.click()">导入歌曲</button-base>
-      <button-base class="align-end">排序方式</button-base>
+      <Button class="align-end" @click="$refs.file_import.click()">导入歌曲</Button>
+      <Button class="align-end">排序方式</Button>
       <input type="file" style="display: none" ref="file_import" multiple accept="audio/*"/>
     </div>
 

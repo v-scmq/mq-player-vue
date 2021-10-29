@@ -1,24 +1,20 @@
 <template>
-  <div class="text-field" :class="{disabled}">
+  <div class='text-field' :class='{disabled}'>
 
-    <slot name='prefix-icon'>
-      <icon :name="prefixIcon" v-if="prefixIcon"/>
-    </slot>
+    <icon :name='prefixIcon' v-if='prefixIcon'/>
 
-    <input class="input" autocomplete="off" :placeholder="placeholder" :type="type"
-           :maxlength="maxLength" :disabled="disabled"
-           @input="handleInput" @change="handleChange" :value="modelValue"/>
+    <input class='input' autocomplete='off' :placeholder='placeholder' :type='type'
+           :maxlength='maxLength' :disabled='disabled'
+           @input='handleInput' @change='handleChange' :value='modelValue'/>
 
-    <slot name="suffix-icon">
-      <icon :name="suffixIcon" v-if="suffixIcon"/>
-    </slot>
+    <icon :name='suffixIcon' v-if='suffixIcon'/>
   </div>
 </template>
 
 <script>
 
 export default {
-  name: "TextField",
+  name: 'TextField',
 
   props: {
     /* 输入框双向绑定值 */

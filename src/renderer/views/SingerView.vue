@@ -12,10 +12,10 @@
       </div>
 
       <div class="v-row">
-        <button-base text="播放全部"/>
-        <button-base text="下载"/>
-        <button-base text="批量操作"/>
-        <button-base text="打印预览" @click="print"/>
+        <Button text="播放全部"/>
+        <Button text="下载"/>
+        <Button text="批量操作"/>
+        <Button text="打印预览" @click="print"/>
       </div>
     </div>
   </div>

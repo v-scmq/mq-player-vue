@@ -1,32 +1,20 @@
 <template>
   <div class="v-row" style="margin: 0 0 12px 0;">
-    <button-base text="播放全部" @click="playSelect">
-      <icon name="play-select" width="1.5em" height="1.5em"/>
-    </button-base>
-
-    <button-base text="批量操作" @click="onMultiple">
-      <icon width="1.5em" height="1.5em" :name="multiple ? 'exit-multiple' : 'multiple' "/>
-    </button-base>
-
-    <button-base text="增加列" @click="doAddColumn"/>
-    <button-base text="删除列" @click="doDelColumn"/>
-    <button-base text="修改列" @click="doUpdColumn"/>
+    <Button text="播放全部" @click="playSelect" prefixIcon='play-select' prefixIconSize='1.5em'/>
+    <Button text="批量操作" @click="onMultiple" prefixIconSize='1.5em'
+            :prefixIcon="multiple ? 'exit-multiple' : 'multiple' "/>
+    <Button text="增加列" @click="doAddColumn"/>
+    <Button text="删除列" @click="doDelColumn"/>
+    <Button text="修改列" @click="doUpdColumn"/>
 
     <text-field v-model="inputKey" placeholder="搜索本地歌曲" @input="handleMusicFilter"/>
 
-    <button-base text='导入歌曲' @click="onImportButtonClicked">
-      <icon name="import" width="1.5em" height="1.5em"/>
-      <input type="file" style="display:none" ref="fileChooser" multiple accept="audio/*" @change="addMusic"/>
-    </button-base>
-
-    <button-base text="排序方式">
-      <icon name="sort" width="1.2em" height="1.2em"/>
-    </button-base>
+    <Button text='导入歌曲' @click="onImportButtonClicked" prefixIcon='import' prefixIconSize='1.5em'/>
+    <input type="file" style="display:none" ref="fileChooser" multiple accept="audio/*" @change="addMusic"/>
+    <Button text="排序方式" prefixIcon='sort' prefixIconSize='1.2em'/>
   </div>
 
-  <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick">
-    <!-- <template v-slot:singer="{item}">{{ item.singer }}</template>-->
-  </table-view>
+  <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick"/>
 </template>
 
 <script>
