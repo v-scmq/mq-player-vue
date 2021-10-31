@@ -124,6 +124,9 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
         // 获取应用程序运行时进程所在的根路径
         ipcMain.handle('get-app-path', async () => app.getAppPath());
+
+        // 关闭计算机
+        ipcMain.handle('shutdown', shutdown);
     });
 
     // 当所有窗口关闭后结束进程
@@ -340,4 +343,21 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         cookies.get({url}).then(cookieArray => cookieArray.forEach(cookie => cookies.remove(url, cookie.name)));
         resolve(null);
     });
+
+    /**
+     * 立即关闭本地计算机
+     *
+     * @param force {boolean} 指定是否强制执行关机(仅适用于windows)
+     */
+    const shutdown = async force => {
+        // shutdown 命令用法:
+        // windows系统可在cmd  输入 "shutdown ?"      查看
+        // linux  系统可在终端 输入 "shutdown --help" 查看
+
+        const command = process.platform === 'win32' ?
+            `shutdown -p${force ? ' -f' : ''}` : 'shutdown -h now';
+
+        const childProcess = require('child_process');
+        childProcess.exec(command, error => app.exit(error ? -1 : 0));
+    };
 }

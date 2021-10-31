@@ -72,6 +72,10 @@ export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
             }
         },
         {
+            path: '/system-setting',
+            component: () => import('../views/SystemSetting'),
+        },
+        {
             path: '/component-list',
             component: () => import('../views/doc/ComponentList'),
             redirect: '/component-list/Pagination',

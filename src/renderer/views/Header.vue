@@ -2,14 +2,15 @@
   <div class="title-bar v-row" ref="el">
     <div class="v-row no-drag fixed-left-bar" style="padding:4px;">
       <!--  用户头像图片 -->
-      <img alt draggable="false" class="user-icon image" :src="user.headURL" v-if="user.uin" @click="openLoginModal"/>
+      <img alt draggable="false" class="user-icon image" :src="user.headURL" v-if="user.uin"
+           @click='loginModal = true'/>
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
       <div class="user-icon container" v-else>
         <icon name="user" @click="login"/>
       </div>
 
-      <span class="user-name" :title="user.nickName" @click="user.uin ? openLoginModal() : login($event)">
+      <span class="user-name" :title="user.nickName" @click='user.uin ? (loginModal = true) : login($event)'>
         {{ user.uin ? user.nickName : '点击登录' }}
       </span>
     </div>
@@ -30,7 +31,7 @@
       <!-- 皮肤 -->
       <icon class="icon-menu skin viewer-hidden" name="skin"/>
       <!-- 设置 -->
-      <icon class="icon-menu setting viewer-hidden" name="setting"/>
+      <icon class="icon-menu setting viewer-hidden" name="setting" @click='openSystemSetting'/>
       <!-- 隐藏播放详情视图(播放详情时可见) -->
       <icon class="icon-menu viewer-show hide-viewer" name="arrow-down" style="margin:0 auto 0 0.5em;"/>
 
@@ -50,7 +51,7 @@
       <icon class="icon-menu close state-icon" name="close" @click="closeWindow"/>
     </div>
 
-    <modal title="QQ登录" id="login-modal" ref="loginModal" width="600px" height="400px">
+    <modal title="QQ登录" id="login-modal" width="600px" height="400px" v-model:visible='loginModal'>
       <template v-slot:content>
         <div class="v-column" style="color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;">
           <div>账号：{{ user.uin }}</div>
@@ -90,6 +91,8 @@ export default {
     const forwardLength = ref(0);
     const isFullScreen = ref(false);
     const searchInput = ref('');
+    const loginModal = ref(false);
+
     /** @type {any} 用户基本信息 */
     const user = reactive({uin: '', nickName: '', headURL: ''});
 
@@ -161,7 +164,7 @@ export default {
     isFullScreen.value = !!document.fullscreenElement;
 
     return {
-      isMaximized, backLength, forwardLength, isFullScreen, searchInput, user,
+      loginModal, isMaximized, backLength, forwardLength, isFullScreen, searchInput, user,
       /** 后退 */
       back() {
         if (backLength.value) {
@@ -223,11 +226,6 @@ export default {
         vc.refs.el.classList.toggle('full-screen', state);
       },
 
-      /** 打开登录模态框 */
-      openLoginModal() {
-        vc.refs.loginModal.open();
-      },
-
       login,
 
       /**
@@ -248,7 +246,7 @@ export default {
         };
 
         // 若是手动调用模式,则先关闭登录模态框
-        param.isManual ? vc.refs.loginModal.close() : null;
+        param.isManual ? (loginModal.value = false) : null;
         $source.impl.logout(param);
       },
 
@@ -264,6 +262,13 @@ export default {
         // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
         return (path === viewPath && query.value === value) ? null :
             router.push({path: viewPath, query: {value}});
+      },
+
+      openSystemSetting() {
+        const viewPath = '/system-setting', path = route.path;
+        if (path !== viewPath) {
+          router.push({path: viewPath});
+        }
       }
     };
   }

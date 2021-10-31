@@ -11,18 +11,21 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 获取窗口状态(这里特指是否非全屏的最大化)
+     *
      * @return Promise<boolean> 异步Promise对象,最大化为true
      * */
     getWindowState: () => ipcRenderer.invoke('get-window-state'),
 
     /**
      * 当窗口最小化时,执行特定的回调方法
+     *
      * @param callback 待执行回调方法
      */
     setOnWindowMaximized: callback => ipcRenderer.on('maximized', callback),
 
     /**
      * 当窗口还原时,执行特定的回调方法
+     *
      * @param callback 待执行回调方法
      */
     setOnWindowRestore: callback => ipcRenderer.on('restored', callback),
@@ -37,6 +40,7 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 移除指定网页的cookie信息
+     *
      * @returns {Promise<any>}
      */
     removeAllCookie: (url) => ipcRenderer.invoke('remove-all-cookie', url),
@@ -46,6 +50,7 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 使用Electron原生网络层API发出网络请求
+     *
      * @param options 网络请求配置选项
      * @returns {Promise<any>} http/https响应内容
      */
@@ -53,6 +58,7 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 解析媒体文件,并获取媒体元数据信息
+     *
      * @param path {String} 媒体资源路径
      * @param options {mm.IOptions} 解析配置选项
      * @returns {Promise<mm.IAudioMetadata>} 媒体元数据信息
@@ -61,18 +67,21 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 创建指定路径的目录(文件夹)
+     *
      * @param path {String} 文件夹路径
      */
     mkDirs: path => fs.mkdirSync(path, {recursive: true}),
 
     /**
      * 强制删除一个目录
+     *
      * @param path {String} 目录路径
      */
     rmDir: path => fs.rmdirSync(path, {recursive: true}),
 
     /**
      * 强制删除文件
+     *
      * @param path {String} 文件路径
      */
     rmFile: path => fs.rmSync(path, {force: true, recursive: true}),
@@ -96,6 +105,7 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 通过检查文件系统，检查指定路径是否存在
+     *
      * @param path {String} 文件或目录 路径
      * @returns {boolean} 若指定的路径是否存在,则返回true
      */
@@ -121,7 +131,16 @@ contextBridge.exposeInMainWorld('electron', {
 
     /**
      * 获取应用程序运行时进程所在的根路径
+     *
      * @return {Promise<String>} 应用程序运行时进程所在的根路径
      */
-    getAppPath: () => ipcRenderer.invoke('get-app-path')
+    getAppPath: () => ipcRenderer.invoke('get-app-path'),
+
+    /**
+     * 关闭计算机
+     *
+     * @param force {boolean} 是否强制关机
+     * @returns {Promise<any>} Promise对象
+     */
+    shutdown: force => ipcRenderer.invoke('shutdown', force)
 });
