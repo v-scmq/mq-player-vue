@@ -5,7 +5,7 @@
     <div class="column">
       <template v-for="(column,index) in columns" :key="index">
         <div class="table-cell" :style="{flex:column.flex}">
-          <check-box v-if="column.type === 'checkbox' " v-model:value="isSelectAll" @update:value="headerCheckChange"/>
+          <check-box v-if="column.type === 'checkbox' " v-model="isSelectAll" @update:modelValue="headerCheckChange"/>
           <template v-else>
             {{ column.type === 'index' ? data.length : column.title }}
           </template>
@@ -31,8 +31,8 @@
              :class="{'selected':selectedItems[row+offsetIndex]}" @click="onTableRowClicked($event,row)">
           <!-- 单元格 -->
           <div class="table-cell" :key="col" v-for="(column,col) in columns" :style="{flex:column.flex}">
-            <check-box v-if="column.type==='checkbox'" v-model:value="selectedItems[row+offsetIndex]"
-                       @update:value="onItemCheckChanged(row)"/>
+            <check-box v-if="column.type==='checkbox'" v-model="selectedItems[row+offsetIndex]"
+                       @update:modelValue="onItemCheckChanged(row)"/>
             <slot v-else :name="column.property" :item="item"> {{ column.getCellValue(item, column, row) }}</slot>
           </div>
         </div>
