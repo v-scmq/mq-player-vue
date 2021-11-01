@@ -58,7 +58,7 @@ export default {
     data: {type: Array, default: () => []}
   },
 
-  emits: ['row-click', 'row-dblclick'],
+  emits: ['row-click', 'row-dblclick', /* 无限滚动 */ 'infinite-scroll'],
 
   setup(props, context) {
     let resizeObserve, el, scrollWrapper, contentWrapper;
@@ -80,6 +80,9 @@ export default {
     const maxScrollHeight = computed(() => props.data.length * props.cellHeight);
     // 检测是否是多选模式
     const isMultipleSelect = computed(() => props.columns.find(column => column.type === 'checkbox'));
+
+    // 无限滚动计时器
+    let infiniteScrollTimer = null;
 
     /**
      * 获取序号列单元格值
@@ -126,7 +129,7 @@ export default {
     /**
      * 更新可视区域
      */
-    const updateVisibleData = () => {
+    const updateVisibleData = (event) => {
       let top = scrollWrapper.scrollTop;
       let start = Math.floor(top / props.cellHeight);
 
@@ -134,10 +137,25 @@ export default {
       let list = props.data.slice(offsetIndex.value = start, start + visibleRowCount.value);
       visibleData.splice(0, visibleData.length, ...list);
 
-      // 出现滚动条元素的scrollTop + 滚动元素的scrollHeight 可以检测是否滚动到底部
-      top = (top + contentWrapper.scrollHeight) > maxScrollHeight.value ? start * props.cellHeight : top;
+      // 出现滚动条元素的scrollTop + 被滚动元素的scrollHeight 可以检测是否滚动到底部
+      const isAtBottom = (top + contentWrapper.scrollHeight) > maxScrollHeight.value;
+      top = isAtBottom ? start * props.cellHeight : top;
       // 将整个内容部分在y轴方向平移到可视区域
       contentWrapper.style.transform = `translate3d(0, ${top}px, 0)`;
+
+      // 若计时器正在使用,则清除计时器
+      if(infiniteScrollTimer !== null) {
+        clearTimeout(infiniteScrollTimer);
+        infiniteScrollTimer = null;
+      }
+
+      // 若滚动到底部(event存在的情况下,可以证明是由鼠标滚动引起的)
+      if(event && isAtBottom) {
+        infiniteScrollTimer = setTimeout(() => {
+          infiniteScrollTimer = null;
+          context.emit('infinite-scroll')
+        }, 500);
+      }
     };
 
     /**
