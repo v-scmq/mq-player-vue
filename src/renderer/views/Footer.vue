@@ -11,9 +11,8 @@
         <div class="v-column media-info">
           <span>{{ media.singer }} - {{ media.title }}</span>
           <div class="v-row">
-            <span>{{ media.time }}</span>
-            <span style="margin:0 4px;">/</span>
-            <span>{{ media.duration }}</span></div>
+            <span>{{ media.time }}</span> <span style="margin:0 4px;">/</span><span>{{ media.duration }}</span>
+          </div>
         </div>
       </div>
 

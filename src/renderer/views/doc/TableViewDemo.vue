@@ -1,42 +1,40 @@
 <template>
-  <div class="v-column" style="height:100%;">
-    <table-view :data="data" :columns="columns" style="flex:1;" @infinite-scroll='addData'/>
-  </div>
+  <table-view :data="data" :columns="columns" style="flex:1;" @infinite-scroll='addData'/>
 </template>
 
 <script>
-import {reactive } from "vue";
+import {reactive} from "vue";
 
 export default {
   name: "TableViewDemo",
 
   setup() {
     const columns = reactive([
-      { type: "index", width: 100 },
-      { title: "姓名", property: "name" },
-      { title: "年龄", property: "age" },
-      { title: "性别", property: "sex" },
-      { title: "专业", property: "major", width: 100 },
-      { title: "班级", property: "class", width: 100 }
+      {type: 'index', width: 100},
+      {title: '歌曲', property: 'title'},
+      {title: '歌手', property: 'singer'},
+      {title: '专辑', property: 'album'},
+      {title: '时长', property: 'duration', width: 100},
+      {title: '大小', property: 'size', width: 100}
     ]);
 
     const data = reactive([]);
 
     for (let index = 0; index < 100; ++index) {
       data.push({
-        name: "张三" + index,
-        age: 0 ^ (Math.random() * 10 + 20),
-        sex: "男",
-        major: "软件工程",
-        class: "16001"
+        title: '九张机',
+        singer: '叶炫清',
+        album: '九张机',
+        duration: '3:58',
+        size: '8.40MB'
       });
     }
 
-    const addData= () => {
+    const addData = () => {
       console.info('添加数据');
     };
 
-    return { columns, data , addData};
+    return {columns, data, addData};
   }
 };
 </script>

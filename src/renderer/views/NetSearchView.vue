@@ -1,21 +1,21 @@
 <template>
-  <div class="v-row singer-info-container" v-if="singer">
-    <img alt class="cover" :src="singer.cover"/>
-    <div class="v-column">
+  <div class='v-row singer-info-container' v-if='singer'>
+    <img alt class='cover' :src='singer.cover'/>
+    <div class='v-column'>
       <div>{{ singer.name || '-' }}</div>
 
-      <div class="v-row base-info">
-        <span class="count-info">单曲：{{ singer.songCount || '-' }}</span>
-        <span class="count-info">专辑：{{ singer.albumCount || '-' }}</span>
-        <span class="count-info">MV：{{ singer.mvCount || '-' }}</span>
-        <span class="count-info">粉丝：{{ singer.fansCount || '-' }}</span>
+      <div class='v-row base-info'>
+        <span class='count-info'>单曲：{{ singer.songCount || '-' }}</span>
+        <span class='count-info'>专辑：{{ singer.albumCount || '-' }}</span>
+        <span class='count-info'>MV：{{ singer.mvCount || '-' }}</span>
+        <span class='count-info'>粉丝：{{ singer.fansCount || '-' }}</span>
       </div>
 
-      <div class="v-row">
-        <Button text="播放全部"/>
-        <Button text="播放全部"/>
-        <Button text="播放全部"/>
-        <Button text="打印预览" @click="print"/>
+      <div class='v-row'>
+        <Button text='播放全部'/>
+        <Button text='播放全部'/>
+        <Button text='播放全部'/>
+        <Button text='打印预览' @click='print'/>
       </div>
     </div>
   </div>
@@ -23,61 +23,61 @@
   <div class='tab-pane v-column'>
     <div class='v-row tab-container' style='justify-content:center;'>
 
-      <div class="tab" v-for='(tab,index) in tabMap.tabList' :key='index'
-           :class="tabMap.value===tab?'active':null" @click='tabMap.value=tab'>
+      <div class='tab' v-for='(tab,index) in tabMap.tabList' :key='index'
+           :class='{active: tabMap.value === tab}' @click='tabMap.value = tab'>
         {{ tab.title }}
       </div>
     </div>
 
-    <div class="tab-content v-column">
+    <div class='tab-content v-column'>
 
-      <table-view :columns="columns" :data='songList' style="flex:auto;"
-                  v-show="tabMap.value===tabMap.SONG_TAB" @row-dblclick="onCellClick">
-        <template v-slot:title="{item}">
+      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
+                  v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
+        <template v-slot:title='{item}'>
           {{ item.title }}
-          <icon class="mv-icon" name="mv" width="1em" height="1em" v-if="item.vid"/>
+          <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
         </template>
 
-        <template v-slot:singer="{item}">
-            <span class="link" v-for="(singer,index) in item.singer" :key="index" :data-mid="singer.mid">
+        <template v-slot:singer='{item}'>
+            <span class='link' v-for='(singer,index) in item.singer' :key='index' :data-mid='singer.mid'>
               {{ singer.name }}
             </span>
         </template>
 
-        <template v-slot:album="{item}">
-            <span class="link" v-if="item.album" :data-mid="item.album.mid">
+        <template v-slot:album='{item}'>
+            <span class='link' v-if='item.album' :data-mid='item.album.mid'>
               {{ item.album.name }}
             </span>
         </template>
       </table-view>
 
       <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show="tabMap.value===tabMap.ALBUM_TAB" @click="onAlbumItemClicked">
-        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :data-index="index">
-          <img class=cover :src='item.cover' loading="lazy" alt/>
+           v-show='tabMap.value===tabMap.ALBUM_TAB' @click='onAlbumItemClicked'>
+        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :data-index='index'>
+          <img class=cover :src='item.cover' loading='lazy' alt/>
           <div class='name'>{{ item.name }}</div>
         </div>
       </div>
 
       <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show="tabMap.value===tabMap.MV_TAB">
+           v-show='tabMap.value===tabMap.MV_TAB'>
         <div class='v-column content-box' v-for='(item,index) in mvList' :key='index'>
-          <img class=cover :src='item.cover' loading="lazy" alt/>
+          <img class=cover :src='item.cover' loading='lazy' alt/>
           <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
         </div>
       </div>
 
-      <div v-show="tabMap.value===tabMap.SPECIAL_TAB" class="label">歌单list</div>
+      <div v-show='tabMap.value===tabMap.SPECIAL_TAB' class='label'>歌单list</div>
     </div>
   </div>
 </template>
 
 <script>
-import {reactive, watch, getCurrentInstance} from "vue";
-import {useRouter} from "vue-router";
+import {reactive, watch, getCurrentInstance} from 'vue';
+import {useRouter} from 'vue-router';
 
 export default {
-  name: "NetSearchView",
+  name: 'NetSearchView',
 
   props: {query: Object},
 
@@ -204,7 +204,20 @@ export default {
           let index = attr.value - 0, album = index >= 0 ? albumList[index] : null;
           return album ? router.push({path: '/album-view', query: album}) : null;
         }
-      }
+      },
+
+      loadDataList() {
+        if (page.total < 2 || page.current >= page.total) {
+          return;
+        }
+
+        ++page.current;
+        $spinner.open();
+
+        $source.impl.songSearch($query, page)
+            .then(res => songList.push(...res))
+            .finally($spinner.close);
+      },
     };
   }
 }

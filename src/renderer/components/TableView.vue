@@ -60,7 +60,7 @@ export default {
 
   emits: ['row-click', 'row-dblclick', /* 无限滚动 */ 'infinite-scroll'],
 
-  setup(props, context) {
+  setup(props, {emit}) {
     let resizeObserve, el, scrollWrapper, contentWrapper;
 
     //列标题尾部填充单元格宽度
@@ -144,16 +144,16 @@ export default {
       contentWrapper.style.transform = `translate3d(0, ${top}px, 0)`;
 
       // 若计时器正在使用,则清除计时器
-      if(infiniteScrollTimer !== null) {
+      if (infiniteScrollTimer !== null) {
         clearTimeout(infiniteScrollTimer);
         infiniteScrollTimer = null;
       }
 
       // 若滚动到底部(event存在的情况下,可以证明是由鼠标滚动引起的)
-      if(event && isAtBottom) {
+      if (event && isAtBottom) {
         infiniteScrollTimer = setTimeout(() => {
           infiniteScrollTimer = null;
-          context.emit('infinite-scroll')
+          emit('infinite-scroll')
         }, 500);
       }
     };
@@ -169,7 +169,7 @@ export default {
 
       // 若是单击
       if (event.detail === 1) {
-        context.emit('row-click', index);
+        emit('row-click', index);
         let map = selectedItems;
 
         // --------若是多选模式,即启用表头复选框时,即是多选模式-------
@@ -194,7 +194,7 @@ export default {
         map[index] = true;
 
       } else if (event.detail === 2) {
-        context.emit('row-dblclick', index);
+        emit('row-dblclick', index);
       }
     };
 
