@@ -20,9 +20,9 @@ const MIME_TYPE = {
 /**
  * 处理本地文件资源请求
  *
- * @param request {module:http.IncomingMessage} 客户端请求信息
- * @param response {module:http.ServerResponse} 服务器响应信息
- * @param path {string} 文件资源绝对路径
+ * @param {module:http.IncomingMessage} request 客户端请求信息
+ * @param {module:http.ServerResponse} response 服务器响应信息
+ * @param {string} path 文件资源绝对路径
  */
 const handleFileRequest = (request, response, path) => {
     if (path && existsSync(path)) {
@@ -87,15 +87,15 @@ const handleFileRequest = (request, response, path) => {
 /**
  * 请求映射处理器
  *
- * @type {{[key:string]:Function}}
+ * @type {{[key:string]: Function}}
  */
 const requestMappingHandler = {
 
     /**
      * 获取本地文件资源
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      * @param url {URL} 经过解析后的URL对象
      */
     '/api/file'(request, response, url) {
@@ -105,8 +105,8 @@ const requestMappingHandler = {
     /**
      * 获取歌手列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singers'(request, response) {
         const buffers = [];
@@ -121,10 +121,7 @@ const requestMappingHandler = {
             const data = await QQMusicSource.singerList(tag, page);
 
             response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
-
             delete data.httpInfo;
-
-            response.write(data);
             response.end();
         });
     },
@@ -132,8 +129,8 @@ const requestMappingHandler = {
     /**
      * 获取歌手歌曲列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/songs'(request, response) {
         response.end();
@@ -142,8 +139,8 @@ const requestMappingHandler = {
     /**
      * 获取歌手专辑列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/albums'(request, response) {
         response.end();
@@ -152,8 +149,8 @@ const requestMappingHandler = {
     /**
      * 获取专辑歌曲列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/album/songs'(request, response) {
         response.end();
@@ -162,8 +159,8 @@ const requestMappingHandler = {
     /**
      * 获取歌手MV列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/mvs'(request, response) {
         response.end();
@@ -172,8 +169,8 @@ const requestMappingHandler = {
     /**
      * 获取歌单列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/specials'(request, response) {
         response.end();
@@ -183,8 +180,8 @@ const requestMappingHandler = {
     /**
      * 获取歌单歌曲列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/special/songs'(request, response) {
         response.end();
@@ -193,8 +190,8 @@ const requestMappingHandler = {
     /**
      * 获取MV列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/mvs'(request, response) {
         response.end();
@@ -203,8 +200,8 @@ const requestMappingHandler = {
     /**
      * 获取榜单列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/ranks'(request, response) {
         response.end();
@@ -213,8 +210,8 @@ const requestMappingHandler = {
     /**
      * 获取榜单歌曲列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/rank/songs'(request, response) {
         response.end();
@@ -224,8 +221,8 @@ const requestMappingHandler = {
     /**
      * 获取歌曲搜索列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/songs'(request, response) {
         response.end();
@@ -234,8 +231,8 @@ const requestMappingHandler = {
     /**
      * 获取专辑搜索列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/albums'(request, response) {
         response.end();
@@ -244,8 +241,8 @@ const requestMappingHandler = {
     /**
      * 获取歌单搜索列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/specials'(request, response) {
         response.end();
@@ -254,8 +251,8 @@ const requestMappingHandler = {
     /**
      * 获取MV搜索列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/mvs'(request, response) {
         response.end();
@@ -264,8 +261,8 @@ const requestMappingHandler = {
     /**
      * 获取歌词
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/lyric'(request, response) {
         response.end();
@@ -275,8 +272,8 @@ const requestMappingHandler = {
     /**
      * 获取歌手写真列表
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/pic'(request, response) {
         response.end();
@@ -285,8 +282,8 @@ const requestMappingHandler = {
     /**
      * 获取音频数据(以二进制数据流方式响应)
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/url/song'(request, response) {
         response.end();
@@ -295,8 +292,8 @@ const requestMappingHandler = {
     /**
      * 获取MV数据(以二进制数据流方式响应)
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/url/mv'(request, response) {
         response.end();
@@ -305,8 +302,8 @@ const requestMappingHandler = {
     /**
      * 获取封面图(以二进制数据流方式响应)
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/url/cover'(request, response) {
         response.end();
@@ -315,16 +312,19 @@ const requestMappingHandler = {
     /**
      * 更通用的数据流请求响应
      *
-     * @param request {module:http.IncomingMessage} 客户端请求信息
-     * @param response {module:http.ServerResponse} 服务器响应信息
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/stream'(request, response) {
         response.end();
     }
 };
 
+// 创建HTTP服务
 http.createServer((request, response) => {
+    // 获取解析后的URL对象
     const url = new URL(`${protocol}://${host}:${port}${request.url}`);
+    // 获取URL路径字符串
     const path = url.pathname;
     const handler = requestMappingHandler[path];
 

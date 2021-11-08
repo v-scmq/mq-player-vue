@@ -1,39 +1,39 @@
 <template>
   <!-- 使用 getCurrentInstance().refs.el 替代 getCurrentInstance().vnode.el -->
-  <div class="table" tabindex="0" ref="el" @keydown="onKeydown" :style="{'--table-cell-height':`${cellHeight}px`}">
+  <div class='table' tabindex='0' ref='el' @keydown='onKeydown' :style="{'--table-cell-height':`${cellHeight}px`}">
     <!-- 表格列信息 -->
-    <div class="column">
-      <template v-for="(column,index) in columns" :key="index">
-        <div class="table-cell" :style="{flex:column.flex}">
-          <check-box v-if="column.type === 'checkbox' " v-model="isSelectAll" @update:modelValue="headerCheckChange"/>
+    <div class='column'>
+      <template v-for='(column,index) in columns' :key='index'>
+        <div class='table-cell' :style='{flex:column.flex}'>
+          <check-box v-if="column.type === 'checkbox' " v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
           <template v-else>
             {{ column.type === 'index' ? data.length : column.title }}
           </template>
         </div>
       </template>
-      <div class="table-cell gutter" :style="{width:gutterWidth}">
+      <div class='table-cell gutter' :style='{width:gutterWidth}'>
         <div>
-          <svg width="1em" height="1em" viewBox="0 0 16 16">
+          <svg width='1em' height='1em' viewBox='0 0 16 16'>
             <path
-                d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z'/>
           </svg>
         </div>
       </div>
     </div>
 
     <!-- 表格内容虚拟滚动部分 -->
-    <div class="scroll-wrapper" @scroll="updateVisibleData" style="flex:auto;overflow-y:auto;position:relative">
-      <div style="position:absolute;left:0;right:0;z-index:-1;" :style="{minHeight:`${maxScrollHeight}px`}"/>
+    <div class='scroll-wrapper' @scroll='updateVisibleData' style='flex:auto;overflow-y:auto;position:relative'>
+      <div style='position:absolute;left:0;right:0;z-index:-1;' :style='{minHeight:`${maxScrollHeight}px`}'/>
       <!-- 表格内容部分  -->
-      <div class="content-wrapper" :style="{paddingRight:data.length < visibleRowCount ? gutterWidth : null}">
+      <div class='content-wrapper' :style='{paddingRight: data.length < visibleRowCount ? gutterWidth : null}'>
         <!-- 行单元格 -->
-        <div class="table-row-cell" :key="row" v-for="(item,row) in visibleData"
-             :class="{'selected':selectedItems[row+offsetIndex]}" @click="onTableRowClicked($event,row)">
+        <div class='table-row-cell' :key='row' v-for='(item,row) in visibleData'
+             :class='{selected:selectedItems[row+offsetIndex]}' @click='onTableRowClicked($event,row)'>
           <!-- 单元格 -->
-          <div class="table-cell" :key="col" v-for="(column,col) in columns" :style="{flex:column.flex}">
-            <check-box v-if="column.type==='checkbox'" v-model="selectedItems[row+offsetIndex]"
-                       @update:modelValue="onItemCheckChanged(row)"/>
-            <slot v-else :name="column.property" :item="item"> {{ column.getCellValue(item, column, row) }}</slot>
+          <div class='table-cell' :key='col' v-for='(column,col) in columns' :style='{flex:column.flex}'>
+            <check-box v-if="column.type==='checkbox'" v-model='selectedItems[row+offsetIndex]'
+                       @update:modelValue='onItemCheckChanged(row)'/>
+            <slot v-else :name='column.property' :item='item'> {{ column.getCellValue(item, column, row) }}</slot>
           </div>
         </div>
       </div>
@@ -45,10 +45,10 @@
 import {
   ref, reactive, computed, watch, nextTick,
   getCurrentInstance, onMounted, onBeforeUnmount,
-} from "vue";
+} from 'vue';
 
 export default {
-  name: "TableView",
+  name: 'TableView',
   props: {
     /* 表格列信息 */
     columns: {type: Array},
@@ -87,10 +87,10 @@ export default {
     /**
      * 获取序号列单元格值
      *
-     * @param item {Object}   当前行单元格数据对象
-     * @param column {Object} 当前单元格所在列配置信息
-     * @param index {Number}  当前行单元格索引
-     * @return {String}       当前行单元格序号字符串
+     * @param {Object} item   当前行单元格数据对象
+     * @param {Object} column 当前单元格所在列配置信息
+     * @param {number} index  当前行单元格索引
+     * @return {string}       当前行单元格序号字符串
      */
     const getSequenceValue = (item, column, index) => {
       return (index = ++index + offsetIndex.value) < 10 ? `0${index}` : index;
@@ -99,9 +99,9 @@ export default {
     /**
      * 获取单元格的普通属性值
      *
-     * @param item {Object}    当前行单元格数据对象
-     * @param column {Object}  当前单元格所在列配置信息
-     * @return {String|Number} 当前单元格的值
+     * @param {Object} item      当前行单元格数据对象
+     * @param {Object} column    当前单元格所在列配置信息
+     * @return {string | number} 当前单元格的值
      */
     const getPropertyValue = (item, column) => {
       return item[column.property];
@@ -110,9 +110,9 @@ export default {
     /**
      * 获取单元格的多级属性值(当某一级属性值不能获取时,将中断获取)
      *
-     * @param item {Object}           当前行单元格数据对象
-     * @param column {Object}         当前单元格所在列配置信息
-     * @return {String|Number|Object} 当前单元格的值
+     * @param {Object} item               当前行单元格数据对象
+     * @param {Object} column             当前单元格所在列配置信息
+     * @return {string | number | Object} 当前单元格的值
      */
     const getDeepPropertyValue = (item, column) => {
       let value = item;
@@ -128,6 +128,8 @@ export default {
 
     /**
      * 更新可视区域
+     *
+     * @param {Event} event 滚动事件
      */
     const updateVisibleData = (event) => {
       let top = scrollWrapper.scrollTop;
@@ -160,8 +162,8 @@ export default {
 
     /**
      * 表格行单元个被点击时的回调
-     * @param event {MouseEvent} 事件
-     * @param index {Number} 被点击行单元格索引(传入的只是在可视区域的索引)
+     * @param {MouseEvent} event 事件
+     * @param {number} index 被点击行单元格索引(传入的只是在可视区域的索引)
      */
     const onTableRowClicked = (event, index) => {
       // 转换为实际的行单元格索引
@@ -200,7 +202,7 @@ export default {
 
     /**
      * 行单元格选中状态改变事件回调
-     * @param index {Number} 行单元格索引(传入的只是在可视区域的索引)
+     * @param {number} index 行单元格索引(传入的只是在可视区域的索引)
      */
     const onItemCheckChanged = index => {
       // 转换为实际行单元格索引
@@ -217,7 +219,7 @@ export default {
 
     /**
      * 列标题上的复选框勾选改变事件
-     * @param newValue {Boolean} 勾选状态
+     * @param {boolean} newValue 勾选状态
      */
     const headerCheckChange = newValue => {
       let map = selectedItems, keys = Object.keys(map);
@@ -238,7 +240,7 @@ export default {
     /**
      * table组件键盘快捷键
      * table组件获得焦点时(必须有tabindex属性)
-     * @param event {KeyboardEvent} 键盘按键事件
+     * @param {KeyboardEvent} event 键盘按键事件
      */
     const onKeydown = event => {
       // 对于出现滚动条的元素的scrollTop值无需检查值范围的合法性,因为元素内部已做控制

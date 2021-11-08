@@ -51,8 +51,8 @@ const player = {
     /**
      * 从一个包含媒体信息的列表中指定位置的媒体资源播放
      *
-     * @param list 媒体资源信息列表
-     * @param index 指定开始播放的索引
+     * @param {Array} list 媒体资源信息列表
+     * @param {number} index 指定开始播放的索引
      */
     playMediaList(list, index) {
         if (!list || list.length < 1)
@@ -87,7 +87,8 @@ const player = {
 
     /**
      * 设置播放器到指定时间位置的
-     * @param value{Number} 时间值，单位秒
+     *
+     * @param {number} value 时间值，单位秒
      */
     seek(value) {
         this.nativePlayer.currentTime = value;
@@ -107,7 +108,8 @@ const player = {
 
     /**
      * 设置播放器是否自动播放
-     * @param value{Boolean} 是否自动播放，[true,false]
+     *
+     * @param {boolean} value 是否自动播放，[true,false]
      */
     setAutoPlay(value) {
         this.nativePlayer.autoplay = value;
@@ -115,7 +117,8 @@ const player = {
 
     /**
      * 设置停止时间
-     * @param value{Number} 播放器停止时间，单位秒
+     *
+     * @param {number} value 播放器停止时间，单位秒
      */
     setStopTime(value) {
         this.nativePlayer.end = value;
@@ -123,7 +126,8 @@ const player = {
 
     /**
      * 设置播放器开始播放时间
-     * @param value{Number} 播放器开始播放时间，单位秒
+     *
+     * @param {number} value 播放器开始播放时间，单位秒
      */
     setStartTime(value) {
         this.nativePlayer.start = value;
@@ -131,7 +135,8 @@ const player = {
 
     /**
      * 设置播放器是否重复播放(单曲循环)
-     * @param value{Boolean} 是否重复播放，[true,false]
+     *
+     * @param {boolean} value 是否重复播放，[true,false]
      */
     setLoop(value) {
         this.nativePlayer.loop = value;
@@ -139,7 +144,8 @@ const player = {
 
     /**
      * 设置播放器片段重复的开始时间
-     * @param value{Number} 时间，单位秒
+     *
+     * @param {number} value时间，单位秒
      */
     setLoopStartTime(value) {
         this.nativePlayer.loopstart = value;
@@ -147,7 +153,8 @@ const player = {
 
     /**
      * 设置播放器片段重复的停止时间
-     * @param value{Number} 时间，单位秒
+     *
+     * @param {number} value 时间，单位秒
      */
     setLoopStopTime(value) {
         this.nativePlayer.loopend = value;
@@ -155,7 +162,8 @@ const player = {
 
     /**
      * 准备媒体资源
-     * @param media{Object} 媒体资源路径
+     *
+     * @param {Object} media 媒体资源路径
      * @return {Promise<boolean>} 异步Promise对象
      */
     async prepare(media) {
@@ -195,7 +203,8 @@ const player = {
 
     /**
      * 设置播放器音量
-     * @param value{Number} 播放器音量,[0,1]
+     *
+     * @param {number} value 播放器音量,[0,1]
      */
     setVolume(value) {
         this.nativePlayer.volume = value;
@@ -203,7 +212,8 @@ const player = {
 
     /**
      * 获取播放器音量
-     * @return {Number} 播放器音量
+     *
+     * @return {number} 播放器音量
      */
     getVolume() {
         return this.nativePlayer.volume;
@@ -211,7 +221,8 @@ const player = {
 
     /**
      * 设置播放速率
-     * @param value{Number} 播放速率值, [0.5,2]
+     *
+     * @param {number} value 播放速率值, [0.5,2]
      */
     setSpeed(value) {
         this.nativePlayer.playbackRate = value < 0.5 ? 0.5 : value > 2 ? 2 : value;
@@ -219,7 +230,8 @@ const player = {
 
     /**
      * 获取播放器播放速率
-     * @return {Number} 播放速率
+     *
+     * @return {number} 播放速率
      */
     getSpeed() {
         return this.nativePlayer.playbackRate;
@@ -227,7 +239,8 @@ const player = {
 
     /**
      * 获取播放器时长，单位毫秒
-     * @returns {Number} 播放时长
+     *
+     * @returns {number} 播放时长
      */
     getDuration() {
         return this.nativePlayer.duration;
@@ -235,7 +248,8 @@ const player = {
 
     /**
      * 获取当前播放器时间，单位毫秒
-     * @returns {Number} 播放时间
+     *
+     * @returns {number} 播放时间
      */
     getTime() {
         return this.nativePlayer.currentTime;
@@ -243,7 +257,8 @@ const player = {
 
     /**
      * 设置播放器是否静音
-     * @param value{Boolean} 是否静音，[true,false]
+     *
+     * @param {boolean} value 是否静音，[true,false]
      */
     setMute(value) {
         this.nativePlayer.mute = value;
@@ -251,7 +266,8 @@ const player = {
 
     /**
      * 检查播放器是否静音
-     * @returns {Boolean} 播放器是否已静音
+     *
+     * @returns {boolean}  播放器是否已静音
      */
     isMute() {
         return this.nativePlayer.muted;
@@ -259,7 +275,8 @@ const player = {
 
     /**
      * 检查播放器是否已暂停
-     * @returns {Boolean} 播放器是否已暂停
+     *
+     * @returns {boolean}  播放器是否已暂停
      */
     isPaused() {
         return this.nativePlayer.paused;
@@ -267,7 +284,8 @@ const player = {
 
     /**
      * 检查播放器是否已播放
-     * @returns {Boolean} 若正在播放则返回true.
+     *
+     * @returns {boolean}  若正在播放则返回true.
      */
     isPlaying() {
         return this.status === Status.PLAYING;
@@ -276,7 +294,7 @@ const player = {
     /**
      * 检查播放器中是否有媒体资源可播放
      *
-     * @return {Boolean} 若播放器可播放则返回true
+     * @returns {boolean} 若播放器可播放则返回true
      */
     isPlayable() {
         return this.nativePlayer.src !== "" && this.status !== Status.RELEASED;
@@ -284,7 +302,8 @@ const player = {
 
     /**
      * 设置播放器错误的回调方法
-     * @param callback{Function} 回调方法
+     *
+     * @param {Function} callback 回调方法
      */
     setOnError(callback) {
         this.nativePlayer.onemptied = callback;
@@ -292,7 +311,7 @@ const player = {
 
     /**
      * 注册播放器事件监听器.
-     * @param listener{Object} 事件监听器
+     * @param {Object} listener 事件监听器
      */
     setEventListener(listener) {
         // 若是第一次调用注册监听器
@@ -307,7 +326,8 @@ const player = {
      * 设置音频频谱数据变化监听器.<br>
      * 注意为了减少CPU负载,只有播放器在播放时才会回调监听器,
      * 同时应该在没有显示频谱视图的时候,取消监听器
-     * @param listener {Function} 音频频谱数据监听器处理方法
+     *
+     * @param {Function} listener 音频频谱数据监听器处理方法
      */
     setAudioSpectrumListener(listener = null) {
         // 取消原有监听器

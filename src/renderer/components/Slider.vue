@@ -1,9 +1,9 @@
 <template>
-  <div class="slider" ref="el" :class=" {'vertical' : vertical} " @click="onSliderClicked">
-    <div class="track"/>
-    <div class="buffering" v-if="buffering!=null" :style="{width:`${buffering*100}%`}"/>
-    <div class="fill"/>
-    <div class="thumb" @mousedown.prevent="onDragStart"/>
+  <div class='slider' ref='el' :class='{"vertical": vertical}' @click='onSliderClicked'>
+    <div class='track'/>
+    <div class='buffering' v-if='buffering!=null' :style='{width:`${buffering*100}%`}'/>
+    <div class='fill'/>
+    <div class='thumb' @mousedown.prevent='onDragStart'/>
   </div>
 </template>
 
@@ -23,10 +23,10 @@
  * @update 2021-09-02
  */
 
-import {watch, onMounted, getCurrentInstance} from "vue";
+import {watch, onMounted, getCurrentInstance} from 'vue';
 
 export default {
-  name: "Slider",
+  name: 'Slider',
 
   props: {
     modelValue: {type: Number, default: 0},
@@ -48,7 +48,7 @@ export default {
      * 鼠标开始拖动(鼠标在滑块上按下)时触发, 此时并还未开始拖动,仅仅是准备好拖动.
      * 需要注意检测中断拖动不能依靠滑块(div)元素本身,需要借助document对象 或 window对象
      * 因为元素本身在鼠标移动后,所监听的鼠标释放事件并不会触发,但是document或window一定会触发
-     * @param e {MouseEvent} 鼠标事件
+     * @param {MouseEvent} e 鼠标事件
      */
     const onDragStart = e => {
       let value = props.vertical;
@@ -78,9 +78,9 @@ export default {
 
     /**
      * 滑块被拖动时触发.在此过程中,只会提交input事件以修改value属性值
-     * @param e {MouseEvent} 鼠标事件
+     * @param {MouseEvent} e 鼠标事件
      */
-    const onDragging = (e) => {
+    const onDragging = e => {
       let total = props.vertical ? el.clientHeight : el.clientWidth;
 
       // 增量 = 现在的e.clientX|e.clientY - 鼠标按下时的e.clientX|e.clientY(即offsetX)
@@ -103,7 +103,7 @@ export default {
     /**
      * 滑动条被点击时触发,随着先后触发input事件和change事件
      * 触发change事件并传出第二个参数值true 以方便侦测滑动条的值是人为改变
-     * @param e {MouseEvent} 鼠标事件
+     * @param {MouseEvent} e 鼠标事件
      */
     const onSliderClicked = e => {
       if (e.target === el) {
@@ -120,7 +120,7 @@ export default {
 
     /**
      * 设置滑块的位置和填充块的宽度
-     * @param value 滑动条模型绑定的值的100倍(滑动条绑定的value在[0,1]区间内)
+     * @param {number} value 滑动条模型绑定的值的100倍(滑动条绑定的value在[0,1]区间内)
      */
     const setStyle = value => {
       if (props.vertical) {

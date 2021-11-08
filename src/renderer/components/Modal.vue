@@ -56,7 +56,7 @@ export default {
       /**
        * 鼠标点击 遮罩层 或 关闭图标 时, 然后关闭对话框.
        *
-       * @param event {MouseEvent | PointerEvent} 鼠标点击事件
+       * @param {MouseEvent | PointerEvent} event 鼠标点击事件
        */
       close(event) {
         const classList = event.target.classList;

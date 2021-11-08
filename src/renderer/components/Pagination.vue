@@ -1,31 +1,31 @@
 <template>
-  <div class='pagination' @click="handleClick" v-show="!hideOnSinglePage || pageCount > 1">
+  <div class='pagination' @click='handleClick' v-show='!hideOnSinglePage || pageCount > 1'>
 
     <!-- 上一页按钮 -->
-    <div class="item prev-button" :class='{disabled: currentPage === 1}'>❮</div>
+    <div class='item prev-button' :class='{disabled: currentPage === 1}'>❮</div>
     <!-- 第一页 -->
-    <div class="item page" v-if="pageCount > 0" :class="{active: currentPage === 1}">1</div>
+    <div class='item page' v-if='pageCount > 0' :class='{active: currentPage === 1}'>1</div>
     <!-- 前一个更多 -->
-    <div class="item more prev-more-button" v-if="showPrevMore" style="width:2.2em"></div>
+    <div class='item more prev-more-button' v-if='showPrevMore' style='width:2.2em'></div>
 
-    <div class="item page" v-for="pager of pagers" :key="pager"
-         :class="{active: currentPage === pager}">{{ pager }}
+    <div class='item page' v-for='pager of pagers' :key='pager'
+         :class='{active: currentPage === pager}'>{{ pager }}
     </div>
 
     <!-- 后一个更多 -->
-    <div class="item more next-more-button" v-if="showNextMore" style="width:2.2em"></div>
+    <div class='item more next-more-button' v-if='showNextMore' style='width:2.2em'></div>
     <!-- 最后一页 -->
-    <div class="item page" v-if="pageCount > 1" :class="{active: currentPage === pageCount}">{{ pageCount }}</div>
+    <div class='item page' v-if='pageCount > 1' :class='{active: currentPage === pageCount}'>{{ pageCount }}</div>
     <!-- 下一页按钮 -->
-    <div class="item next-button" :class='{disabled: currentPage === pageCount}'>❯</div>
+    <div class='item next-button' :class='{disabled: currentPage === pageCount}'>❯</div>
   </div>
 </template>
 
 <script>
-import {computed} from "vue";
+import {computed} from 'vue';
 
 export default {
-  name: "Pagination",
+  name: 'Pagination',
 
   props: {
     // 总条目数量
@@ -106,7 +106,7 @@ export default {
       /**
        * 处理分页按钮点击事件
        *
-       * @param event {MouseEvent} 鼠标点击事件
+       * @param {MouseEvent} event 鼠标点击事件
        */
       handleClick(event) {
         const element = event.target, classList = element.classList;

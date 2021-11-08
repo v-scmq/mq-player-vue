@@ -5,7 +5,7 @@ import {request as httpsRequest} from 'https';
  * @typedef {Object} RequestParam 请求信息
  *
  * @property {string} url                                           访问路径
- * @property {Record<String, String>} headers                       请求头
+ * @property {Record<string, string>} headers                       请求头
  * @property {'get' | 'post' | undefined} method                    请求方式
  * @property {string | Object | undefined} data                     发送到服务器的数据
  * @property {boolean | undefined} isMobile                         是否模拟手机端请求
@@ -18,13 +18,13 @@ import {request as httpsRequest} from 'https';
  *
  * @property {number} statusCode                       响应状态码
  * @property {Record<string, string>} headers          响应头信息
- * @property {Object | Buffer | String} data           响应数据
+ * @property {Object | Buffer | string} data           响应数据
  */
 
 /**
  * 发起网络请求(默认get请求)
  *
- * @param options {RequestParam} 配置选项对象
+ * @param {RequestParam} options 配置选项对象
  * @returns {Promise<ResponseData>} 异步对象Promise
  */
 const http = options => new Promise(resolve => {
@@ -70,6 +70,7 @@ const http = options => new Promise(resolve => {
             // 改变Promise对象状态:由pending(进行中)转变为resolved(已成功)
             // 数据响应完成时,promise对象状态变为resolved以将数据返回
             response.once('end', () => {
+                /** @type {Buffer | string} */
                 let data = Buffer.concat(buffers);
 
                 let {responseType: type} = options;
@@ -89,10 +90,10 @@ const http = options => new Promise(resolve => {
                 // 配置选项提供响应类型为JSON(默认),那么返回反序列化后的JSON格式的对象
                 try {
                     data = JSON.parse(data);
-                    resolve({statusCode: response.statusCode, headers: response.headers, data})
+                    resolve({statusCode: response.statusCode, headers: response.headers, data});
                 } catch (error) {
                     // 若转换为JSON数据失败, 则返回文本
-                    resolve({statusCode: response.statusCode, headers: response.headers, data})
+                    resolve({statusCode: response.statusCode, headers: response.headers, data});
                 }
             });
         });
@@ -114,7 +115,7 @@ const http = options => new Promise(resolve => {
 /**
  * 发起GET请求
  *
- * @param options {RequestParam} 配置选项对象
+ * @param {RequestParam} options 配置选项对象
  * @returns {Promise<ResponseData>} 异步对象Promise
  */
 http.get = options => {
@@ -126,7 +127,7 @@ http.get = options => {
 /**
  * 发起POST请求
  *
- * @param options {RequestParam} 配置选项对象
+ * @param {RequestParam} options 配置选项对象
  * @returns {Promise<ResponseData>} 异步对象Promise
  */
 http.post = options => {

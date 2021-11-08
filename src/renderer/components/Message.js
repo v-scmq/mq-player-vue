@@ -1,4 +1,4 @@
-import {createVNode, render, ref} from "vue";
+import {createVNode, render, ref} from 'vue';
 
 /**  Message 图标类型 */
 const TYPE_MAP = {
@@ -12,18 +12,18 @@ const TYPE_MAP = {
 const MessageComponent = {
     template: `
       <transition name='message-fade' @before-leave='onClose' @after-leave="$emit('destroy')">
-      <div class='message' v-show="visible" :style="{top: topOffset + 'px'}" @mouseenter='onMouseEnter'
+      <div class='message' v-show='visible' :style="{top: topOffset + 'px'}" @mouseenter='onMouseEnter'
            @mouseleave='onMouseLeave' :class="[type, showClose ? 'closeable' : null]">
 
-        <svg width="1em" height="1em" viewBox="0 0 16 16" class="message-icon">
-          <path :d="icon"></path>
+        <svg width='1em' height='1em' viewBox='0 0 16 16' class='message-icon'>
+          <path :d='icon'></path>
         </svg>
 
-        <div class="content">{{ message }}</div>
+        <div class='content'>{{ message }}</div>
 
         <svg width='1em' height='1em' viewBox='0 0 16 16' v-if='showClose' class='close-icon' @click='close'>
           <path
-              d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/>
         </svg>
       </div>
       </transition>
@@ -75,7 +75,7 @@ const instances = [];
 /**
  * 通过配置选项在页面上显示消息
  *
- * @param options {Object | String} 配置选项
+ * @param {Object | string} options 配置选项
  * @return {Object} message对象
  */
 const Message = options => {
@@ -89,7 +89,7 @@ const Message = options => {
         options.type = 'info';
     }
 
-    const id = instances.length + 1;
+    const id = `${Math.random()}-${new Date().getTime()}`;
     // 将onClose方法传入到Message.vue
     options.onClose = () => Message.close(id);
 
@@ -123,7 +123,8 @@ Object.keys(TYPE_MAP).forEach(type => {
 
 /**
  * 关闭指定id的message消息
- * @param id message ID
+ *
+ * @param {number} id message ID
  */
 Message.close = id => {
     let index = instances.findIndex(vm => vm.$nodeId === id);
@@ -146,7 +147,9 @@ Message.close = id => {
     }
 };
 
-// 关闭所有message的方法
+/**
+ * 关闭所有message的方法
+ */
 Message.closeAll = () => {
     for (let i = instances.length - 1; i >= 0; --i) {
         instances[i].close();

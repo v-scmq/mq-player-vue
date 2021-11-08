@@ -2,8 +2,8 @@ export class TimeUtil {
     /**
      * 将毫秒时间值转换为 00:00 或 00:00:00的时间格式字符串
      *
-     * @param millis {Number} 毫秒时间值
-     * @return {String} 毫秒表示的时间字符串
+     * @param {number} millis 毫秒时间值
+     * @return {string} 毫秒表示的时间字符串
      */
     static millisToString(millis) {
         // 先将总毫秒数转换为总秒数,然后交给总秒数转换为标准时间值的方法处理
@@ -13,8 +13,8 @@ export class TimeUtil {
     /**
      * 将一个秒数时间值转换为 00:00 或 00:00:00的时间格式字符串
      *
-     * @param value {Number} 总秒数
-     * @return {String} 秒数表示的标准时间字符串
+     * @param {number} value 总秒数
+     * @return {string} 秒数表示的标准时间字符串
      */
     static secondToString(value) {
         // 浮点数转换为整数可以使用 0 ^ 1.23232 = 1
@@ -42,8 +42,8 @@ export class FileUtil {
      * 解决字符序列不能用于Windows操作系统平台的文件或文件夹名称.
      * 对于Windows平台,文件或文件夹名称一定不能包含 “{@code / \ * ? " : | < >}”中的任一字符.
      *
-     * @param name {String | Array | Object} 文件或文件夹名称
-     * @return String 标准的文件或文件夹名称
+     * @param {string | Array | Object} name 文件或文件夹名称
+     * @return {string} 标准的文件或文件夹名称
      */
     static resolveFileName(name) {
         if (!name) return name;
@@ -64,34 +64,35 @@ export class FileUtil {
     /**
      * 文件大小格式化
      *
-     * @param scale {Number} 精度
-     * @param size {Number} 文件字节大小
-     * @return {String} 返回格式化后的文件大小的字符串表示
+     * @param {number} scale 精度
+     * @param {number} size  文件字节大小
+     * @return {string}      返回格式化后的文件大小的字符串表示
      */
-    static toFileSize(scale, size) {
+    static toFileSize(scale = 2, size) {
         let B = 1024;
         if (size < B) {
             return `${size}B`;
         }
         let KB = 1048576;
         if (size < KB) {
-            return `${(size / B).toFixed(2)}KB`;
+            return `${(size / B).toFixed(scale)}KB`;
         }
         let MB = 1073741824;
         if (size < MB) {
-            return `${(size / KB).toFixed(2)}MB`;
+            return `${(size / KB).toFixed(scale)}MB`;
         }
         // let GB = 1099511627776L;
         if (size < 1099511627776) {
-            return `${(size / MB).toFixed(2)}GB`;
+            return `${(size / MB).toFixed(scale)}GB`;
         }
         return "";
     }
 
     /**
      *  从文件对象获取歌手名称、歌曲标题、专辑(使用标题)、文件大小、文件路径(临时URL创建)
-     * @param file {File} 文件对象
-     * @param isElectron {boolean} 是否在Electron进程中
+     *
+     * @param {File} file 文件对象
+     * @param {boolean} isElectron 是否在Electron进程中
      * @return {{path: String, singer: String, size: String, album: String, title: String}} 媒体基本信息
      */
     static getMediaInfo(file, isElectron) {

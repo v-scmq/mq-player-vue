@@ -1,6 +1,7 @@
 import {app, BrowserWindow, ipcMain, Menu, net, protocol, shell, Tray} from 'electron';
 import {readFile} from 'fs';
 import path from 'path';
+import './server'
 
 if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     // 若未能获得单个应用实例的锁,那么退出应用程序
@@ -180,7 +181,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         let playIcon = `${iconPath}/play.png`, pauseIcon = `${iconPath}/pause.png`;
         let playing = false;
 
-        /** @type {[{tooltip: string, icon: string|Electron.NativeImage, click: (function(): void)}]} */
+        /** @type {[{tooltip: string, icon: string | Electron.NativeImage, click: (function(): void)}]} */
         let buttons = [
             {tooltip: '上一曲', icon: prevIcon, click: () => console.info("prev...")},
             {
@@ -196,8 +197,8 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     /**
      * 处理来自渲染进程准备发起的网络请求,最后将响应信息返回到渲染进程
-     * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
-     * @param options {Electron.ClientRequestConstructorOptions | any} 从渲染进程传递过来的参数
+     * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
+     * @param {Electron.ClientRequestConstructorOptions | any} options 从渲染进程传递过来的参数
      * @return {Promise<{data:Buffer, headers, statusCode, statusMessage}>} 异步Promise对象
      */
     const handleNetRequest = (event, options) => new Promise(resolve => {
@@ -259,7 +260,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         let data = options['data'];
         // post请求时且存在数据时,将数据通过输出流管道发送到目标服务器
         if (options.method && options.method.toLowerCase() === 'post' && data) {
-            // 写入数据(String | Buffer)
+            // 写入数据(string | Buffer)
             data = ((data instanceof Buffer) || (typeof data) === 'string') ? data :
                 (typeof data) === 'object' ? JSON.stringify(data) : data.toString();
             request.write(data);
@@ -271,12 +272,12 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     /**
      * 处理来自渲染进程请求打开模态框,最后将页面的Cookie信息返回到渲染进程
-     * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
-     * @param options {String | Object} 从渲染进程传递过来的参数
-     * @return {Promise<String>} 异步Promise对象
+     * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
+     * @param {string | Object} options从渲染进程传递过来的参数
+     * @return {Promise<string>} 异步Promise对象
      */
     const handleOpenModal = (event, options) => new Promise(resolve => {
-        /** @type {{url:String, indexURL:String, width:Number, height:Number, preloadName:String}} */
+        /** @type {{url:string, indexURL:string, width:number, height:number, preloadName:string}} */
         options = (typeof options) === 'string' ? JSON.parse(options) : options;
 
         // 若指定了预加载文件名(不包含扩展名),则获取需要执行预加载文件的全路径
@@ -334,9 +335,9 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     /**
      * 处理来自渲染进程请求删除指定URL下的cookie信息
-     * @param event {Electron.IpcMainInvokeEvent} 渲染进程 => 主进程被调用事件
-     * @param url {String} cookie对应的URL
-     * @return {Promise<String>} 异步Promise对象
+     * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
+     * @param {string} url cookie对应的URL
+     * @return {Promise<string>} 异步Promise对象
      */
     const handleRemoveAllCookie = (event, url) => new Promise(resolve => {
         let cookies = mainWindow.webContents.session.cookies;
@@ -347,7 +348,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     /**
      * 立即关闭本地计算机
      *
-     * @param force {boolean} 指定是否强制执行关机(仅适用于windows)
+     * @param {boolean} force 指定是否强制执行关机(仅适用于windows)
      */
     const shutdown = async force => {
         // shutdown 命令用法:

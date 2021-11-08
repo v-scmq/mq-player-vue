@@ -41,8 +41,8 @@ export default {
      * 若输入框类型是数值,那么将输入框的字符串数值转换为数值类型;
      * 否则获取的是输入框未做任何处理的的值
      *
-     * @param value {String} 输入框已键入的值
-     * @return {Number | String} 转换后输入框的值
+     * @param {string} value 输入框已键入的值
+     * @return {number | string} 转换后输入框的值
      */
     const getValue = value => props.type === 'number' ? Number(value) : value;
 
@@ -51,7 +51,7 @@ export default {
       /**
        * 处理输入框实时输入事件
        *
-       * @param event {InputEvent} 输入框输入事件
+       * @param {InputEvent} event 输入框输入事件
        */
       handleInput: event => {
         const oldValue = props.modelValue;
@@ -64,7 +64,7 @@ export default {
       /**
        * 处理输入框值改变事件
        *
-       * @param event {Event} 输入框值改变事件
+       * @param {Event} event 输入框值改变事件
        */
       handleChange: event => {
         // 若指定了onChange事件

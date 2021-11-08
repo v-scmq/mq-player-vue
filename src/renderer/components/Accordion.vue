@@ -3,17 +3,17 @@
     <div class='list-view v-column' v-for='(data,index) in list' :key='index' @click='onClick($event,data,index)'>
       <div class='v-row titled-pane'>{{ data.title }}</div>
       <div class='v-column scroll-wrapper'>
-        <div class='item' v-for='(item,index) in data.items' :key='index' :data-index="index">{{ item.name }}</div>
+        <div class='item' v-for='(item,index) in data.items' :key='index' :data-index='index'>{{ item.name }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import {nextTick, onBeforeUnmount, onMounted, ref, watch, getCurrentInstance} from "vue";
+import {nextTick, onBeforeUnmount, onMounted, ref, watch, getCurrentInstance} from 'vue';
 
 export default {
-  name: "Accordion",
+  name: 'Accordion',
   props: {list: {default: []}},
   emits: ['change'],
 
@@ -90,9 +90,9 @@ export default {
       scrollWrapperHeight,
       /**
        * ListView被点击时触发
-       * @param event {MouseEvent}               鼠标事件
-       * @param data {{name:String,items:Array}} 鼠标所击对应的数据项
-       * @param index {Number}                   鼠标所击对应的数据项索引
+       * @param {MouseEvent} event               鼠标事件
+       * @param {{name:String,items:Array}} data 鼠标所击对应的数据项
+       * @param {Number} index                   鼠标所击对应的数据项索引
        */
       onClick: (event, data, index) => {
         event.stopPropagation();

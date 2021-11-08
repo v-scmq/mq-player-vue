@@ -1,11 +1,11 @@
 <template>
-  <svg class="icon" :viewBox="box">
-    <path :d="path"></path>
+  <svg class='icon' :viewBox='box'>
+    <path :d='path'></path>
   </svg>
 </template>
 
 <script>
-import {computed} from "vue";
+import {computed} from 'vue';
 
 export const ICON_MAP = {
   user: {box: '0 0 16 16', path: 'M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'},
@@ -190,7 +190,7 @@ export const ICON_MAP = {
 };
 
 export default {
-  name: "Icon",
+  name: 'Icon',
 
   props: {/** 图标名称 */  name: {type: String, required: true}},
 

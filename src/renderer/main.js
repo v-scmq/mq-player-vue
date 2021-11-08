@@ -10,10 +10,14 @@ import axios from "axios";
 import db from './database';
 import player from './player';
 
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+
 createApp(app)
     .use(control)
     .use(router)
     .use(api)
+    .use(ElementPlus)
     .use(app => {
         app.config.globalProperties.$db = db;
         app.config.globalProperties.$player = player;
