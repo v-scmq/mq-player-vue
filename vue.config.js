@@ -70,10 +70,10 @@ module.exports = {
         hotOnly: false,
         proxy: {
             '/api': {
-                target: 'http://localhost:8080/',
+                target: 'http://localhost:9081/',
                 changeOrigin: true, // 是否跨域
                 ws: true, // 代理长连接
-                pathRewrite: {'^/api': '/'} // 重写路径,将路径替换,避免打包后,放到服务器,不能访问
+                pathRewrite: {'^/api': 'api'} // 重写路径,将路径替换,避免打包后,放到服务器,不能访问
             },
             '/socket': {
                 target: 'ws://localhost:9999/',
