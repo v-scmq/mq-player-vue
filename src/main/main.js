@@ -1,7 +1,6 @@
-import {app, BrowserWindow, ipcMain, Menu, net, protocol, shell, Tray} from 'electron';
-import {readFile} from 'fs';
+import {app, BrowserWindow, ipcMain, Menu, shell, Tray} from 'electron';
 import path from 'path';
-import './server'
+import {BASE_URL} from './server'
 
 if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     // 若未能获得单个应用实例的锁,那么退出应用程序
@@ -19,10 +18,10 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     let iconPath = isProduction ? path.resolve(__dirname, 'icon') : 'public/icon';
 
     // 方案必须在应用程序准备好之前注册
-    if (isProduction) {
-        let scheme = {scheme: 'app', privileges: {secure: true, standard: true, corsEnabled: true}};
-        protocol.registerSchemesAsPrivileged([scheme]);
-    }
+    // if (isProduction) {
+    //     let scheme = {scheme: 'app', privileges: {secure: true, standard: true, corsEnabled: true}};
+    //     protocol.registerSchemesAsPrivileged([scheme]);
+    // }
 
     app.setPath('logs', `${app.getAppPath()}/logs`);
     app.setPath('temp', `${app.getAppPath()}/temp`);
@@ -40,33 +39,6 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     // 当Electron完成初始化并准备创建浏览器窗口时，将调用此方法 有些API只能在事件发生后使用
     app.on('ready', () => {
-        // 注册自定义文件协议,解决高版本electron不能加载本地文件的问题,同时此方案仍然保留web安全策略
-        // request请求包含原始请求URL和header等信息,callback回调用于将文件绝对路径传入并做响应信息处理
-        protocol.registerFileProtocol('fs', (request, callback) =>
-            callback(decodeURI(request.url.replace('fs://', ''))));
-
-        // 注册自定义http协议,解决跨域问题
-        protocol.registerHttpProtocol('hs', (request, callback) =>
-            callback({url: request.url.replace('hs://', '')}));
-
-        if (isProduction) {
-            const MIME_TYPE = {
-                '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.svg': 'image/svg+xml',
-                '.svgz': 'image/svg+xml', '.json': 'application/json', '.wasm': 'application/wasm'
-            }
-
-            const {URL} = require('url');
-            protocol.registerBufferProtocol('app', (request, callback) => {
-                    let pathName = decodeURI(new URL(request.url).pathname);
-                    readFile(path.join(__dirname, pathName), (error, data) => {
-                        error ? console.error(`在app协议上读取 ${pathName} 失败 => `, error) : null;
-                        let extension = path.extname(pathName).toLowerCase();
-                        callback({mimeType: MIME_TYPE[extension] || '', data});
-                    });
-                }
-            );
-        }
-
         // 创建浏览器主窗口
         mainWindow = new BrowserWindow({
             width: 800,
@@ -91,9 +63,8 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
             mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL).then(readyToShow);
             mainWindow.webContents.openDevTools();
         } else {
-            // createProtocol('app'); // import {createProtocol} from 'vue-cli-plugin-electron-builder/lib'
             // 从自定义协议加载首页html文件
-            mainWindow.loadURL('app://./index.html').then(readyToShow);
+            mainWindow.loadURL(`${BASE_URL}/index.html`).then(readyToShow);
         }
 
         // 当浏览器窗口关闭时,解除mainWindow引用指向
@@ -116,8 +87,6 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         // 在渲染进程中,请求主进程清除浏览记录
         ipcMain.handle('clear-history', async () => mainWindow.webContents.clearHistory());
 
-        // 在渲染进程中,请求主进程发起网络请求,主进程将响应信息返回到渲染进程
-        ipcMain.handle('net-request', handleNetRequest);
         // 在渲染进程中,请求主进程打开浏览器视图,主进程将Cookie信息返回到渲染进程
         ipcMain.handle('open-modal', handleOpenModal);
         // 在渲染进程中,请求主进程删除指定URL下的所有Cookie信息
@@ -196,84 +165,9 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     };
 
     /**
-     * 处理来自渲染进程准备发起的网络请求,最后将响应信息返回到渲染进程
-     * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
-     * @param {Electron.ClientRequestConstructorOptions | any} options 从渲染进程传递过来的参数
-     * @return {Promise<{data:Buffer, headers, statusCode, statusMessage}>} 异步Promise对象
-     */
-    const handleNetRequest = (event, options) => new Promise(resolve => {
-        let request = net.request(options), headers = options['headers'];
-        // 若选项中存在header配置信息,则先设置请求头
-        if (headers) {
-            Object.keys(headers).forEach(key => request.setHeader(key, headers[key]));
-        }
-
-        // 监听网络响应
-        request.on('response', response => {
-            // 返回到渲染进程的数据
-            const res = {
-                // 响应数据
-                data: [],
-                // 响应头信息
-                headers: response.headers,
-                // 状态码
-                statusCode: response.statusCode,
-                // 状态信息
-                statusMessage: response.statusMessage
-            };
-
-            // 数据得到响应时,拼接响应数据
-            response.on('data', chunk => res.data.push(chunk));
-
-            // 改变Promise对象状态:由pending(进行中)转变为resolved(已成功)
-            // 数据响应完成时,promise对象状态变为resolved以将数据返回
-            response.on('end', () => {
-                res.data = Buffer.concat(res.data);
-                let {responseType: type, RESPONSE_TYPE: types} = options;
-
-                // 若配置选项提供返回类型是字节类型,那么返回的将是Buffer(Uint8Array子类)类型
-                if (type === types.BYTE) {
-                    return resolve(res);
-                }
-
-                // 若配置选项提供响应内容为文本,则直接返回字符串
-                res.data = res.data.toString();
-                if (type === types.TEXT) {
-                    return resolve(res);
-                }
-
-                // 配置选项提供响应类型为JSON(默认),那么返回反序列化后的JSON格式的对象
-                try {
-                    res.data = JSON.parse(res.data);
-                } catch (error) {
-                    res.data = {};
-                }
-                return resolve(res);
-            });
-            // 数据响应失败
-            response.on('error', () => resolve(res));
-        });
-
-        // 当前网络请求发生错误时
-        request.on('error', error => resolve(error.toString()));
-
-        let data = options['data'];
-        // post请求时且存在数据时,将数据通过输出流管道发送到目标服务器
-        if (options.method && options.method.toLowerCase() === 'post' && data) {
-            // 写入数据(string | Buffer)
-            data = ((data instanceof Buffer) || (typeof data) === 'string') ? data :
-                (typeof data) === 'object' ? JSON.stringify(data) : data.toString();
-            request.write(data);
-        }
-
-        // 当网络请求完成后 // request.on('finish', () => console.info('请求完成！'));
-        request.end();
-    });
-
-    /**
      * 处理来自渲染进程请求打开模态框,最后将页面的Cookie信息返回到渲染进程
      * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
-     * @param {string | Object} options从渲染进程传递过来的参数
+     * @param {string | Object} options 从渲染进程传递过来的参数
      * @return {Promise<string>} 异步Promise对象
      */
     const handleOpenModal = (event, options) => new Promise(resolve => {

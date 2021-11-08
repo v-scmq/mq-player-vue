@@ -60,14 +60,6 @@ contextBridge.exposeInMainWorld('electron', {
     clearHistory: () => ipcRenderer.invoke('clear-history'),
 
     /**
-     * 使用Electron原生网络层API发出网络请求
-     *
-     * @param options 网络请求配置选项
-     * @returns {Promise<any>} http/https响应内容
-     */
-    netRequest: options => ipcRenderer.invoke('net-request', options),
-
-    /**
      * 解析媒体文件,并获取媒体元数据信息
      *
      * @param {string} path 媒体资源路径
