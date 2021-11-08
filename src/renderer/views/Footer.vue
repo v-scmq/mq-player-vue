@@ -1,96 +1,96 @@
 <template>
-  <div class="v-column">
-    <slider v-model="media.timeValue" ref="progressSlider" :buffering="media.buffered" @change="valueChanged"/>
-    <div class="v-row" style="justify-content: space-between;">
+  <div class='v-column'>
+    <slider v-model='media.timeValue' ref='progressSlider' :buffering='media.buffered' @change='valueChanged'/>
+    <div class='v-row' style='justify-content: space-between;'>
 
       <!-- 左侧部分 -->
-      <div class="v-row" style="flex:1">
-        <img class="album-icon" :src="media.cover" alt="专辑" draggable="false" @error="media.cover = DEFAULT_COVER"
-             @click="viewerVisible=true"/>
+      <div class='v-row' style='flex:1'>
+        <img class='album-icon' :src='media.cover' alt='专辑' draggable='false' @error='media.cover = DEFAULT_COVER'
+             @click='viewerVisible=true'/>
 
-        <div class="v-column media-info">
+        <div class='v-column media-info'>
           <span>{{ media.singer }} - {{ media.title }}</span>
-          <div class="v-row">
-            <span>{{ media.time }}</span> <span style="margin:0 4px;">/</span><span>{{ media.duration }}</span>
+          <div class='v-row'>
+            <span>{{ media.time }}</span> <span style='margin:0 4px;'>/</span><span>{{ media.duration }}</span>
           </div>
         </div>
       </div>
 
       <!-- 中间部分 -->
-      <div class="v-row">
+      <div class='v-row'>
         <!-- 播放模式 -->
-        <div class="popup-container">
-          <icon id='mode' width='2em' height='2em' :name="modeIcon"/>
+        <div class='popup-container'>
+          <icon id='mode' width='2em' height='2em' :name='modeIcon'/>
 
-          <div class="v-column popup-pane mode">
-            <div class="v-row" @click="modeIcon = 'list-loop' ">
-              <icon width='2em' height='2em' name="list-loop"/>
-              <span class="title">列表循环</span>
+          <div class='v-column popup-pane mode'>
+            <div class='v-row' @click="modeIcon = 'list-loop' ">
+              <icon width='2em' height='2em' name='list-loop'/>
+              <span class='title'>列表循环</span>
             </div>
-            <div class="v-row" @click="modeIcon = 'order' ">
-              <icon width='2em' height='2em' name="order"/>
-              <span class="title">顺序播放</span>
+            <div class='v-row' @click="modeIcon = 'order' ">
+              <icon width='2em' height='2em' name='order'/>
+              <span class='title'>顺序播放</span>
             </div>
-            <div class="v-row" @click="modeIcon = 'single-loop' ">
-              <icon width='2em' height='2em' name="single-loop"/>
-              <span class="title">单曲循环</span>
+            <div class='v-row' @click="modeIcon = 'single-loop' ">
+              <icon width='2em' height='2em' name='single-loop'/>
+              <span class='title'>单曲循环</span>
             </div>
-            <div class="v-row" @click="modeIcon = 'random' ">
-              <icon width='2em' height='2em' name="random"/>
-              <span class="title">随机播放</span>
+            <div class='v-row' @click="modeIcon = 'random' ">
+              <icon width='2em' height='2em' name='random'/>
+              <span class='title'>随机播放</span>
             </div>
           </div>
         </div>
 
         <!-- 上一首 -->
-        <icon width='2em' height='2em' name="previous" @click="play(getIndex(false))"/>
+        <icon width='2em' height='2em' name='previous' @click='play(getIndex(false))'/>
         <!-- 播放或暂停 -->
-        <icon width="3em" height="3em" :name="isPlaying ? 'pause' : 'play' " @click="playOrPause"/>
+        <icon width='3em' height='3em' :name="isPlaying ? 'pause' : 'play' " @click='playOrPause'/>
         <!-- 下一首 -->
-        <icon width="2em" height="2em" name="next" @click="play(getIndex(true))"/>
+        <icon width='2em' height='2em' name='next' @click='play(getIndex(true))'/>
 
         <!-- 音量 -->
-        <div class="popup-container">
-          <icon id="volume" width="2em" height="2em" :name="volume === 0 ? 'mute' : 'volume' "/>
-          <div class="v-column popup-pane volume" @wheel="onVolumeScroll">
-            <slider vertical v-model="volume" style="flex:1" @change="handleVolumeChange"/>
+        <div class='popup-container'>
+          <icon id='volume' width='2em' height='2em' :name="volume === 0 ? 'mute' : 'volume' "/>
+          <div class='v-column popup-pane volume' @wheel='onVolumeScroll'>
+            <slider vertical v-model='volume' style='flex:1' @change='handleVolumeChange'/>
             <span>{{ (volume * 100).toFixed(0) }}%</span>
           </div>
         </div>
       </div>
 
       <!--  右侧部分 -->
-      <div class="v-row" style="flex:1;justify-content:flex-end;">
-        <div class="popup-container">
+      <div class='v-row' style='flex:1;justify-content:flex-end;'>
+        <div class='popup-container'>
           <!-- 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」-->
-          <div class="icon" id="speed">{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
-          <div class="v-row popup-pane speed" @wheel="onSpeedPaneScroll">
-            <slider vertical v-model="speed" style="height:100%" @change="handleSpeedChange"/>
-            <div class="v-column" style="height:100%;justify-content:space-between;line-height:0.5">
+          <div class='icon' id='speed'>{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
+          <div class='v-row popup-pane speed' @wheel='onSpeedPaneScroll'>
+            <slider vertical v-model='speed' style='height:100%' @change='handleSpeedChange'/>
+            <div class='v-column' style='height:100%;justify-content:space-between;line-height:0.5'>
               <span>2.0</span><span>1.5</span><span>1.0</span><span>0.5</span>
             </div>
           </div>
         </div>
 
-        <icon name="favorites" width="2em" height="2em"/>
-        <icon name="download" width="2em" height="2em"/>
-        <icon name="playlist" width="2em" height="2em"/>
+        <icon name='favorites' width='2em' height='2em'/>
+        <icon name='download' width='2em' height='2em'/>
+        <icon name='playlist' width='2em' height='2em'/>
       </div>
     </div>
 
-    <teleport to="body">
-      <music-viewer :visible="viewerVisible" :cover="media.cover" @close="viewerVisible=false"/>
+    <teleport to='body'>
+      <music-viewer :visible='viewerVisible' :cover='media.cover' @close='viewerVisible=false'/>
     </teleport>
   </div>
 </template>
 
 <script>
 import {ref, reactive, getCurrentInstance, onBeforeUnmount} from 'vue';
-import MusicViewer from "./MusicViewer";
+import MusicViewer from './MusicViewer';
 import {TimeUtil} from '../utils';
 
 export default {
-  name: "Footer",
+  name: 'Footer',
 
   components: {MusicViewer},
 
@@ -117,8 +117,9 @@ export default {
 
     /**
      * 获取播放器媒体播放索引
-     * @param next{Boolean} true:生成下一个索引,false:生成上一个索引
-     * @return {Number} 新的播放索引. 若返回{@code -1},则表示没有播放数据源,若返回{@code -2},则表示顺序播放结束
+     *
+     * @param {boolean} next true:生成下一个索引,false:生成上一个索引
+     * @return {number} 新的播放索引. 若返回{@code -1},则表示没有播放数据源,若返回{@code -2},则表示顺序播放结束
      */
     const getIndex = next => {
       let index = $player.index, size = $player.playList.length;
@@ -143,15 +144,16 @@ export default {
 
     /**
      * 播放指定索引的歌曲列表
-     * @param index{Number} 媒体资源索引
-     * @param playNext {Boolean | null} 指定遇到错误时是否继续播放下一首
+     *
+     * @param {number} index 媒体资源索引
+     * @param {boolean | null} playNext 指定遇到错误时是否继续播放下一首
      */
     const play = (index, playNext = null) => {
       let list = $player.playList;
       // 暂停当前播放的媒体
       $player.pause();
       if (!list || list.length === 0 || index === -1 || index >= list.length) {
-        return $message.warning("没有播放数据源，请选择一个播放源！");
+        return $message.warning('没有播放数据源，请选择一个播放源！');
       }
 
       $player.index = index;
@@ -191,8 +193,9 @@ export default {
 
     /**
      * 滑动条值改变事件回调方法
-     * @param newValue 滑动条新的值
-     * @param seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
+     *
+     * @param {number} newValue 滑动条新的值
+     * @param {boolean} seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
      */
     const valueChanged = (newValue, seek) => {
       media.time = TimeUtil.secondToString(newValue * $player.getDuration());
@@ -203,20 +206,21 @@ export default {
 
     /**
      * 当音量值改变时,给播放器设置这个音量值
-     * @param newValue{Number} 新的播放器音量值
+     *
+     * @param {number} newValue 新的播放器音量值
      */
     const handleVolumeChange = newValue => $player.setVolume(newValue);
 
     /**
      * 当播放速率值改变时,给播放器设置这个速率值
      * 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」
-     * @param newValue{Number} 播放速率
+     * @param {number} newValue 播放速率
      */
     const handleSpeedChange = newValue => $player.setSpeed(1.5 * newValue + 0.5);
 
     /**
      * 鼠标滚轮在音量面板上滚动时,重新设置播放器音量
-     * @param event{WheelEvent} 鼠标滚轮滚动事件
+     * @param {WheelEvent} event 鼠标滚轮滚动事件
      */
     const onVolumeScroll = event => {
       let value = volume.value + (event.deltaY > 0 ? -0.05 : 0.05);
@@ -225,7 +229,7 @@ export default {
 
     /**
      * 鼠标滚轮在播放速率面板上滚动时,重新设置播放速率
-     * @param event{WheelEvent} 鼠标事件
+     * @param {WheelEvent} event 鼠标事件
      */
     const onSpeedPaneScroll = event => {
       // 由 y = 1.5x + 0.5 得 x = (y - b) / a , 增量 = x2 -x1()
@@ -238,11 +242,11 @@ export default {
     $player.setEventListener({
       /**
        * 播放器状态回调
-       * @param status 播放器状态
+       * @param {unkown} status 播放器状态
        * @see STATUS
        */
       statusChanged(status) {
-        console.info("status=>", status)
+        console.info('status=>', status)
         isPlaying.value = status === $player.$statusType.PLAYING;
       },
 

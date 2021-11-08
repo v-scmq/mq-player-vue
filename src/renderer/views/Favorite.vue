@@ -34,9 +34,11 @@ export default {
   methods: {
     handleClicked() {
     },
+
     toIndex(index) {
       return ++index < 10 ? '0' + index : index;
     },
+
     /**
      * 表格行单元格双击时的回调方法
      */

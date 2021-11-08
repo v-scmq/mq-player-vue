@@ -1,37 +1,37 @@
 <template>
-  <div class="v-row singer-info-container">
-    <img alt class="cover" :src="album.cover"/>
-    <div class="v-column">
+  <div class='v-row singer-info-container'>
+    <img alt class='cover' :src='album.cover'/>
+    <div class='v-column'>
       <div>{{ album.name || '-' }}</div>
 
-      <div class="v-row base-info">
-        <span class="count-info">流派：{{ album.genre || '-' }}</span>
-        <span class="count-info">语种：{{ album.language || '-' }}</span>
-        <span class="count-info">唱片公司：{{ album.company || '-' }}</span>
-        <span class="count-info">发行时间：{{ album.year || '-' }}</span>
+      <div class='v-row base-info'>
+        <span class='count-info'>流派：{{ album.genre || '-' }}</span>
+        <span class='count-info'>语种：{{ album.language || '-' }}</span>
+        <span class='count-info'>唱片公司：{{ album.company || '-' }}</span>
+        <span class='count-info'>发行时间：{{ album.year || '-' }}</span>
       </div>
 
-      <div class="v-row">
-        <Button text="播放全部"/>
-        <Button text="播放全部"/>
-        <Button text="打印预览"/>
+      <div class='v-row'>
+        <Button text='播放全部'/>
+        <Button text='播放全部'/>
+        <Button text='打印预览'/>
       </div>
     </div>
   </div>
 
-  <div class="v-row" style="margin:1em 0 0 0;flex:auto;overflow:hidden;align-items:stretch;">
-    <table-view style="flex:auto" :columns="columns" :data='songList' @row-dblclick="onCellClick"/>
-    <div class="label" style="margin:0 0 0 1em;padding:0 1em 0 0;width:15em;">
+  <div class='v-row' style='margin:1em 0 0 0;flex:auto;overflow:hidden;align-items:stretch;'>
+    <table-view style='flex:auto' :columns='columns' :data='songList' @row-dblclick='onCellClick'/>
+    <div class='label' style='margin:0 0 0 1em;padding:0 1em 0 0;width:15em;'>
       简介：{{ album.introduce }}
     </div>
   </div>
 </template>
 
 <script>
-import {getCurrentInstance, reactive, watch} from "vue";
+import {getCurrentInstance, reactive, watch} from 'vue';
 
 export default {
-  name: "AlbumView",
+  name: 'AlbumView',
 
   props: {query: Object},
 
@@ -64,7 +64,8 @@ export default {
 
       /**
        * 表格行单元格双击时的回调方法
-       * @param row {Number} 行单元格索引
+       *
+       * @param {number} row 行单元格索引
        */
       onCellClick: row => $player.playMediaList(songList, row)
     };
