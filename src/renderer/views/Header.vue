@@ -79,6 +79,10 @@
 </template>
 
 <script>
+import db from '../database';
+import Message from '../components/Message';
+import Spinner from '../components/Spinner';
+
 import {nextTick, reactive, ref, getCurrentInstance} from "vue";
 import {useRoute, useRouter} from "vue-router";
 
@@ -97,7 +101,9 @@ export default {
     const user = reactive({uin: '', nickName: '', headURL: ''});
 
     const vc = getCurrentInstance();
-    const {$message, $spinner, $db, $source} = vc.appContext.config.globalProperties;
+
+    // TODO 数据源API待修改
+    const $source = {};
 
     const router = useRouter(), route = useRoute();
 
@@ -110,15 +116,15 @@ export default {
      */
     const login = event => {
       let param = {
-        db: $db,                                                   // indexDB
+        db: db,                                                   // indexDB
         isManual: event instanceof MouseEvent,                     // 是否是手动调用登录
       };
 
-      $spinner.open();
+      Spinner.open();
       $source.impl.login(param)
           .then(userObj => userObj ? Object.assign(user, userObj) : null)
-          .catch(reason => $message.error(reason.message))
-          .finally($spinner.close);
+          .catch(reason => Message.error(reason.message))
+          .finally(Spinner.close);
     };
 
     if (window.electron) {
@@ -241,7 +247,7 @@ export default {
 
         let param = {
           uin,
-          db: $db,                                                   // indexDB
+          db: db,                                                   // indexDB
           isManual: event instanceof MouseEvent,                     // 是否是手动调用退出登录
         };
 

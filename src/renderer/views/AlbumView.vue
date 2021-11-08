@@ -28,7 +28,9 @@
 </template>
 
 <script>
-import {getCurrentInstance, reactive, watch} from 'vue';
+import {reactive, watch} from 'vue';
+import player from '../player';
+import Spinner from '../components/Spinner';
 
 export default {
   name: 'AlbumView',
@@ -47,14 +49,15 @@ export default {
       {title: '大小', property: 'size', width: 100}
     ]);
 
-    const {$player, $spinner, $source} = getCurrentInstance().appContext.config.globalProperties;
+    // TODO 数据源api待修改
+    const $source = {};
 
     watch(() => props.query, newQuery => {
       if (album.mid !== newQuery.mid) {
-        $spinner.open();
+        Spinner.open();
         $source.impl.albumSongList(Object.assign(album, newQuery), page)
             .then(res => songList.splice(0, songList.length, ...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
 
     }, {immediate: true});
@@ -67,7 +70,7 @@ export default {
        *
        * @param {number} row 行单元格索引
        */
-      onCellClick: row => $player.playMediaList(songList, row)
+      onCellClick: row => player.playMediaList(songList, row)
     };
 
   }

@@ -11,6 +11,8 @@
 </template>
 
 <script>
+import Spinner from '../components/Spinner';
+
 import {reactive, nextTick, getCurrentInstance, onMounted} from "vue";
 import {useRouter} from "vue-router";
 
@@ -23,12 +25,14 @@ export default {
     const page = reactive({current: 1, size: 30});
     const tag = reactive({en: null, area: null, sex: null, genre: null, group: null});
 
+    // TODO 数据源API待修改
+    const $source = {};
+
     const vc = getCurrentInstance();
-    const {$spinner, $source} = vc.appContext.config.globalProperties;
     const router = useRouter();
 
     onMounted(() => {
-      $spinner.open();
+      Spinner.open();
       $source.impl.singerList(null, page).then(data => {
         if (data instanceof Array) {
           list.splice(0, list.length, ...data);
@@ -53,7 +57,7 @@ export default {
           });
         }
 
-      }).finally($spinner.close);
+      }).finally(Spinner.close);
     });
 
     return {
@@ -68,10 +72,10 @@ export default {
           nodes.forEach(item => item.classList.remove('active'));
           node.classList.add('active');
 
-          $spinner.open();
+          Spinner.open();
           $source.impl.singerList(tag, page)
               .then(data => list.splice(0, list.length, ...data))
-              .finally($spinner.close);
+              .finally(Spinner.close);
         }
       },
 

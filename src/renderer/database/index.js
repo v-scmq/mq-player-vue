@@ -1,4 +1,4 @@
-export default {
+const db = {
     db: null,
     openQueue: null,
     tables: {
@@ -213,3 +213,5 @@ export default {
         });
     }
 };
+
+export default db;

@@ -18,6 +18,11 @@
 </template>
 
 <script>
+import db from '../database';
+import player from '../player';
+import Message from '../components/Message';
+import Spinner from '../components/Spinner';
+
 import {TimeUtil, FileUtil} from '../utils';
 import {reactive, ref, getCurrentInstance, onBeforeUnmount} from "vue";
 
@@ -40,7 +45,6 @@ export default {
     const inputKey = ref('');
 
     const vc = getCurrentInstance();
-    const {$db, $player, $spinner, $message} = vc.appContext.config.globalProperties;
 
     // 用于在indexDB中存储本地音乐信息的数据量(非响应式)
     let maxSize = 0;
@@ -110,7 +114,7 @@ export default {
           (item.singer && item.singer.indexOf(value) >= 0);
     };
 
-    const playSelect = () => $message({message: "播放所选音乐", showClose: true, type: 'success'});
+    const playSelect = () => Message({message: "播放所选音乐", showClose: true, type: 'success'});
 
     /** 开始执行本地歌曲模糊搜索(使用事件防抖原理,避免频繁调用过滤逻辑) */
     const handleMusicFilter = () => {
@@ -121,16 +125,16 @@ export default {
       if (!handleMusicFilter.$method) {
         handleMusicFilter.$method = () => {
           let limited = maxSize > 1024;
-          limited ? $spinner.open() : null;
+          limited ? Spinner.open() : null;
 
-          let table = $db.tables.localMusic.name;
+          let table = db.tables.localMusic.name;
           // 若输入了搜索关键词,则调用过滤,否则查询所有
-          let promise = inputKey.value ? $db.queryOfFilter(table, filter) : $db.queryAll(table);
+          let promise = inputKey.value ? db.queryOfFilter(table, filter) : db.queryAll(table);
           promise.then(data => {
             inputKey.value ? (maxSize = data.length) : null;
             list.splice(0, list.length, ...data);
           });
-          promise.finally(limited ? $spinner.close : null);
+          promise.finally(limited ? Spinner.close : null);
         }
       }
       // 开始计时,在指定时间后执行数据过滤
@@ -142,7 +146,7 @@ export default {
      * @param row {Number} 行单元格索引
      */
     const onCellClick = row => {
-      $player.playMediaList(list, row);
+      player.playMediaList(list, row);
     };
 
     /** 导入音乐信息 */
@@ -152,7 +156,7 @@ export default {
         return;
       }
 
-      $spinner.open();
+      Spinner.open();
       let savedList = [];
 
       if (window.electron) {
@@ -184,24 +188,24 @@ export default {
 
       if (savedList.length) {
         list.push(...savedList);
-        await $db.insert($db.tables.localMusic.name, savedList);
+        await db.insert(db.tables.localMusic.name, savedList);
         maxSize += savedList.length;
       }
 
-      $spinner.close();
+      Spinner.close();
     };
 
-    onBeforeUnmount(() => $db.close());
+    onBeforeUnmount(() => db.close());
 
     /************ 加载表格视图数据 START ************/
         // 获取数据库表名称
-    let tableNamed = $db.tables.localMusic.name;
+    let tableNamed = db.tables.localMusic.name;
 
-    $spinner.open();
-    $db.open()
-        .then(() => $db.queryAll(tableNamed))
+    Spinner.open();
+    db.open()
+        .then(() => db.queryAll(tableNamed))
         .then(data => maxSize = list.push(...data))
-        .finally($spinner.close);
+        .finally(Spinner.close);
     /************ 加载表格视图数据   END ************/
 
     return {

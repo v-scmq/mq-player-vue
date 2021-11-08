@@ -24,7 +24,11 @@
 </template>
 
 <script>
-import {reactive, getCurrentInstance} from "vue";
+import player from '../player';
+import Message from '../components/Message';
+import Spinner from '../components/Spinner';
+
+import {reactive} from "vue";
 
 export default {
   name: 'RankList',
@@ -41,9 +45,10 @@ export default {
       {title: '时长', property: 'duration', width: 100},
     ]);
 
-    const {$player, $spinner, $source, $message} = getCurrentInstance().appContext.config.globalProperties;
+    // TODO 数据源API待修改
+    const $source = {};
 
-    $spinner.open();
+    Spinner.open();
     $source.impl.rankSongList(null, page).then(res => {
       if (res instanceof Array) {
         songList.splice(0, songList.length, ...res);
@@ -51,7 +56,7 @@ export default {
         rankList.splice(0, rankList.length, ...res.rankList);
         songList.splice(0, songList.length, ...res.list);
       }
-    }).finally($spinner.close);
+    }).finally(Spinner.close);
 
     return {
       rankList, songList, page, columns,
@@ -62,18 +67,18 @@ export default {
        * @param rankType {Object} 榜单项所属分类
        */
       onRankChanged(rankItem, rankType) {
-        $message(`榜单分类：${rankType.name} 对应的榜单项：${rankItem.name}`);
-        $spinner.open();
+        Message(`榜单分类：${rankType.name} 对应的榜单项：${rankItem.name}`);
+        Spinner.open();
         $source.impl.rankSongList(rankItem, page)
             .then(res => songList.splice(0, songList.length, ...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       },
 
       /**
        * 表格行单元格双击时的回调方法
        * @param row {number} 行单元格索引
        */
-      onCellClick: row => $player.playMediaList(songList, row)
+      onCellClick: row => player.playMediaList(songList, row)
     };
   }
 }

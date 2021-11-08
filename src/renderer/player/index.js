@@ -1,8 +1,14 @@
 /**
+ * @namespace MediaPlayer
+ */
+
+/**
  * 播放器状态
  *
+ * @memberOf MediaPlayer
+ *
  * @readonly
- * @enum {number}
+ * @enum Status
  *
  * @property {number} UNKNOWN   未知
  * @property {number} READY     就绪
@@ -15,7 +21,11 @@
  */
 const Status = {UNKNOWN: 0, READY: 1, PLAYING: 2, PAUSED: 3, STOPPED: 4, STALLED: 5, RELEASED: 6};
 
-/** 播放器对象 */
+/**
+ * @memberOf MediaPlayer
+ *
+ * 播放器对象
+ */
 const player = {
     /**播放器状态枚举*/
     $statusType: Status,
@@ -109,7 +119,7 @@ const player = {
     /**
      * 设置播放器是否自动播放
      *
-     * @param {boolean} value 是否自动播放，[true,false]
+     * @param {boolean} value 是否自动播放, 取值: [true,false]
      */
     setAutoPlay(value) {
         this.nativePlayer.autoplay = value;
@@ -145,7 +155,7 @@ const player = {
     /**
      * 设置播放器片段重复的开始时间
      *
-     * @param {number} value时间，单位秒
+     * @param {number} value 时间，单位秒
      */
     setLoopStartTime(value) {
         this.nativePlayer.loopstart = value;

@@ -14,6 +14,8 @@
 </template>
 
 <script>
+import player from '../player';
+
 export default {
   name: "Favorite",
   data: () => ({
@@ -46,9 +48,8 @@ export default {
       if (!row.path) {
         return;
       }
-      this.$player.playList.splice(0, this.$player.playList.length);
-      this.$player.playList.push(...this.dataList)
-      let player = this.$player;
+      player.playList.splice(0, player.playList.length);
+      player.playList.push(...this.dataList)
       if (player.prepare(row)) {
         player.play();
       }

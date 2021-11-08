@@ -36,16 +36,14 @@
 </template>
 
 <script>
-import {getCurrentInstance, reactive, ref} from "vue";
+import Message from '../components/Message';
+
+import {reactive, ref} from "vue";
 
 export default {
   name: "SystemSetting",
 
   setup() {
-
-    const vc = getCurrentInstance();
-    const {$message} = vc.appContext.config.globalProperties;
-
     // 标记退出程序
     const dataOfExit = reactive({checked: false, hour: 0, minute: 0});
     // 标记关闭计算机
@@ -80,7 +78,7 @@ export default {
 
         const {hour, minute, force} = option === 0 ? dataOfExit : dataOfShutdown;
         if ((hour * 60 + minute) < 1) {
-          return $message.warning('时间必须在1分钟以上');
+          return Message.warning('时间必须在1分钟以上');
         }
 
         data.hour = hour;

@@ -73,10 +73,24 @@ const MessageComponent = {
 const instances = [];
 
 /**
+ * @typedef {'info' | 'success' | 'warning' | 'error'} MessageType 消息类型
+ */
+
+/**
+ * @typedef {Object} MessageOptions 消息组件
+ *
+ * @property {string}                   message     消息文本
+ * @property {MessageType | undefined}  type        消息类型
+ * @property {boolean | undefined}      showClose   是否显示关闭图标
+ * @property {number | undefined}       duration    消息显示时间(单位: 毫秒)
+ * @property {undefined}                onClose     (仅内部使用)消息在关闭时的回调
+ * @property {undefined}                topOffset   (仅内部使用)消息在可视区域的上边缘偏移量(单位:像素)
+ */
+
+/**
  * 通过配置选项在页面上显示消息
  *
- * @param {Object | string} options 配置选项
- * @return {Object} message对象
+ * @param {MessageOptions | string} options 配置选项
  */
 const Message = options => {
     options = options || {};
@@ -110,21 +124,64 @@ const Message = options => {
     instances.push(vm);
 };
 
-// 注册不同类型的消息方法
-Object.keys(TYPE_MAP).forEach(type => {
-    Message[type] = options => {
-        if (typeof options === 'string') {
-            options = {message: options};
-        }
-        options.type = type;
-        Message(options);
-    };
-});
+/**
+ * 显示info级别的消息
+ *
+ * @param {MessageOptions | string} options 配置选项
+ */
+Message.info = options => {
+    if (typeof options === 'string') {
+        options = {message: options};
+    }
+    options.type = 'info';
+    Message(options);
+};
+
+/**
+ * 显示success级别的消息
+ *
+ * @param {MessageOptions | string} options 配置选项
+ */
+Message.success = options => {
+    if (typeof options === 'string') {
+        options = {message: options};
+    }
+    options.type = 'success';
+    Message(options);
+};
+
+/**
+ * 显示warning级别的消息
+ *
+ * @param {MessageOptions | string} options 配置选项
+ */
+Message.warning = options => {
+    if (typeof options === 'string') {
+        options = {message: options};
+    }
+    options.type = 'warning';
+    Message(options);
+};
+
+/**
+ * 显示error级别的消息
+ *
+ * @memberOf {Message}
+ * @param {MessageOptions | string} options 配置选项
+ */
+Message.error = options => {
+    if (typeof options === 'string') {
+        options = {message: options};
+    }
+    options.type = 'error';
+    Message(options);
+};
 
 /**
  * 关闭指定id的message消息
  *
- * @param {number} id message ID
+ * @memberOf {Message}
+ * @param {string} id message ID
  */
 Message.close = id => {
     let index = instances.findIndex(vm => vm.$nodeId === id);
@@ -149,6 +206,8 @@ Message.close = id => {
 
 /**
  * 关闭所有message的方法
+ *
+ * @memberOf {Message}
  */
 Message.closeAll = () => {
     for (let i = instances.length - 1; i >= 0; --i) {

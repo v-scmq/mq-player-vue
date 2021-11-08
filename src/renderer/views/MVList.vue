@@ -11,6 +11,7 @@
 </template>
 
 <script>
+import Spinner from '../components/Spinner';
 import {reactive, nextTick, onMounted, getCurrentInstance} from "vue";
 
 export default {
@@ -23,11 +24,12 @@ export default {
     const page = reactive({current: 1, size: 30});
     const tag = {};
 
-    const {$spinner, $source} = getCurrentInstance().appContext.config.globalProperties;
+    // TODO 数据源API待修改
+    const $source = {};
 
     onMounted(() => {
       let el = getCurrentInstance().refs.el;
-      $spinner.open();
+      Spinner.open();
       $source.impl.mvList(null, page).then(data => {
         if (data instanceof Array) {
           this.list = data;
@@ -52,7 +54,7 @@ export default {
           });
         }
 
-      }).finally($spinner.close);
+      }).finally(Spinner.close);
     });
 
     return {
@@ -72,10 +74,10 @@ export default {
           node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
           node.classList.add('active');
 
-          $spinner.open();
+          Spinner.open();
           $source.impl.mvList(tag, page)
               .then(data => list.splice(0, list.length, ...data))
-              .finally($spinner.close);
+              .finally(Spinner.close);
         }
       }
     };

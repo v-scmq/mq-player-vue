@@ -73,7 +73,10 @@
 </template>
 
 <script>
-import {reactive, watch, getCurrentInstance} from 'vue';
+import player from '../player';
+import Spinner from '../components/Spinner';
+
+import {reactive, watch} from 'vue';
 import {useRouter} from 'vue-router';
 
 export default {
@@ -108,7 +111,9 @@ export default {
       {title: '时长', property: 'duration', width: 100}
     ]);
 
-    const {$spinner, $source, $player} = getCurrentInstance().appContext.config.globalProperties;
+    // TODO 数据源API待修改
+    const $source = {};
+
     const router = useRouter();
 
     /**
@@ -122,25 +127,25 @@ export default {
       newTab.update = false;
 
       if (newTab === tabMap.SONG_TAB) {
-        $spinner.open();
+        Spinner.open();
         return $source.impl.handleSingerInfo(singer).then(success =>
             success ? $source.impl.singerSongList(singer, page) : null)
             .then(res => songList.splice(0, songList.length, ...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
 
       if (newTab === tabMap.ALBUM_TAB) {
-        $spinner.open();
+        Spinner.open();
         return $source.impl.singerAlbumList(singer, page)
             .then(res => albumList.splice(0, albumList.length, ...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
 
       if (newTab === tabMap.MV_TAB) {
-        $spinner.open();
+        Spinner.open();
         return $source.impl.singerMvList(singer, page)
             .then(res => mvList.splice(0, mvList.length, ...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
     };
 
@@ -177,7 +182,7 @@ export default {
        * @param index {Number} 行单元格索引
        */
       onCellClick(index) {
-        $player.playMediaList(songList, index);
+        player.playMediaList(songList, index);
       },
 
       print: () => print(),
@@ -201,11 +206,11 @@ export default {
         }
 
         ++page.current;
-        $spinner.open();
+        Spinner.open();
 
         $source.impl.singerSongList(singer, page)
             .then(res => songList.push(...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       },
     };
   }

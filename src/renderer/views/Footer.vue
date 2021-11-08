@@ -88,6 +88,9 @@
 import {ref, reactive, getCurrentInstance, onBeforeUnmount} from 'vue';
 import MusicViewer from './MusicViewer';
 import {TimeUtil} from '../utils';
+import player from '../player';
+import Message from '../components/Message';
+import Spinner from '../components/Spinner';
 
 export default {
   name: 'Footer',
@@ -113,7 +116,9 @@ export default {
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
     const vc = getCurrentInstance();
-    const {$player, $message, $spinner, $source} = vc.appContext.config.globalProperties;
+    
+    // TODO 数据源API待修改
+    const $source = {};
 
     /**
      * 获取播放器媒体播放索引
@@ -122,7 +127,7 @@ export default {
      * @return {number} 新的播放索引. 若返回{@code -1},则表示没有播放数据源,若返回{@code -2},则表示顺序播放结束
      */
     const getIndex = next => {
-      let index = $player.index, size = $player.playList.length;
+      let index = player.index, size = player.playList.length;
       // 列表循环
       if (modeIcon.value === 'list-loop') {
         return next ? (++index >= size ? 0 : index) : (--index < 0 ? --size : index);
@@ -149,30 +154,30 @@ export default {
      * @param {boolean | null} playNext 指定遇到错误时是否继续播放下一首
      */
     const play = (index, playNext = null) => {
-      let list = $player.playList;
+      let list = player.playList;
       // 暂停当前播放的媒体
-      $player.pause();
+      player.pause();
       if (!list || list.length === 0 || index === -1 || index >= list.length) {
-        return $message.warning('没有播放数据源，请选择一个播放源！');
+        return Message.warning('没有播放数据源，请选择一个播放源！');
       }
 
-      $player.index = index;
+      player.index = index;
       // 若index==-2,则是列表播放模式,且列表播放已完成,不播放下一首,
       // 可以不处理,因为index==-2在下面的执行中无法通过
       // 若播放索引在正常范围内,则准备播放媒体
       if (index >= 0 && index < list.length) {
         let media = list[index];
         if (!(media instanceof Object)) {
-          $message.info('媒体信息不存在，即将播放下一首');
+          Message.info('媒体信息不存在，即将播放下一首');
           return playNext ? play(++index, true) : null;
         }
 
         // 准备加载媒体资源
-        $player.prepare(media).then(state => {
+        player.prepare(media).then(state => {
           if (state) {
-            $player.play();
+            player.play();
           } else {
-            $message.error('媒体加载失败，即将播放下一首');
+            Message.error('媒体加载失败，即将播放下一首');
             playNext ? play(++index, true) : null;
           }
         });
@@ -183,11 +188,11 @@ export default {
      * 播放或暂停
      */
     const playOrPause = () => {
-      let type = $player.$statusType;
-      if ($player.isPlayable()) {
-        $player.status !== type.PLAYING ? $player.play() : $player.pause();
+      let type = player.$statusType;
+      if (player.isPlayable()) {
+        player.status !== type.PLAYING ? player.play() : player.pause();
       } else {
-        play($player.index);
+        play(player.index);
       }
     };
 
@@ -198,9 +203,9 @@ export default {
      * @param {boolean} seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
      */
     const valueChanged = (newValue, seek) => {
-      media.time = TimeUtil.secondToString(newValue * $player.getDuration());
-      if (seek && $player.status !== $player.$statusType.UNKNOWN) {
-        $player.seek(newValue * $player.getDuration());
+      media.time = TimeUtil.secondToString(newValue * player.getDuration());
+      if (seek && player.status !== player.$statusType.UNKNOWN) {
+        player.seek(newValue * player.getDuration());
       }
     };
 
@@ -209,14 +214,14 @@ export default {
      *
      * @param {number} newValue 新的播放器音量值
      */
-    const handleVolumeChange = newValue => $player.setVolume(newValue);
+    const handleVolumeChange = newValue => player.setVolume(newValue);
 
     /**
      * 当播放速率值改变时,给播放器设置这个速率值
      * 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」
      * @param {number} newValue 播放速率
      */
-    const handleSpeedChange = newValue => $player.setSpeed(1.5 * newValue + 0.5);
+    const handleSpeedChange = newValue => player.setSpeed(1.5 * newValue + 0.5);
 
     /**
      * 鼠标滚轮在音量面板上滚动时,重新设置播放器音量
@@ -238,33 +243,32 @@ export default {
       speed.value = value < 0 ? 0 : value > 1 ? 1 : value;
     };
 
-    $player.setVolume(volume.value);
-    $player.setEventListener({
+    player.setVolume(volume.value);
+    player.setEventListener({
       /**
        * 播放器状态回调
-       * @param {unkown} status 播放器状态
-       * @see STATUS
+       * @param {MediaPlayer.Status} status 播放器状态
        */
       statusChanged(status) {
         console.info('status=>', status)
-        isPlaying.value = status === $player.$statusType.PLAYING;
+        isPlaying.value = status === player.$statusType.PLAYING;
       },
 
       /**
        * 播放器当前时间改变回调
-       * @param time {Number} 播放进度时间(单位秒)
+       * @param time {number} 播放进度时间(单位秒)
        */
       timeChanged(time) {
         // 当滑动条没有再拖动时,才同步播放进度到滑动条视图
         let slider = vc.refs.progressSlider;
         if (!slider || slider.isNotDragging()) {
-          media.timeValue = time / $player.getDuration();
+          media.timeValue = time / player.getDuration();
         }
       },
 
       /**
        * 播放器时长改变回调
-       * @param duration 播放器时长(单位秒)
+       * @param {number} duration 播放器时长(单位秒)
        */
       durationChanged(duration) {
         media.duration = TimeUtil.secondToString(duration);
@@ -282,6 +286,7 @@ export default {
         media.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
             ((singer instanceof Object ? singer.name : singer) || '未知');
 
+        // TODO cover获取有误
         let cover = (album instanceof Object) ? album.cover : $media.cover;
         media.cover = (cover && (cover.charAt(1) === ':' || cover.charAt(0) === '/') ?
             `fs://${cover}` : cover) || DEFAULT_COVER;
@@ -292,7 +297,7 @@ export default {
 
       /**
        * 播放器由于缓冲而回调此方法
-       * @param value 缓存进度值
+       * @param {number} value 缓存进度值
        */
       bufferChanged(value) {
         media.buffered = value;
@@ -310,25 +315,25 @@ export default {
        * @return {Promise<boolean>} 是否获得网络资源路径
        */
       prepareBefore(media) {
-        $spinner.open();
+        Spinner.open();
         return new Promise(resolve => {
           $source.impl.handleMusicInfo(media).then(state => {
             if (!state) {
-              $message.warning('网络资源获取失败！');
+              Message.warning('网络资源获取失败！');
             }
             resolve(state);
 
           }).catch(() => {
-            $message.error('获取网络资源出现错误！');
+            Message.error('获取网络资源出现错误！');
             resolve(null);
 
-          }).finally($spinner.close);
+          }).finally(Spinner.close);
         });
       }
     });
 
     // 释放媒体资源
-    onBeforeUnmount(() => $player.release());
+    onBeforeUnmount(() => player.release());
 
     return {
       media, isPlaying, DEFAULT_COVER, viewerVisible, volume, speed, modeIcon,

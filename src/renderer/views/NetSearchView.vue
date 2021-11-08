@@ -73,7 +73,10 @@
 </template>
 
 <script>
-import {reactive, watch, getCurrentInstance} from 'vue';
+import player from '../player';
+import Spinner from '../components/Spinner';
+
+import {reactive, watch} from 'vue';
 import {useRouter} from 'vue-router';
 
 export default {
@@ -105,7 +108,8 @@ export default {
       {title: '时长', property: 'duration', width: 100}
     ]);
 
-    const {$spinner, $source, $player} = getCurrentInstance().appContext.config.globalProperties;
+    // TODO 数据源API待修改
+    const $source = {};
     const router = useRouter();
     let $query = null;
 
@@ -131,7 +135,7 @@ export default {
       newTab.update = false;
 
       // 打开进度指示器
-      $spinner.open();
+      Spinner.open();
       let api = $source.impl;
 
       // 若选定歌曲选项卡
@@ -142,25 +146,25 @@ export default {
             .catch(() => singer.mid = null)
             .then(() => api.songSearch($query, page))
             .then(list => songList.splice(0, songList.length, ...list))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
 
       if (newTab === tabMap.ALBUM_TAB) {
         $source.impl.albumSearch($query, page)
             .then(list => albumList.splice(0, albumList.length, ...list))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
 
       if (newTab === tabMap.MV_TAB) {
         $source.impl.mvSearch($query, page)
             .then(list => mvList.splice(0, mvList.length, ...list))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
 
       if (newTab === tabMap.SPECIAL_TAB) {
         $source.impl.specialSearch($query, page)
             .then(list => specialList.splice(0, specialList.length, ...list))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       }
     };
 
@@ -189,7 +193,7 @@ export default {
        * 表格行单元格双击时的回调方法
        * @param row {Number} 行单元格索引
        */
-      onCellClick: row => $player.playMediaList(songList, row),
+      onCellClick: row => player.playMediaList(songList, row),
 
       print: () => print(),
 
@@ -212,11 +216,11 @@ export default {
         }
 
         ++page.current;
-        $spinner.open();
+        Spinner.open();
 
         $source.impl.songSearch($query, page)
             .then(res => songList.push(...res))
-            .finally($spinner.close);
+            .finally(Spinner.close);
       },
     };
   }

@@ -6,6 +6,8 @@
 </template>
 
 <script>
+import player from '../player';
+
 export default {
   name: "PlayDetailView",
 
@@ -35,7 +37,7 @@ export default {
     // #7EC0EE", "#9AFF9A", "#FF86C1", "#FFA07A", "#FF00FF
 
     // 进行首次渲染
-    // this.$player.setAudioSpectrumListener(this.rectRenderFrame);
+    // player.setAudioSpectrumListener(this.rectRenderFrame);
 
     // Vue3中无需手动将组件放到某个特定节点(如body)之下,使用<teleport to="body"><component></component></teleport>
     // document.body.appendChild(this.$el);、、
@@ -43,7 +45,7 @@ export default {
 
   beforeUnmount() {
     // this.$el.remove();
-    this.$player.setAudioSpectrumListener(null);
+    player.setAudioSpectrumListener(null);
     if (this._header) {
       document.body.querySelector('#app >.tab-pane').before(this._header);
     }
@@ -52,7 +54,7 @@ export default {
   watch: {
     visible(value) {
       let listener = value ? this.rectRenderFrame : null;
-      this.$player.setAudioSpectrumListener(listener);
+      player.setAudioSpectrumListener(listener);
       // value ? document.body.appendChild(this.$el) : this.$el.remove();
 
       this._header.classList.toggle('viewer', value);

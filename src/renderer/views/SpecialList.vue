@@ -23,6 +23,8 @@
 </template>
 
 <script>
+import Spinner from '../components/Spinner';
+
 import {getCurrentInstance, nextTick, onMounted, reactive} from "vue";
 
 export default {
@@ -37,12 +39,15 @@ export default {
     const page = reactive({current: 1, size: 30});
     const tag = {};
 
+
+    // TODO 数据源API待修改
+    const $source = {};
+
     const vc = getCurrentInstance();
-    const {$spinner, $source} = vc.appContext.config.globalProperties;
 
     onMounted(() => {
       let el = vc.refs.el;
-      $spinner.open();
+      Spinner.open();
       $source.impl.specialList(null, page).then(res => {
         if (res instanceof Array) {
           list.splice(0, list.length, ...res);
@@ -63,7 +68,7 @@ export default {
             nodes.forEach(node => node.classList.add('active'));
           });
         }
-      }).finally($spinner.close);
+      }).finally(Spinner.close);
 
     });
 
@@ -82,10 +87,10 @@ export default {
           node.classList.add('active');
 
           if ((tag.id = attr ? attr.value : null)) {
-            $spinner.open();
+            Spinner.open();
             $source.impl.specialList(tag, page)
                 .then(data => list.splice(0, list.length, ...data))
-                .finally($spinner.close);
+                .finally(Spinner.close);
           }
         }
       }
