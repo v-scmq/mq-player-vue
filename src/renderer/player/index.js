@@ -196,14 +196,12 @@ const player = {
             return false;
         }
 
-        // this.nativePlayer.src = path;
-
         // let isWindows = navigator.platform === 'Win32';
         // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
         // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
 
-        this.nativePlayer.src = path.charAt(1) === ':' || path.charAt(0) === '/'
-            ? `fs://${path}` : `hs://${path}`;
+        // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
+        this.nativePlayer.src = path;
 
         if (listener && listener.mediaChanged) {
             listener.mediaChanged(media);

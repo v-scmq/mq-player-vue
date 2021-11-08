@@ -50,6 +50,19 @@ export default {
     let maxSize = 0;
 
     /**
+     * 获取本地文件资源在本地服务器上的URL <br>
+     *
+     * 注意: 原有文件路径无需经过 {@link encodeURI} 和 {@link encodeURIComponent} 编码URI
+     * {@link encodeURI} 是 编码部分字符
+     * {@link encodeURIComponent} 是编码更多字符(如'/' 也会被编码) 编码URI
+     *
+     * @param {string} path 文件绝对路径
+     *
+     * @returns {`/api/file?path=${string}`} 文件在本地服务器上的URL
+     */
+    const getFileURL = path => `/api/file?path=${path.replaceAll('\\', '/')}`;
+
+    /**
      * 通过文件对象生成音乐信息
      * @param basePath 存储音频专辑
      * @param file {File}文件对象
@@ -58,7 +71,7 @@ export default {
      */
     const parse = (basePath, file, meta) => {
       let data = {
-        path: file.path,
+        path: getFileURL(file.path),
         title: meta.common.title,
         singer: meta.common.artist,
         singerList: meta.common.artists,
@@ -93,11 +106,14 @@ export default {
         isDirectory ? fs.rmDir(path) : null;
 
         let buffer = meta.common.picture;
-        buffer = buffer && buffer.length ? buffer[0].data : null;
-        buffer ? fs.writeFile(data.cover = path, buffer) : null;
+        if ((buffer = buffer && buffer.length ? buffer[0].data : null)) {
+          fs.writeFile(path, buffer);
+          data.cover = getFileURL(path);
+        }
 
       } else {
-        data.cover = path;
+        // 替换路径为本地服务器地址
+        data.cover = getFileURL(path);
       }
       meta = meta.common = meta.format = fs = null;
       return data;

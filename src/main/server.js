@@ -2,13 +2,14 @@ import * as http from 'http';
 import {createReadStream, existsSync, statSync} from 'fs';
 import {QQMusicSource} from './api/tencent';
 
-
-// const https = require('https');
-
 const protocol = 'http';
 const host = 'localhost';
 const port = 9081;
 
+// 本地服务器根路径
+export const BASE_URL = `${protocol}://${host}:${port}`;
+
+// 内容MIME类型
 const MIME_TYPE = {
     '.aac': 'audio/mpeg', '.m4a': 'audio/mpeg', '.mp3': 'audio/mpeg', '.flac': 'audio/mpeg',
     '.mp4': 'video/mpeg', 'mkv': 'video/mpeg',
@@ -323,7 +324,7 @@ const requestMappingHandler = {
 // 创建HTTP服务
 http.createServer((request, response) => {
     // 获取解析后的URL对象
-    const url = new URL(`${protocol}://${host}:${port}${request.url}`);
+    const url = new URL(`${BASE_URL}${request.url}`);
     // 获取URL路径字符串
     const path = url.pathname;
     const handler = requestMappingHandler[path];

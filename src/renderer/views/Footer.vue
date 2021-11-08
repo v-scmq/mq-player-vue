@@ -116,7 +116,7 @@ export default {
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
     const vc = getCurrentInstance();
-    
+
     // TODO 数据源API待修改
     const $source = {};
 
@@ -286,10 +286,8 @@ export default {
         media.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
             ((singer instanceof Object ? singer.name : singer) || '未知');
 
-        // TODO cover获取有误
         let cover = (album instanceof Object) ? album.cover : $media.cover;
-        media.cover = (cover && (cover.charAt(1) === ':' || cover.charAt(0) === '/') ?
-            `fs://${cover}` : cover) || DEFAULT_COVER;
+        media.cover = cover || DEFAULT_COVER;
 
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
