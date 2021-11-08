@@ -2,7 +2,7 @@ import {KuGouSource} from './kugou';
 import {QQMusicSource} from "./tencent";
 
 /** 用户代理 PC浏览器标识 */
-const USER_AGENT_PC = navigator.userAgent;
+const USER_AGENT_PC = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36';
 
 /** 用户代理 手机浏览器标识 */
 const USER_AGENT_MOBILE = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36';

@@ -1,27 +1,26 @@
-/** 播放器状态枚举 */
-const STATUS = {
-    /**未知*/
-    UNKNOWN: 0,
-    /**准备就绪*/
-    READY: 1,
-    /**播放中*/
-    PLAYING: 2,
-    /**已暂停*/
-    PAUSED: 3,
-    /**已停止*/
-    STOPPED: 4,
-    /**由于某些原因而发生阻塞(例如网络不佳)*/
-    STALLED: 5,
-    /**播放器已被释放*/
-    RELEASED: 6
-};
+/**
+ * 播放器状态
+ *
+ * @readonly
+ * @enum {number}
+ *
+ * @property {number} UNKNOWN   未知
+ * @property {number} READY     就绪
+ * @property {number} PLAYING   播放中
+ * @property {number} PAUSED    已暂停
+ * @property {number} STOPPED   已停止
+ * @property {number} STALLED   已阻塞(由于某些原因而发生阻塞,例如网络不佳)
+ * @property {number} RELEASED  就绪
+ *
+ */
+const Status = {UNKNOWN: 0, READY: 1, PLAYING: 2, PAUSED: 3, STOPPED: 4, STALLED: 5, RELEASED: 6};
 
 /** 播放器对象 */
 const player = {
     /**播放器状态枚举*/
-    $statusType: STATUS,
+    $statusType: Status,
     /** 播放器当前状态 */
-    status: STATUS.UNKNOWN,
+    status: Status.UNKNOWN,
     /** 本地播放器 */
     nativePlayer: new Audio(),
     /** 事件监听器 */
@@ -102,7 +101,7 @@ const player = {
         let listener = this.eventListener;
         this.eventListener = null;
         if (listener && listener.statusChanged) {
-            listener.statusChanged(STATUS.RELEASED);
+            listener.statusChanged(Status.RELEASED);
         }
     },
 
@@ -271,7 +270,7 @@ const player = {
      * @returns {Boolean} 若正在播放则返回true.
      */
     isPlaying() {
-        return this.status === STATUS.PLAYING;
+        return this.status === Status.PLAYING;
     },
 
     /**
@@ -280,7 +279,7 @@ const player = {
      * @return {Boolean} 若播放器可播放则返回true
      */
     isPlayable() {
-        return this.nativePlayer.src !== "" && this.status !== STATUS.RELEASED;
+        return this.nativePlayer.src !== "" && this.status !== Status.RELEASED;
     },
 
     /**
@@ -386,9 +385,9 @@ player.nativePlayer.onprogress = () => {
 // 注册播放器播放时的回调
 player.nativePlayer.onplaying = () => {
     let listener = player.eventListener;
-    player.status = STATUS.PLAYING;
+    player.status = Status.PLAYING;
     if (listener && listener.statusChanged) {
-        listener.statusChanged(STATUS.PLAYING);
+        listener.statusChanged(Status.PLAYING);
     }
 
     // 若已注册音频监听器
@@ -401,7 +400,7 @@ player.nativePlayer.onplaying = () => {
 // 注册播放器正在播放时的回调
 player.nativePlayer.onended = () => {
     let listener = player.eventListener;
-    player.status = STATUS.STOPPED;
+    player.status = Status.STOPPED;
     if (listener && listener.finished) {
         listener.finished();
     }
@@ -415,9 +414,9 @@ player.nativePlayer.onended = () => {
 // 注册播放器暂停时的回调
 player.nativePlayer.onpause = () => {
     let listener = player.eventListener;
-    player.status = STATUS.PAUSED;
+    player.status = Status.PAUSED;
     if (listener && listener.statusChanged) {
-        listener.statusChanged(STATUS.PAUSED);
+        listener.statusChanged(Status.PAUSED);
     }
 
     // 取消音频频谱数据监听
@@ -429,9 +428,9 @@ player.nativePlayer.onpause = () => {
 // 注册播放器阻塞时的回调
 player.nativePlayer.onstalled = () => {
     let listener = player.eventListener;
-    player.status = STATUS.STALLED;
+    player.status = Status.STALLED;
     if (listener && listener.statusChanged) {
-        listener.statusChanged(STATUS.STALLED);
+        listener.statusChanged(Status.STALLED);
     }
 
     // 取消音频频谱数据监听
