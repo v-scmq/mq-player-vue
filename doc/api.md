@@ -14,7 +14,8 @@
 
 #### 歌手列表(post)
 
-> 接口: /api/singers => data = {platform:number, page:number, pageSize:number, en:string, sex:string, genre:string, index:string} <br>
+> 接口: /api/singers => data = {platform:number, page:{current:number, pageSize:number},
+> tag:{en:string, sex:string, genre:string, area:string}} <br>
 > 示例: /api/singers => data = {platform:1, page:1, pageSize:30} <br>
 >
 > 返回: <br>
@@ -22,15 +23,15 @@
 > tags:{
 > en:[{id:1,name:"华语"}, {id:2,name:"欧美"}],
 > sex:[{id:1,name:"男"}, {id:2,name:"女"}],
-> genre:[], index:[]
+> genre:[], area:[]
 > list:[{id:12394, mid:"239hmu", name:"叶炫清", cover:"/singer/cover/1.jpg", otherName:"", spell:"yxq"}]
 > }
 
 #### 歌手歌曲列表(post)
 
-> 接口: /api/singer/songs => data = {platform:number, page:number, pageSize:number} <br>
-> 示例: /api/singer/songs => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: [{duration, vid, singer, year, album, mid, id, title}]
+> 接口: /api/singer/songs => data = {platform:number, page:Page, singer:Singer} <br>
+> 示例: /api/singer/songs => data = {platform:1, page:{current:1, pageSize:30}, singer:{mid:"1234v"}} <br>
+> 返回: {page:Page, singer:Singer | null, list:[{duration, vid, singer, year, album, mid, id, title}]}
 
 #### 歌手专辑列表(post)
 

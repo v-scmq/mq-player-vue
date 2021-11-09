@@ -1,6 +1,7 @@
 import * as http from 'http';
 import {createReadStream, existsSync, statSync} from 'fs';
 import {QQMusicSource} from './api/tencent';
+import {DefaultSource} from './api/default';
 
 const protocol = 'http';
 const host = 'localhost';
@@ -17,6 +18,12 @@ const MIME_TYPE = {
     '.svgz': 'image/svg+xml', '.json': 'application/json', '.wasm': 'application/wasm',
     default: 'application/octet-stream'
 }
+
+// 数据来源
+const DATA_SOURCE_IMPL = {
+    [DefaultSource.id]: DefaultSource,
+    [QQMusicSource.id]: QQMusicSource
+};
 
 /**
  * 处理本地文件资源请求
@@ -110,19 +117,36 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singers'(request, response) {
+        /** @type {Buffer[]} */
         const buffers = [];
 
-        request.on('data', chunk => buffers.push(chunk));
+        request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
 
         request.once('end', async () => {
+            // 获取请求参数
+            /** @type {{platform:number, page: Page, tag: SingerTagsParam}}} */
             const param = JSON.parse(buffers.toString());
+            // 根据平台id查找对应的数据源实现
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
 
-            const tag = {area: param.area, en: null, sex: null, genre: null};
-            const page = {};
-            const data = await QQMusicSource.singerList(tag, page);
+            // 若找到对应的接口实现 且 提供获取歌手列表信息的方法实现,则调用并返回数据到客户端
+            if (dataSource && dataSource.singerList) {
+                // 获取数据
+                const data = await dataSource.singerList(param.tag, param.page);
 
-            response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
-            delete data.httpInfo;
+                // 写入 状态码 和 响应头信息 到客户端
+                response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
+                // 删除状态码和响应头信息
+                delete data.httpInfo;
+                // 吸入数据到客户端
+                response.write(JSON.stringify(data));
+
+            } else {
+                // TODO 暂时不做任何处理
+                response.writeHead(200, {});
+            }
+
+            // 结束响应
             response.end();
         });
     },
@@ -134,7 +158,38 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/songs'(request, response) {
-        response.end();
+        /** @type {Buffer[]} */
+        const buffers = [];
+
+        request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
+
+        request.once('end', async () => {
+            // 获取请求参数
+            /** @type {{platform:number, page: Page, singer: Singer}}} */
+            const param = JSON.parse(buffers.toString());
+            // 根据平台id查找对应的数据源实现
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+
+            // 若找到对应的接口实现 且 提供获取歌手列表信息的方法实现,则调用并返回数据到客户端
+            if (dataSource && dataSource.singerSongList) {
+                // 获取数据
+                const data = await dataSource.singerSongList(param.singer, param.page);
+
+                // 写入 状态码 和 响应头信息 到客户端
+                response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
+                // 删除状态码和响应头信息
+                delete data.httpInfo;
+                // 吸入数据到客户端
+                response.write(JSON.stringify(data));
+
+            } else {
+                // TODO 暂时不做任何处理
+                response.writeHead(200, {});
+            }
+
+            // 结束响应
+            response.end();
+        });
     },
 
     /**
