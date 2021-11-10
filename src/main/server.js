@@ -1,4 +1,4 @@
-import * as http from 'http';
+import {createServer} from 'http';
 import {createReadStream, existsSync, statSync} from 'fs';
 import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
@@ -93,6 +93,50 @@ const handleFileRequest = (request, response, path) => {
 };
 
 /**
+ * 处理post请求,并调用传入的callback方法获取数据
+ *
+ * @param {module:http.IncomingMessage} request 客户端请求信息
+ * @param {module:http.ServerResponse} response 服务器响应信息
+ * @param {(dataSource:Object, param:Object) => Promise<any>} callback 回调处理器, 用于自定义调用对象上的方法来获取数据
+ */
+const handlePostRequest = (request, response, callback) => {
+    /** @type {Buffer[]} */
+    const buffers = [];
+
+    request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
+
+    request.once('end', () => {
+        // 获取请求参数
+        try {
+            /** @type {{platform:number, [key:string]:any}} */
+            const param = JSON.parse(buffers.toString());
+            // 根据平台id查找对应的数据源实现
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+
+            if (dataSource) {
+                callback(dataSource, param).then(/** @type {{[key:string]:any, httpInfo: HttpInfo}} */data => {
+                    // 写入 状态码 和 响应头信息 到客户端
+                    response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
+                    // 删除状态码和响应头信息
+                    delete data.httpInfo;
+                    // 吸入数据到客户端
+                    response.write(JSON.stringify(data));
+
+                }).catch(reason => response.writeHead(200, {}).end(reason));
+
+            } else {
+                response.writeHead(200, {}).end('没有对应的数据源api实现此接口');
+            }
+
+        } catch (e) {
+            response.writeHead(200).end('无效的参数！')
+        }
+    });
+
+    request.once('error', () => response.writeHead(200).end('请求失败！'));
+};
+
+/**
  * 请求映射处理器
  *
  * @type {{[key:string]: Function}}
@@ -107,6 +151,8 @@ const requestMappingHandler = {
      * @param url {URL} 经过解析后的URL对象
      */
     '/api/file'(request, response, url) {
+        console.info('url => ', url);
+        console.info('path => ', url.searchParams.get('path'));
         handleFileRequest(request, response, url.searchParams.get('path'));
     },
 
@@ -117,38 +163,9 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singers'(request, response) {
-        /** @type {Buffer[]} */
-        const buffers = [];
-
-        request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
-
-        request.once('end', async () => {
-            // 获取请求参数
-            /** @type {{platform:number, page: Page, tag: SingerTagsParam}}} */
-            const param = JSON.parse(buffers.toString());
-            // 根据平台id查找对应的数据源实现
-            const dataSource = DATA_SOURCE_IMPL[param.platform];
-
-            // 若找到对应的接口实现 且 提供获取歌手列表信息的方法实现,则调用并返回数据到客户端
-            if (dataSource && dataSource.singerList) {
-                // 获取数据
-                const data = await dataSource.singerList(param.tag, param.page);
-
-                // 写入 状态码 和 响应头信息 到客户端
-                response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
-                // 删除状态码和响应头信息
-                delete data.httpInfo;
-                // 吸入数据到客户端
-                response.write(JSON.stringify(data));
-
-            } else {
-                // TODO 暂时不做任何处理
-                response.writeHead(200, {});
-            }
-
-            // 结束响应
-            response.end();
-        });
+        // param: {platform:number, page: Page, tag: SingerTagsParam} = {};
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.singerList(param.tag, param.page));
     },
 
     /**
@@ -158,38 +175,9 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/songs'(request, response) {
-        /** @type {Buffer[]} */
-        const buffers = [];
-
-        request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
-
-        request.once('end', async () => {
-            // 获取请求参数
-            /** @type {{platform:number, page: Page, singer: Singer}}} */
-            const param = JSON.parse(buffers.toString());
-            // 根据平台id查找对应的数据源实现
-            const dataSource = DATA_SOURCE_IMPL[param.platform];
-
-            // 若找到对应的接口实现 且 提供获取歌手列表信息的方法实现,则调用并返回数据到客户端
-            if (dataSource && dataSource.singerSongList) {
-                // 获取数据
-                const data = await dataSource.singerSongList(param.singer, param.page);
-
-                // 写入 状态码 和 响应头信息 到客户端
-                response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
-                // 删除状态码和响应头信息
-                delete data.httpInfo;
-                // 吸入数据到客户端
-                response.write(JSON.stringify(data));
-
-            } else {
-                // TODO 暂时不做任何处理
-                response.writeHead(200, {});
-            }
-
-            // 结束响应
-            response.end();
-        });
+        // const param: {platform:number, page: Page, singer: Singer} = {};
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.singerSongList(param.singer, param.page));
     },
 
     /**
@@ -199,7 +187,9 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/albums'(request, response) {
-        response.end();
+        // const param: {platform:number, page: Page, singer: Singer} = {};
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.singerAlbumList(param.singer, param.page));
     },
 
     /**
@@ -209,7 +199,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/album/songs'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.albumSongList(param.album, param.page));
     },
 
     /**
@@ -219,7 +210,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/singer/mvs'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.singerMvList(param.singer, param.page));
     },
 
     /**
@@ -377,7 +369,7 @@ const requestMappingHandler = {
 };
 
 // 创建HTTP服务
-http.createServer((request, response) => {
+createServer((request, response) => {
     // 获取解析后的URL对象
     const url = new URL(`${BASE_URL}${request.url}`);
     // 获取URL路径字符串

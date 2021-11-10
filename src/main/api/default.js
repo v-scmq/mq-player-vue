@@ -120,5 +120,38 @@ export const DefaultSource = {
      */
     async singerSongList(singer, page) {
         return {singer, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
-    }
+    },
+
+    /**
+     * 获取歌手的专辑列表
+     *
+     * @param {Singer} singer 歌手信息,不能为null
+     * @param {Page} page 分页对象,不能为null
+     * @return {Promise<{page:Page, list:Album[], httpInfo:HttpInfo}>}专辑信息列表集合
+     */
+    async singerAlbumList(singer, page) {
+        return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取专辑的歌曲列表
+     *
+     * @param {Album} album 专辑信息对象,不能为null
+     * @param {Page} page 分页信息对象,不能为null
+     * @return {Promise<{album:Album, list:Song[], httpInfo:HttpInfo}>} 专辑包含的歌曲List集合
+     */
+    async albumSongList(album, page) {
+        return {album, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取歌手的MV列表
+     *
+     * @param {Singer} singer 歌手信息,不能为null
+     * @param {Page} page 分页对象,不能为null
+     * @return {Promise<{page:Page, list:MV[], httpInfo:HttpInfo}>} MV信息列表集合
+     */
+    async singerMvList(singer, page) {
+        return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
 }

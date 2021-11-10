@@ -52,21 +52,22 @@ export default {
     /**
      * 获取本地文件资源在本地服务器上的URL <br>
      *
-     * 注意: 原有文件路径无需经过 {@link encodeURI} 和 {@link encodeURIComponent} 编码URI
+     * 注意: 原有文件路径需要经过 {@link encodeURIComponent} 编码URI
      * {@link encodeURI} 是 编码部分字符
-     * {@link encodeURIComponent} 是编码更多字符(如'/' 也会被编码) 编码URI
+     * {@link encodeURIComponent} 是编码更多字符(如'/' 和 '&' 也会被编码) 编码URI
      *
      * @param {string} path 文件绝对路径
      *
      * @returns {`/api/file?path=${string}`} 文件在本地服务器上的URL
      */
-    const getFileURL = path => `/api/file?path=${path.replaceAll('\\', '/')}`;
+    const getFileURL = path => `/api/file?path=${encodeURIComponent(path.replaceAll('\\', '/'))}`;
 
     /**
      * 通过文件对象生成音乐信息
-     * @param basePath 存储音频专辑
-     * @param file {File}文件对象
-     * @param meta {Object}音频元数据信息
+     *
+     * @param {string} basePath 存储音频专辑封面图的根路径
+     * @param {File} file 文件对象
+     * @param {Object} meta 音频元数据信息
      * @returns {Object} 音乐信息对象
      */
     const parse = (basePath, file, meta) => {

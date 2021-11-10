@@ -31,25 +31,25 @@
 
 > 接口: /api/singer/songs => data = {platform:number, page:Page, singer:Singer} <br>
 > 示例: /api/singer/songs => data = {platform:1, page:{current:1, pageSize:30}, singer:{mid:"1234v"}} <br>
-> 返回: {page:Page, singer:Singer | null, list:[{duration, vid, singer, year, album, mid, id, title}]}
+> 返回: {page:Page, singer:Singer | null, list:Song[]}
 
 #### 歌手专辑列表(post)
 
-> 接口: /api/singer/albums => data = {platform:number, page:number, pageSize:number} <br>
-> 示例: /api/singer/albums => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: [{singer:{}, mid, id, name, year, cover, songCount}]
+> 接口: /api/singer/albums => data = {platform:number, page:Page, singer:Singer} <br>
+> 示例: /api/singer/albums => data = {platform:1, page:{current:1, pageSize:30}, singer:{mid:"1234v"}} <br>
+> 返回: {page:Page, list:Album[]}
 
 #### 专辑歌曲列表(post)
 
-> 接口: /api/album/songs => data = {platform:number, page:number, pageSize:number} <br>
-> 示例: /api/album/songs => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: [{duration, vid, singer, year, album, mid, id, title}]
+> 接口: /api/album/songs => data = {platform:number, page:Page, album:Album} <br>
+> 示例: /api/album/songs => data = {platform:1, page:{current:1, pageSize:30}, album:{mid:"t02kl"}} <br>
+> 返回: {album:Album | null, list:Song[]}
 
 #### 歌手MV列表(post)
 
-> 接口: /api/singer/mvs => data = {platform:number, page:number, pageSize:number} <br>
-> 示例: /api/singer/mvs => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: [{singer, vid, title, cover, duration}]
+> 接口: /api/singer/mvs => data = {platform:number, page:Page, singer:Singer} <br>
+> 示例: /api/singer/mvs => data = {platform:1, page:{current:1, pageSize:30}, singer:{mid:"1234v"}0} <br>
+> 返回: {page:Page, list:MV[]}
 
 #### 歌单列表(post)
 
