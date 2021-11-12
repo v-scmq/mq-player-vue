@@ -43,7 +43,7 @@
  */
 
 /**
- * @typedef {Object} MV MV信息
+ * @typedef {Object} Mv mv信息
  *
  * @property {string | number | undefined}              vid      mv id
  * @property {string | undefined}                       title    mv标题
@@ -65,10 +65,11 @@
  */
 
 /**
- * @typedef {Object} Tag    标签信息
+ * @typedef {Object} Tag        标签信息
  *
- * @property {string} id    分类标签id
- * @property {string} name  分类标签名
+ * @property {string} id   分类标签id
+ * @property {string} name          分类标签名
+ * @property {any} [key:string]     额外的信息
  */
 
 /**
@@ -81,12 +82,52 @@
  */
 
 /**
- * @typedef {Object} SingerTagsParam    歌手分类标签作为参数信息
+ * @typedef {{[key: keyof SingerTags]: string | number}} SingerTagsParam  歌手分类标签作为参数信息
+ */
+
+/**
+ * @typedef {Object} SpecialTags 歌单分类标签
  *
- * @property {string | undefined} en                歌手检索字母
- * @property {string | undefined} area              歌手所属区域
- * @property {string | undefined} sex               歌手性别分类
- * @property {string | undefined} genre             歌手所属流派
+ * @property {string} title 歌单分类(标签组)标题
+ * @property {Tag[]}  items 歌单子分类标签列表
+ */
+
+/**
+ * @typedef {Object} Special    歌单信息
+ *
+ * @property {string} mid                       歌单mid
+ * @property {string} name                      歌单名称
+ * @property {string | number | undefined} id   歌单id
+ * @property {string | undefined} cover         歌单封面URL
+ * @property {string | undefined} introduce     歌单简介
+ * @property {string | undefined} creator       歌单创建者
+ * @property {string | undefined} userId        用户id
+ */
+/**
+ * @typedef {Object} MvTags mv分类标签信息
+ *
+ * @property {Tag[]} area 区域分类标签
+ * @property {Tag[]} version 版本分类标签
+ */
+
+/**
+ * @typedef {{[key: keyof MvTags]: string | number}} MvTagsParam 获取mv列表时的分类标签参数信息
+ */
+
+/**
+ * @typedef {Object} RankItem           音乐排行榜子分类列表项
+ *
+ * @property {string | number} id       分类id
+ * @property {string |undefined} name   排行榜名称
+ * @property {string |undefined} cover  排行榜图标URL
+ */
+
+/**
+ * @typedef {Object} Rank           音乐排行榜分类信息
+ *
+ * @property {string | number} id   榜单分组id
+ * @property {string} title         榜单分组标题
+ * @property {RankItem[]} items     榜单子分类列表
  */
 
 /**
@@ -108,7 +149,7 @@ export const DefaultSource = {
      * @return {Promise<{tags: SingerTags | null, list: Song[], page: Page, httpInfo:HttpInfo}>} 歌手信息列表集合
      */
     async singerList(tag, page) {
-        return {tags:/** @type {SingerTagsParam} */{}, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+        return {tags: null, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
     },
 
     /**
@@ -149,9 +190,53 @@ export const DefaultSource = {
      *
      * @param {Singer} singer 歌手信息,不能为null
      * @param {Page} page 分页对象,不能为null
-     * @return {Promise<{page:Page, list:MV[], httpInfo:HttpInfo}>} MV信息列表集合
+     * @return {Promise<{page:Page, list:Mv[], httpInfo:HttpInfo}>} MV信息列表集合
      */
     async singerMvList(singer, page) {
         return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取歌单列表
+     *
+     * @param {Tag | null} tag  歌单分类标签信息
+     * @param {Page} page       分页对象
+     * @returns {Promise<{tags:SpecialTags[], page:Page, list:Special[], httpInfo:HttpInfo}>} 异步Promise对象
+     */
+    async specialList(tag, page) {
+        return {tags: [], page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取歌单包含的歌曲列表
+     *
+     * @param {Special} special 歌单信息
+     * @param {Page} page 分页对象
+     * @returns {Promise<{special:Special, page:Page, list:Song[], httpInfo:HttpInfo}>} 歌单中的歌曲的List集合
+     */
+    async specialSongList(special, page) {
+        return {special, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取指定MV分类下的MV列表
+     *
+     * @param {MvTagsParam | null} tag MV分类标签信息
+     * @param {Page} page 分页对象
+     * @return {Promise<{tags:MvTags, list:Mv[], httpInfo:HttpInfo}>} 异步Promise对象
+     */
+    async mvList(tag, page) {
+        return {tags: {area: [], version: []}, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取指定榜单项包含的音乐列表
+     *
+     * @param {RankItem | null} item 榜单项
+     * @param {Page} page 分页对象
+     * @return {Promise<{page:Page, rankList:Rank[], list:Song[], httpInfo:HttpInfo}>} 异步Promise对象
+     */
+    async rankSongList(item, page) {
+        return {page, rankList: [], list: [], httpInfo: {statusCode: 200, headers: {}}};
     },
 }

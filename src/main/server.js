@@ -151,8 +151,6 @@ const requestMappingHandler = {
      * @param url {URL} 经过解析后的URL对象
      */
     '/api/file'(request, response, url) {
-        console.info('url => ', url);
-        console.info('path => ', url.searchParams.get('path'));
         handleFileRequest(request, response, url.searchParams.get('path'));
     },
 
@@ -221,7 +219,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/specials'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.specialList(param.tag, param.page));
     },
 
 
@@ -232,7 +231,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/special/songs'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.specialSongList(param.special, param.page));
     },
 
     /**
@@ -242,7 +242,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/mvs'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.mvList(param.tag, param.page));
     },
 
     /**

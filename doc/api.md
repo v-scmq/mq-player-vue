@@ -53,33 +53,27 @@
 
 #### 歌单列表(post)
 
-> 接口: /api/specials => data = {platform:number, page:number, pageSize:number, tagId:string} <br>
-> 示例: /api/specials => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: {tags:[{title, items:[{id, mame, sortType:[{id, name}]}]}], list:[{mid, name, cover, creator}]}
+> 接口: /api/specials => data = {platform:number, page:Page, tag:Tag} <br>
+> 示例: /api/specials => data = {platform:1, page:{current:1, pageSize:30}, tag:{id:1}} <br>
+> 返回: {tags:SpecialTags[], page:Page, list:Special[]}
 
 #### 歌单歌曲列表(post)
 
-> 接口: /api/special/songs => data = {platform:number, page:number, pageSize:number, specialId:string} <br>
-> 示例: /api/special/songs => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: {tags:[{title, items:[{id, mame, sortType:[{id, name}]}]}], list:[{duration, vid, singer, year, album, mid, id, title}]}
+> 接口: /api/special/songs => data = {platform:number, page:Page, special:Special} <br>
+> 示例: /api/special/songs => data = {platform:1, page:{current:1, pageSize:30}, special:{id:'1sdlt0'}} <br>
+> 返回: {special:Special, page:Page, list:Song[]}
 
 #### MV列表(post)
 
-> 接口: /api/mvs => data = {platform:number, page:number, pageSize:number, area:string, version:string} <br>
-> 示例: /api/mvs => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: {tags:{area:[{id, name}], version:[{id, name}]}, list:[{singer:{}, vid, title, cover, duration}]}
+> 接口: /api/mvs => data = {platform:number, page:Page, tag:{area:string, version:string}} <br>
+> 示例: /api/mvs => data = {platform:1, page:{current:1, pageSize:30}, tag:{area:'1', version:'2'}} <br>
+> 返回: {tags:MvTags, list:Mv[]}
 
-#### 榜单列表(post)
+#### 榜单及歌曲列表(post)
 
-> 接口: /api/ranks => data = {platform:number, page:number, pageSize:number} <br>
-> 示例: /api/ranks => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: [{id, title, items:[{id, name, cover}]}]
-
-#### 榜单歌曲列表(post)
-
-> 接口: /api/rank/songs => data = {platform:number, page:number, pageSize:number, rankItemId:string} <br>
-> 示例: /api/rank/songs => data = {platform:1, page:1, pageSize:30} <br>
-> 返回: [{duration, vid, singer, year, album, mid, id, title}]
+> 接口: /api/ranks => data = {platform:number, page:Page, item:RankItem} <br>
+> 示例: /api/ranks => data = {platform:1, page:{current:1, pageSize:30}, item:{id:'1slv'}} <br>
+> 返回: {page:Page, rankList:Rank[], list:Song[]}
 
 #### 歌曲搜索(post)
 
