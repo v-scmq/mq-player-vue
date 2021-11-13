@@ -23,8 +23,8 @@ import player from '../player';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
 
-import {TimeUtil, FileUtil} from '../utils';
-import {reactive, ref, getCurrentInstance, onBeforeUnmount} from "vue";
+import {reactive, ref, getCurrentInstance, onBeforeUnmount} from 'vue';
+import {getFileURL, secondToString, resolveFileName, getMediaInfo, toFileSize} from '../../utils';
 
 export default {
   name: "LocalMusic",
@@ -50,19 +50,6 @@ export default {
     let maxSize = 0;
 
     /**
-     * 获取本地文件资源在本地服务器上的URL <br>
-     *
-     * 注意: 原有文件路径需要经过 {@link encodeURIComponent} 编码URI
-     * {@link encodeURI} 是 编码部分字符
-     * {@link encodeURIComponent} 是编码更多字符(如'/' 和 '&' 也会被编码) 编码URI
-     *
-     * @param {string} path 文件绝对路径
-     *
-     * @returns {`/api/file?path=${string}`} 文件在本地服务器上的URL
-     */
-    const getFileURL = path => `/api/file?path=${encodeURIComponent(path.replaceAll('\\', '/'))}`;
-
-    /**
      * 通过文件对象生成音乐信息
      *
      * @param {string} basePath 存储音频专辑封面图的根路径
@@ -79,8 +66,8 @@ export default {
         year: meta.common.year,
         album: meta.common.album,
         cover: null,
-        duration: TimeUtil.secondToString(meta.format.duration),
-        size: FileUtil.toFileSize(2, file.size),
+        duration: secondToString(meta.format.duration),
+        size: toFileSize(2, file.size),
         bitrate: meta.format.bitrate,
         sampleRate: meta.format.sampleRate
         // codec: meta.format.codec, // "MPEG 1 Layer 3"
@@ -91,13 +78,13 @@ export default {
       };
 
       if (!data.title || !data.singer) {
-        let info = FileUtil.getMediaInfo(file, true);
+        let info = getMediaInfo(file, true);
         data.title = info.title || '未知';
         data.singer = info.singer || '未知';
       }
 
       let fs = window.electron, name = data.album || file.name;
-      let path = `${basePath}/${FileUtil.resolveFileName(name)}`;
+      let path = `${basePath}/${resolveFileName(name)}`;
       // 注意必须先检测存在才能判断是文件还是目录,否则抛出异常
       let exists = fs.exists(path), isDirectory;
 
@@ -199,7 +186,7 @@ export default {
       } else {
         for (let file of files) {
           // 若是外部环境,只能使用URL类创建临时的文件访问地址
-          savedList.push(FileUtil.getMediaInfo(file, false));
+          savedList.push(getMediaInfo(file, false));
         }
       }
 

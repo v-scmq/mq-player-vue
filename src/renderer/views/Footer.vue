@@ -87,7 +87,7 @@
 <script>
 import {ref, reactive, getCurrentInstance, onBeforeUnmount} from 'vue';
 import MusicViewer from './MusicViewer';
-import {TimeUtil} from '../utils';
+import {secondToString} from '../../utils';
 import player from '../player';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
@@ -203,7 +203,7 @@ export default {
      * @param {boolean} seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
      */
     const valueChanged = (newValue, seek) => {
-      media.time = TimeUtil.secondToString(newValue * player.getDuration());
+      media.time = secondToString(newValue * player.getDuration());
       if (seek && player.status !== player.$statusType.UNKNOWN) {
         player.seek(newValue * player.getDuration());
       }
@@ -271,7 +271,7 @@ export default {
        * @param {number} duration 播放器时长(单位秒)
        */
       durationChanged(duration) {
-        media.duration = TimeUtil.secondToString(duration);
+        media.duration = secondToString(duration);
       },
 
       /**
