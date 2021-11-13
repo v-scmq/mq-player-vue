@@ -48,7 +48,7 @@
  * @property {string | number | undefined}              vid      mv id
  * @property {string | undefined}                       title    mv标题
  * @property {string | Singer | Singer[] | undefined}   singer   歌手信息
- * @property {number | undefined}                       cover    mv封面图
+ * @property {string | undefined}                       cover    mv封面图
  * @property {string | undefined}                       duration 播放时长
  * @property {string | undefined}                       path     文件路径
  * @property {string | undefined}                       format   视频格式
@@ -223,7 +223,7 @@ export const DefaultSource = {
      *
      * @param {MvTagsParam | null} tag MV分类标签信息
      * @param {Page} page 分页对象
-     * @return {Promise<{tags:MvTags, list:Mv[], httpInfo:HttpInfo}>} 异步Promise对象
+     * @return {Promise<{page:Page, tags:MvTags, list:Mv[], httpInfo:HttpInfo}>} 异步Promise对象
      */
     async mvList(tag, page) {
         return {tags: {area: [], version: []}, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
@@ -239,4 +239,58 @@ export const DefaultSource = {
     async rankSongList(item, page) {
         return {page, rankList: [], list: [], httpInfo: {statusCode: 200, headers: {}}};
     },
+
+    /**
+     * 搜索歌手
+     *
+     * @param {string} keyword 歌手名关键词
+     * @return {Promise<{list:Singer[], httpInfo:HttpInfo}>} 歌手信息列表集合
+     */
+    async singerSearch(keyword) {
+        return {list: [{mid: '1S21239V', name: keyword}], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 搜索歌曲,这个搜索关键词可以是歌曲名、歌手名、专辑名
+     *
+     * @param {string} keyword 搜索关键词(也可以是拼音)
+     * @param {Page} page 分页对象
+     * @return {Promise<{page:Page, list:[], httpInfo:HttpInfo}>} 异步Promise对象
+     */
+    async songSearch(keyword, page) {
+        return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 搜索专辑,这个搜索关键词可以是歌曲名、歌手名、专辑名
+     *
+     * @param {string} keyword 搜索关键词(也可以是拼音)
+     * @param {Page} page 分页对象
+     * @return {Promise<{page:Page, list:Album[], httpInfo:HttpInfo}>} 专辑信息列表集合
+     */
+    async albumSearch(keyword, page) {
+        return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 搜索MV,这个搜索关键词可以是歌曲名、歌手名、专辑名
+     *
+     * @param {string} keyword 搜索关键词(也可以是拼音)
+     * @param {Page} page 分页对象
+     * @return {Promise<{page:Page, list:Mv[], httpInfo:HttpInfo}>} MV信息列表集合
+     */
+    async mvSearch(keyword, page) {
+        return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 根据关键词搜索歌单, 以获得歌单列表
+     *
+     * @param {string} keyword 搜索关键词(也可以是拼音)
+     * @param {Page} page 分页对象
+     * @return {Promise<{page, list:Special[], httpInfo:HttpInfo}>} 歌单信息列表集合
+     */
+    async specialSearch(keyword, page) {
+        return { page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    }
 }

@@ -14,18 +14,9 @@
 
 #### 歌手列表(post)
 
-> 接口: /api/singers => data = {platform:number, page:{current:number, pageSize:number},
-> tag:{en:string, sex:string, genre:string, area:string}} <br>
-> 示例: /api/singers => data = {platform:1, page:1, pageSize:30} <br>
->
-> 返回: <br>
-> {
-> tags:{
-> en:[{id:1,name:"华语"}, {id:2,name:"欧美"}],
-> sex:[{id:1,name:"男"}, {id:2,name:"女"}],
-> genre:[], area:[]
-> list:[{id:12394, mid:"239hmu", name:"叶炫清", cover:"/singer/cover/1.jpg", otherName:"", spell:"yxq"}]
-> }
+> 接口: /api/singers => data = {platform:number, page:Page, tag:SingerTagsParam},
+> 示例: /api/singers => data = {platform:1, page:{page:1, pageSize:30}, tag:{area:'1', en:'A'} } <br>
+> 返回: {page:Page, tags:SingerTags, list:Singer[]}
 
 #### 歌手歌曲列表(post)
 
@@ -71,33 +62,40 @@
 
 #### 榜单及歌曲列表(post)
 
-> 接口: /api/ranks => data = {platform:number, page:Page, item:RankItem} <br>
-> 示例: /api/ranks => data = {platform:1, page:{current:1, pageSize:30}, item:{id:'1slv'}} <br>
+> 接口: /api/ranks/songs => data = {platform:number, page:Page, item:RankItem} <br>
+> 示例: /api/ranks/songs => data = {platform:1, page:{current:1, pageSize:30}, item:{id:'1slv'}} <br>
 > 返回: {page:Page, rankList:Rank[], list:Song[]}
+
+#### 歌手搜索(post)
+
+> 接口: /api/search/singers => data = {platform:number, keyword:string} <br>
+> 示例: /api/search/singers => data = {platform:1, keyword:'九张机'} <br>
+> 返回: {list:Singer[]}
+
 
 #### 歌曲搜索(post)
 
-> 接口: /api/search/songs => data = {platform:number, page:number, pageSize:number, keyword:string} <br>
-> 示例: /api/search/songs => data = {platform:1, page:1, pageSize:30, keyword:'九张机'} <br>
-> 返回: [{duration, vid, singer, year, album, mid, id, title}]
+> 接口: /api/search/songs => data = {platform:number, page:Page, keyword:string} <br>
+> 示例: /api/search/songs => data = {platform:1, page:{current:1, pageSize:30}, keyword:'九张机'} <br>
+> 返回: {page:Page, list:Song[]}
 
 #### 专辑搜索(post)
 
-> 接口: /api/search/albums => data = {platform:number, page:number, pageSize:number, keyword:string} <br>
-> 示例: /api/search/albums => data = {platform:1, page:1, pageSize:30, keyword:'九张机'} <br>
-> 返回: [{singer:{}, mid, id, name, year, cover, songCount}]
+> 接口: /api/search/albums => data = {platform:number, page:Page, keyword:string} <br>
+> 示例: /api/search/albums => data = {platform:1, page:{current:1, pageSize:30}, keyword:'九张机'} <br>
+> 返回: {page:Page, list:Album[]}
 
 #### 歌单搜索(post)
 
-> 接口: /api/search/specials => data = {platform:number, page:number, pageSize:number, keyword:string} <br>
-> 示例: /api/search/specials => data = {platform:1, page:1, pageSize:30, keyword:'九张机'} <br>
-> 返回: [{mid, name, cover, creator}]
+> 接口: /api/search/specials => data = {platform:number, page:Page, keyword:string} <br>
+> 示例: /api/search/specials => data = {platform:1, page:{current:1, pageSize:30}, keyword:'九张机'} <br>
+> 返回: {page:Page, list:Special[]}
 
 #### MV搜索(post)
 
-> 接口: /api/search/mvs => data = {platform:number, page:number, pageSize:number, keyword:string} <br>
-> 示例: /api/search/mvs => data = {platform:1, page:1, pageSize:30, keyword:'九张机'} <br>
-> 返回: [{mid, name, cover, creator}]
+> 接口: /api/search/mvs => data = {platform:number, page:Page, keyword:string} <br>
+> 示例: /api/search/mvs => data = {platform:1, page:{current:1, pageSize:30}, keyword:'九张机'} <br>
+> 返回: {page:Page, list:Mv[]}
 
 #### 歌词(post)
 
@@ -113,18 +111,13 @@
 
 #### 歌曲URL(get)
 
-> 接口: /api/url/song?quality=number&platform=number&mid=string&id=string <br>
-> 示例: /api/url/song?quality=1&platform=1&mid=11111v&id=1000n <br>
+> 接口: /api/url/song?platform=number&mid=string&id=string&quality=number <br>
+> 示例: /api/url/song?platform=1&mid=11111v&id=1000n&quality=1 <br>
 
 #### MV URL(get)
 
-> 接口: /api/url/mv?quality=number&platform=number&vid=string <br>
-> 示例: /api/url/mv?quality=1&platform=1&vid=11111v <br>
-
-#### cover URL(get)
-
-> 接口: /api/url/cover?uri=string <br>
-> 示例: /api/url/cover?uri=https://demo/1.jpg <br>
+> 接口: /api/url/mv?platform=number&vid=string&quality=number <br>
+> 示例: /api/url/mv?platform=1&vid=11111v&quality=1 <br>
 
 #### stream URL(get)
 

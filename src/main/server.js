@@ -1,5 +1,8 @@
-import {createServer} from 'http';
+import {createServer, request as httpRequest} from 'http';
+import {request as httpsRequest} from 'https';
+
 import {createReadStream, existsSync, statSync} from 'fs';
+
 import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
 
@@ -119,7 +122,7 @@ const handlePostRequest = (request, response, callback) => {
                     response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
                     // 删除状态码和响应头信息
                     delete data.httpInfo;
-                    // 吸入数据到客户端
+                    // 写入数据到客户端
                     response.write(JSON.stringify(data));
 
                 }).catch(reason => response.writeHead(200, {}).end(reason));
@@ -141,7 +144,7 @@ const handlePostRequest = (request, response, callback) => {
  *
  * @type {{[key:string]: Function}}
  */
-const requestMappingHandler = {
+const RequestMappingHandler = {
 
     /**
      * 获取本地文件资源
@@ -247,25 +250,26 @@ const requestMappingHandler = {
     },
 
     /**
-     * 获取榜单列表
+     * 获取榜单列表和榜单响应的歌曲列表
      *
      * @param {module:http.IncomingMessage} request 客户端请求信息
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
-    '/api/ranks'(request, response) {
-        response.end();
+    '/api/ranks/songs'(request, response) {
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.rankSongList(param.item, param.page));
     },
 
     /**
-     * 获取榜单歌曲列表
+     * 获取歌手搜索列表
      *
      * @param {module:http.IncomingMessage} request 客户端请求信息
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
-    '/api/rank/songs'(request, response) {
-        response.end();
+    '/api/search/singers'(request, response) {
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.singerSearch(param.keyword));
     },
-
 
     /**
      * 获取歌曲搜索列表
@@ -274,7 +278,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/songs'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.songSearch(param.keyword, param.page));
     },
 
     /**
@@ -284,7 +289,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/albums'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.albumSearch(param.keyword, param.page));
     },
 
     /**
@@ -294,7 +300,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/specials'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.specialSearch(param.keyword, param.page));
     },
 
     /**
@@ -304,7 +311,8 @@ const requestMappingHandler = {
      * @param {module:http.ServerResponse} response 服务器响应信息
      */
     '/api/search/mvs'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.mvSearch(param.keyword, param.page));
     },
 
     /**
@@ -329,43 +337,52 @@ const requestMappingHandler = {
     },
 
     /**
-     * 获取音频数据(以二进制数据流方式响应)
+     * 请求指定的站点, 并以数据流的方式响应 <br>
+     * 示例: `api/stream/uri=${ encodeURIComponent('https://www.electronjs.org/') }`
      *
      * @param {module:http.IncomingMessage} request 客户端请求信息
      * @param {module:http.ServerResponse} response 服务器响应信息
+     * @param {URL} url 解析后的URL对象
      */
-    '/api/url/song'(request, response) {
-        response.end();
-    },
+    '/api/stream'(request, response, url) {
+        const uriParam = url.searchParams.get('uri');
 
-    /**
-     * 获取MV数据(以二进制数据流方式响应)
-     *
-     * @param {module:http.IncomingMessage} request 客户端请求信息
-     * @param {module:http.ServerResponse} response 服务器响应信息
-     */
-    '/api/url/mv'(request, response) {
-        response.end();
-    },
+        try {
+            const uri = uriParam ? new URL(uriParam) : null;
+            // 若未指定uri参数 或 path部分和代理服务器中的当前路径相同(不考虑是否同源)
+            if (!uri || uri.pathname === '/api/stream') {
+                // 拒绝访问
+                response.writeHead(403).end('无效的URL');
 
-    /**
-     * 获取封面图(以二进制数据流方式响应)
-     *
-     * @param {module:http.IncomingMessage} request 客户端请求信息
-     * @param {module:http.ServerResponse} response 服务器响应信息
-     */
-    '/api/url/cover'(request, response) {
-        response.end();
-    },
+            } else {
+                /**
+                 * 处理响应
+                 *
+                 * @param {module:http.IncomingMessage} newResponse 来自远程的响应信息
+                 */
+                const handler = newResponse => {
+                    // 写入响应标头(注意:所有响应头都将会被写入到本地客户端)
+                    response.writeHead(newResponse.statusCode, newResponse.headers);
+                    // 新的响应 (连接管道)=> 原来的响应
+                    newResponse.pipe(response);
+                };
 
-    /**
-     * 更通用的数据流请求响应
-     *
-     * @param {module:http.IncomingMessage} request 客户端请求信息
-     * @param {module:http.ServerResponse} response 服务器响应信息
-     */
-    '/api/stream'(request, response) {
-        response.end();
+                // 请求配置选项
+                const options = {/*method: 'get',*/ headers: {referer: uriParam}};
+
+                // 发出新的请求(不同的协议, 使用不同的请求处理器发送)
+                const newRequest = uri.protocol === 'https:'
+                    ? httpsRequest(uriParam, options, handler)
+                    : httpRequest(uriParam, options, handler);
+
+                // 源请求 (连接管道)=> 新的请求
+                request.pipe(newRequest);
+            }
+
+        } catch (e) {
+            // 捕捉异常,在此处做出错误消息
+            response.writeHead(403).end(e.message);
+        }
     }
 };
 
@@ -373,9 +390,8 @@ const requestMappingHandler = {
 createServer((request, response) => {
     // 获取解析后的URL对象
     const url = new URL(`${BASE_URL}${request.url}`);
-    // 获取URL路径字符串
-    const path = url.pathname;
-    const handler = requestMappingHandler[path];
+    // 获取URL路径字符串 和 请求处理器
+    const path = url.pathname, handler = RequestMappingHandler[path];
 
     try {
         if (handler) {
