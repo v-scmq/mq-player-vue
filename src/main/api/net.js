@@ -54,52 +54,68 @@ const http = options => new Promise(resolve => {
             'application/x-www-form-urlencoded;charset=UTF-8' : 'application/json;charset=UTF-8';
     }
 
-    // 必须由协议相对应的处理器去发起网络请求
-    /** @type {httpRequest | httpsRequest | Function} */
-    const handler = options.url.indexOf('https') === 0 ? httpsRequest : httpRequest;
+    /**
+     * 响应信息处理器
+     *
+     *  @param {module:http.IncomingMessage} response 响应信息
+     */
+    const handler = response => {
+        // 响应错误时,返回错误信息
+        response.once('error', reason => resolve({
+            statusCode: response.statusCode,
+            headers: response.headers,
+            reason
+        }));
 
-    // 发起网络请求
-    const request = handler(options.url, {method: options.method, headers: {...options.headers}},
-        /** @type {module:http.IncomingMessage} */response => {
+        const buffers = [];
 
-            const buffers = [];
+        // 数据得到响应时,拼接响应数据
+        response.on('data', chunk => buffers.push(chunk));
 
-            // 数据得到响应时,拼接响应数据
-            response.on('data', chunk => buffers.push(chunk))
+        // 改变Promise对象状态:由pending(进行中)转变为resolved(已成功)
+        // 数据响应完成时,promise对象状态变为resolved以将数据返回
+        response.once('end', () => {
+            /** @type {Buffer | string} */
+            const data = Buffer.concat(buffers);
+            // 响应类型
+            const {responseType: type} = options;
 
-            // 改变Promise对象状态:由pending(进行中)转变为resolved(已成功)
-            // 数据响应完成时,promise对象状态变为resolved以将数据返回
-            response.once('end', () => {
-                /** @type {Buffer | string} */
-                let data = Buffer.concat(buffers);
+            // 返回结果值
+            const result = {statusCode: response.statusCode, headers: response.headers, data};
 
-                let {responseType: type} = options;
+            // 若配置选项提供返回类型是字节类型,那么返回的将是Buffer(Uint8Array子类)类型
+            if (type === 'buffer') {
+                return resolve(result);
+            }
 
-                // 若配置选项提供返回类型是字节类型,那么返回的将是Buffer(Uint8Array子类)类型
-                if (type === 'buffer') {
-                    return resolve({statusCode: response.statusCode, headers: response.headers, data});
-                }
+            result.data = data.toString();
 
-                data = data.toString();
+            // 若配置选项提供响应内容为文本,则直接返回字符串
+            if (type === 'text') {
+                return resolve(result);
+            }
 
-                // 若配置选项提供响应内容为文本,则直接返回字符串
-                if (type === 'text') {
-                    return resolve({statusCode: response.statusCode, headers: response.headers, data});
-                }
-
-                // 配置选项提供响应类型为JSON(默认),那么返回反序列化后的JSON格式的对象
-                try {
-                    data = JSON.parse(data);
-                    resolve({statusCode: response.statusCode, headers: response.headers, data});
-                } catch (error) {
-                    // 若转换为JSON数据失败, 则返回文本
-                    resolve({statusCode: response.statusCode, headers: response.headers, data});
-                }
-            });
+            // 配置选项提供响应类型为JSON(默认),那么返回反序列化后的JSON格式的对象
+            try {
+                result.data = JSON.parse(result.data);
+                resolve(result);
+            } catch (error) {
+                // 若转换为JSON数据失败, 则返回文本
+                resolve(result);
+            }
         });
+    };
+
+    // 新的请求配置对象
+    const newOptions = {method, headers: options.headers};
+
+    // 发起网络请求(不同的协议, 使用不同的请求处理器发送)
+    const request = options.url.includes('https')
+        ? httpsRequest(options.url, newOptions, handler)
+        : httpRequest(options.url, newOptions, handler);
 
     // 当前网络请求发生错误时
-    request.once('error', error => resolve(error.toString()));
+    request.once('error', reason => resolve({reason}));
 
     // post请求时且存在数据时, 将数据通过输出流管道发送到目标服务器
     if (method === 'post' && options.data) {
