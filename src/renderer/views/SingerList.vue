@@ -13,8 +13,10 @@
 <script>
 import Spinner from '../components/Spinner';
 
-import {reactive, nextTick, getCurrentInstance, onMounted} from "vue";
-import {useRouter} from "vue-router";
+import {reactive, nextTick, getCurrentInstance, onMounted} from 'vue';
+import {useRouter} from 'vue-router';
+
+import {getSingerList} from '../api';
 
 export default {
   name: 'SingerListView',
@@ -25,15 +27,12 @@ export default {
     const page = reactive({current: 1, size: 30});
     const tag = reactive({en: null, area: null, sex: null, genre: null, group: null});
 
-    // TODO 数据源API待修改
-    const $source = {};
-
     const vc = getCurrentInstance();
     const router = useRouter();
 
     onMounted(() => {
       Spinner.open();
-      $source.impl.singerList(null, page).then(data => {
+      getSingerList(page, null).then(({data}) => {
         if (data instanceof Array) {
           list.splice(0, list.length, ...data);
 
@@ -73,7 +72,7 @@ export default {
           node.classList.add('active');
 
           Spinner.open();
-          $source.impl.singerList(tag, page)
+          getSingerList(page, tag)
               .then(data => list.splice(0, list.length, ...data))
               .finally(Spinner.close);
         }

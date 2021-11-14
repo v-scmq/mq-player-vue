@@ -1,93 +1,188 @@
-import {KuGouSource} from './kugou';
-import {QQMusicSource} from "./tencent";
+import axios from 'axios';
 
-/** 用户代理 PC浏览器标识 */
-const USER_AGENT_PC = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36';
+/**
+ * @template T
+ * @typedef {Object} AxiosResponse<T>
+ *
+ * @property {T} data 数据
+ */
 
-/** 用户代理 手机浏览器标识 */
-const USER_AGENT_MOBILE = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36';
+// 音乐平台id
+let platform = 1;
 
-export default {
-    install(app) {
-        /**
-         * 发起网络请求(默认GET请求)
-         * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
-         * @returns {Promise<{data:Object | Buffer | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
-         */
-        const http = options => new Promise(resolve => {
-            options.headers = options.headers || {};
-            options.RESPONSE_TYPE = http.RESPONSE_TYPE;
+/** 设置当前使用的音乐平台 */
+export const setPlatform = platformId => platform = platformId;
 
-            // 若没有提供UA信息,则提供默认的UA信息
-            if (!options.headers['User-Agent']) {
-                options.headers['User-Agent'] = options.isMobile ? USER_AGENT_MOBILE : USER_AGENT_PC;
-            }
+/**
+ * 获取歌手列表
+ *
+ * @param {Page} page                   分页对象
+ * @param {SingerTagsParam | null} tag  歌手分类标签信息
+ * @returns {Promise<AxiosResponse<{page:Page, tags:SingerTags, list:Singer[]}>>} 异步Promise对象
+ */
+export const getSingerList = (page, tag) =>
+    axios.post('/api/singers', {platform, page, tag});
 
-            // 若没有提供来源页面信息,则提供默认的url部分
-            if (!options.headers.referer) {
-                options.headers.referer = options.url;
-            }
+/**
+ * 获取歌手歌曲列表
+ *
+ * @param {Page}    page     分页对象
+ * @param {Singer}  singer   歌手信息
+ * @returns {Promise<AxiosResponse<{page:Page, singer:Singer | null, list:Song[]}>>} 异步Promise对象
+ */
+export const getSingerSongList = (page, singer) =>
+    axios.post('/api/singer/songs', {platform, page, singer});
 
-            // 若有提交的数据,必须设置请求的中的内容类型
-            if (options.data) {
-                options.headers['Content-Type'] = (typeof options.data === 'object') || options.headers.postJSON ?
-                    'application/json;charset=UTF-8' : 'application/x-www-form-urlencoded;charset=UTF-8';
-            }
+/**
+ * 获取歌手专辑列表
+ *
+ * @param {Page}    page     分页对象
+ * @param {Singer}  singer   歌手信息
+ * @returns {Promise<AxiosResponse<{page:Page, list:Album[]}>>} 异步Promise对象
+ */
+export const getSingerAlbumList = (page, singer) =>
+    axios.post('/api/singer/albums', {platform, page, singer});
 
-            let postJSON = options.headers.postJSON
-            delete options.headers.postJSON;
+/**
+ * 获取专辑歌曲列表
+ *
+ * @param {Page}    page     分页对象
+ * @param {Album}   album    专辑信息
+ * @returns {Promise<AxiosResponse<{album:Album | null, list:Song[]}>>} 异步Promise对象
+ */
+export const getAlbumSongList = (page, album) =>
+    axios.post('/api/album/songs', {platform, page, album});
 
-            // 传递请求到主进程,并等待主进程发起网络请求,然后返回响应数据
-            window.electron.netRequest(options).then(res => {
-                app.config.globalProperties.$message(`状态码：${res.statusCode}, 消息：${res.statusMessage}`);
-                // 从pending状态变成resolved状态
-                resolve(res);
+/**
+ * 获取歌手MV列表
+ *
+ * @param {Page}    page     分页对象
+ * @param {Singer}  singer   歌手信息
+ * @returns {Promise<AxiosResponse<{page:Page, list:Mv[]}>>} 异步Promise对象
+ */
+export const getSingerMvList = (page, singer) =>
+    axios.post('/api/singer/mvs', {platform, page, singer});
 
-            }).catch(reason => {
-                app.config.globalProperties.$message(`请求失败:${reason}`);
-                resolve(reason);
+/**
+ * 获取歌单列表
+ *
+ * @param {Page}        page     分页对象
+ * @param {Tag | null}  tag      歌单分类标签信息
+ * @returns {Promise<AxiosResponse<{tags:SpecialTags[], page:Page, list:Special[]}>>} 异步Promise对象
+ */
+export const getSpecialList = (page, tag) =>
+    axios.post('/api/specials', {platform, page, tag});
 
-            }).finally(() => postJSON ? options.headers.postJSON = postJSON : null);
-        });
+/**
+ * 获取歌单歌曲列表
+ *
+ * @param {Page}        page     分页对象
+ * @param {Special}     special  歌单信息
+ * @returns {Promise<AxiosResponse<{special:Special, page:Page, list:Song[]}>>} 异步Promise对象
+ */
+export const getSpecialSongList = (page, special) =>
+    axios.post('/api/special/songs', {platform, page, special});
 
-        /**
-         * 发起GET请求.若传入的参数只是一个字符串则,会认为是目标URL
-         * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
-         * @returns {Promise<{data:Object | Buffer | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
-         */
-        http.get = options => {
-            // 转换为配置选项对象
-            if ((typeof options) === 'string') {
-                options = {url: options};
-            }
-            // 设置为GET请求
-            options.method = 'get';
-            return http(options);
-        };
+/**
+ * 获取MV列表
+ *
+ * @param {Page}                page     分页对象
+ * @param {MvTagsParam | null}  tag      MV分类标签信息
+ * @returns {Promise<AxiosResponse<{tags:MvTags, list:Mv[]}>>} 异步Promise对象
+ */
+export const getMvList = (page, tag) =>
+    axios.post('/api/mvs', {platform, page, tag});
 
-        /**
-         * 发起POST请求.若传入的参数只是一个字符串,则会认为是目标URL
-         * @param options {{url, data, headers, responseType, method, isMobile, RESPONSE_TYPE}} 配置选项对象
-         * @returns {Promise<{data:Object | Buffer | String, headers:any, statusCode:Number, statusMessage:String}>} 异步对象Promise
-         */
-        http.post = options => {
-            // 转换为配置选项对象
-            if ((typeof options) === 'string') {
-                options = {url: options};
-            }
-            // 设置为POST请求
-            options.method = 'post';
-            return http(options);
-        };
+/**
+ * 获取榜单及歌曲列表
+ *
+ * @param {Page}                page     分页对象
+ * @param {RankItem | null}     item     榜单分类标签信息
+ * @returns {Promise<AxiosResponse<{page:Page, rankList:Rank[], list:Song[]}>>} 异步Promise对象
+ */
+export const getRanksSongList = (page, item) =>
+    axios.post('/api/ranks/songs', {platform, page, item});
 
-        /**
-         * 接收 HTTP/HTTPS 响应类型枚举
-         * @type {{BYTE: number, JSON: number, TEXT: number}}
-         */
-        http.RESPONSE_TYPE = {BYTE: 2, JSON: 1, TEXT: 3};
+/**
+ * 获取歌手搜索列表
+ *
+ * @param {string}              keyword  搜索关键词
+ * @returns {Promise<AxiosResponse<{list:Singer[]}>>} 异步Promise对象
+ */
+export const searchSinger = (keyword) =>
+    axios.post('/api/search/singers', {platform, keyword});
 
-        KuGouSource.http = QQMusicSource.http = http;
-        app.config.globalProperties.$source = {KuGouSource, QQMusicSource, impl: QQMusicSource};
-        app.config.globalProperties.$http = http;
-    }
-}
+/**
+ * 获取歌曲搜索列表
+ *
+ * @param {Page}                page     分页对象
+ * @param {string}              keyword  搜索关键词
+ * @returns {Promise<AxiosResponse<{page:Page, list:Song[]}>>} 异步Promise对象
+ */
+export const searchSong = (page, keyword) =>
+    axios.post('/api/ranks/songs', {platform, page, keyword});
+
+/**
+ * 获取专辑搜索列表
+ *
+ * @param {Page}                page     分页对象
+ * @param {string}              keyword  搜索关键词
+ * @returns {Promise<AxiosResponse<{page:Page, list:Album[]}>>} 异步Promise对象
+ */
+export const searchAlbum = (page, keyword) =>
+    axios.post('/api/ranks/songs', {platform, page, keyword});
+
+/**
+ * 获取歌单搜索列表
+ *
+ * @param {Page}                page     分页对象
+ * @param {string}              keyword  搜索关键词
+ * @returns {Promise<AxiosResponse<{page:Page, list:Special[]}>>} 异步Promise对象
+ */
+export const searchSpecial = (page, keyword) =>
+    axios.post('/api/search/specials', {platform, page, keyword});
+
+/**
+ * 获取MV搜索列表
+ *
+ * @param {Page}                page     分页对象
+ * @param {string}              keyword  搜索关键词
+ * @returns {Promise<AxiosResponse<{page:Page, list:Mv[]}>>} 异步Promise对象
+ */
+export const searchMv = (page, keyword) =>
+    axios.post('/api/search/mvs', {platform, page, keyword});
+
+/**
+ * 获取歌曲歌词
+ *
+ * @param {Song}    song     歌曲信息
+ * @returns {Promise<AxiosResponse<[{millis:number, content:string}]>>} 异步Promise对象
+ */
+export const getLyric = (song) =>
+    axios.post('/api/lyric', {platform, song});
+
+/**
+ * 获取歌手写真图片列表
+ *
+ * @param {Singer}  singer      歌曲信息
+ * @returns {Promise<AxiosResponse<string[]>>} 异步Promise对象
+ */
+export const getSingerPicture = (singer) =>
+    axios.post('/api/singer/pic', {platform, singer});
+
+/**
+ * 获取登录选项配置(当参数中不包含cookie信息) 或 登录用户信息(当参数中包含cookie信息)
+ *
+ * @param {Electron.Cookie[] | null}  cookies  cookie信息
+ * @returns {Promise<AxiosResponse<{option:ModalOpenOption} | {reason:string | null, user:User | null}>>} 异步Promise对象
+ */
+export const login = (cookies) =>
+    axios.post('/api/user/login', {platform, cookies});
+
+/**
+ * 退出登录,并返回需要移除cookie的URL
+ *
+ * @returns {Promise<AxiosResponse<{cookieURL:string}>>} 异步Promise对象
+ */
+export const logout = () =>
+    axios.post('/api/user/login', {platform});

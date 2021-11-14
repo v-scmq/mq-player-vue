@@ -109,6 +109,7 @@ const handlePostRequest = (request, response, callback) => {
     request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
 
     request.once('end', () => {
+        debugger;
         // 获取请求参数
         try {
             /** @type {{platform:number, [key:string]:any}} */
@@ -117,26 +118,31 @@ const handlePostRequest = (request, response, callback) => {
             const dataSource = DATA_SOURCE_IMPL[param.platform];
 
             if (dataSource) {
-                callback(dataSource, param).then(/** @type {{[key:string]:any, httpInfo: HttpInfo}} */data => {
-                    // 写入 状态码 和 响应头信息 到客户端
-                    response.writeHead(data.httpInfo.statusCode, data.httpInfo.headers);
-                    // 删除状态码和响应头信息
+                callback(dataSource, param).then(/** @param {{[key:string]:any, httpInfo?: HttpInfo}} data */data => {
+                    debugger;
+                    data = data || {};
+                    //  获取状态码 和 响应头
+                    const {httpInfo: {statusCode = 200, headers = {}}} = data;
+                    // 从data对象上 删除 状态码 和 响应头信息
                     delete data.httpInfo;
-                    // 写入数据到客户端
-                    response.write(JSON.stringify(data));
+                    // 当内容大小与实际大小不一致时,将导致客户端不能正确响应 (策略: 删除 内容大小 响应标头)
+                    delete headers['content-length'];
 
-                }).catch(reason => response.writeHead(200, {}).end(reason));
+                    // 写入 状态信息 及 数据 到客户端
+                    response.writeHead(statusCode, headers).end(JSON.stringify(data));
+
+                }).catch(reason => response.writeHead(403, {}).end(reason.message));
 
             } else {
-                response.writeHead(200, {}).end('没有对应的数据源api实现此接口');
+                response.writeHead(403, {}).end('没有对应的数据源api实现此接口');
             }
 
         } catch (e) {
-            response.writeHead(200).end('无效的参数！')
+            response.writeHead(403).end('无效的参数！')
         }
     });
 
-    request.once('error', () => response.writeHead(200).end('请求失败！'));
+    request.once('error', () => response.writeHead(403).end('请求失败！'));
 };
 
 /**
@@ -334,6 +340,27 @@ const RequestMappingHandler = {
      */
     '/api/singer/pic'(request, response) {
         response.end();
+    },
+
+    /**
+     * 获取登录选项配置(当参数中不包含cookie信息) 或 登录用户信息(当参数中包含cookie信息)
+     *
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
+     */
+    '/api/user/login'(request, response) {
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.login(param.cookies));
+    },
+
+    /**
+     * 退出登录,并返回需要移除cookie的URL
+     *
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
+     */
+    '/api/user/logout'(request, response) {
+        handlePostRequest(request, response, (dataSource) => dataSource.logout());
     },
 
     /**

@@ -1,78 +1,71 @@
 <template>
-  <div class="title-bar v-row" ref="el">
-    <div class="v-row no-drag fixed-left-bar" style="padding:4px;">
+  <div class='title-bar v-row' ref='el'>
+    <div class='v-row no-drag fixed-left-bar' style='padding:4px;'>
       <!--  用户头像图片 -->
-      <img alt draggable="false" class="user-icon image" :src="user.headURL" v-if="user.uin"
+      <img alt draggable='false' class='user-icon image' :src='user.headURI' v-if='user.uin'
            @click='loginModal = true'/>
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
-      <div class="user-icon container" v-else>
-        <icon name="user" @click="login"/>
+      <div class='user-icon container' v-else>
+        <icon name='user' @click='login'/>
       </div>
 
-      <span class="user-name" :title="user.nickName" @click='user.uin ? (loginModal = true) : login($event)'>
+      <span class='user-name' :title='user.nickName' @click='user.uin ? (loginModal = true) : login($event)'>
         {{ user.uin ? user.nickName : '点击登录' }}
       </span>
     </div>
 
-    <div class="v-row option-container no-drag" style="margin:0 4px 0 16px;">
+    <div class='v-row option-container no-drag' style='margin:0 4px 0 16px;'>
       <!-- 后退 -->
-      <icon class="back" name="back" :class="{disabled: backLength === 0}" style="margin-left:0" @click="back"/>
+      <icon class='back' name='back' :class='{disabled: backLength === 0}' style='margin-left:0' @click='back'/>
       <!-- 前进 -->
-      <icon class="forward" name="back" style="transform:rotate(180deg)" @click="forward"
-            :class="{disabled : forwardLength === 0}"/>
+      <icon class='forward' name='back' style='transform:rotate(180deg)' @click='forward'
+            :class='{disabled : forwardLength === 0}'/>
       <!-- 刷新 -->
-      <icon name="refresh" @click="refresh" style="margin:0 8px 0 0"/>
+      <icon name='refresh' @click='refresh' style='margin:0 8px 0 0'/>
 
-      <text-field placeholder="请输入内容" v-model="searchInput" suffixIcon="search" @keyup.enter="openNetSearchView"/>
+      <text-field placeholder='请输入内容' v-model='searchInput' suffixIcon='search' @keyup.enter='openNetSearchView'/>
     </div>
 
-    <div class="v-row window-tool no-drag" style="flex:1;justify-content:flex-end;">
+    <div class='v-row window-tool no-drag' style='flex:1;justify-content:flex-end;'>
       <!-- 皮肤 -->
-      <icon class="icon-menu skin viewer-hidden" name="skin"/>
+      <icon class='icon-menu skin viewer-hidden' name='skin'/>
       <!-- 设置 -->
-      <icon class="icon-menu setting viewer-hidden" name="setting" @click='openSystemSetting'/>
+      <icon class='icon-menu setting viewer-hidden' name='setting' @click='openSystemSetting'/>
       <!-- 隐藏播放详情视图(播放详情时可见) -->
-      <icon class="icon-menu viewer-show hide-viewer" name="arrow-down" style="margin:0 auto 0 0.5em;"/>
+      <icon class='icon-menu viewer-show hide-viewer' name='arrow-down' style='margin:0 auto 0 0.5em;'/>
 
       <!-- 全屏/退出全屏(播放详情时可见) -->
-      <icon class="icon-menu screen viewer-show" :name="isFullScreen ? 'fulled-screen' :'full-screen' "
-            @click="setScreenState"/>
+      <icon class='icon-menu screen viewer-show' :name='isFullScreen ? "fulled-screen" :"full-screen" '
+            @click='setScreenState'/>
       <!-- 图标分割符 -->
-      <span class="separator viewer-hidden"></span>
+      <span class='separator viewer-hidden'></span>
 
       <!-- 窗口最小化状态控制 -->
-      <icon class="icon-menu state-icon" name="minimize" @click="minimize"/>
+      <icon class='icon-menu state-icon' name='minimize' @click='minimize'/>
 
       <!-- 窗口最大化/还原状态控制 -->
-      <icon class="icon-menu state-icon" :name="isMaximized ? 'maximized' : 'maximize' " @click="maximizeOrRestore"/>
+      <icon class='icon-menu state-icon' :name='isMaximized ? "maximized" : "maximize" ' @click='maximizeOrRestore'/>
 
       <!-- 窗口关闭控制  -->
-      <icon class="icon-menu close state-icon" name="close" @click="closeWindow"/>
+      <icon class='icon-menu close state-icon' name='close' @click='closeWindow'/>
     </div>
 
-    <modal title="QQ登录" id="login-modal" width="600px" height="400px" v-model:visible='loginModal'>
+    <modal title='QQ登录' id='login-modal' width='600px' height='400px' v-model:visible='loginModal'>
       <template v-slot:content>
-        <div class="v-column" style="color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;">
+        <div class='v-column' style='color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;'>
           <div>账号：{{ user.uin }}</div>
           <div>昵称：{{ user.nickName }}</div>
-          <template v-if="user.greenDiamondLevel">
-            <div class="v-row">
-              豪华绿钻等级：<img alt style="margin:-0.5em 0 0 0;" :src="user.greenLevelCover"/>
+          <template v-if='user.level'>
+            <div class='v-row'>
+              VIP等级：<img alt style='margin:-0.5em 0 0 0;' :src='user.levelIconURI'/>
             </div>
-            <div>会员开通时间：{{ user.greenDiamondStartTime }}</div>
-            <div>会员到期时间：{{ user.greenDiamondEndTime }}</div>
-          </template>
-
-          <template v-if="user.payBillLevel">
-            <div class="v-row">
-              付费包等级：<img alt style="margin:-0.5em 0 0 0;" :src="user.payBillLevelCover"/>
-            </div>
-            <div>会员开通时间：{{ user.payBillStartTime }}</div>
-            <div>会员到期时间：{{ user.payBillEndTime }}</div>
+            <span>会员开通时间：{{ user.startTime }}</span>
+            <span>会员到期时间：{{ user.endTime }}</span>
+            <span v-if='user.autoPay'>已开启自动续费</span>
           </template>
         </div>
-        <Button text="退出" @click="logout"/>
+        <Button text='退出' @click='logout'/>
       </template>
     </modal>
   </div>
@@ -83,11 +76,13 @@ import db from '../database';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
 
-import {nextTick, reactive, ref, getCurrentInstance} from "vue";
-import {useRoute, useRouter} from "vue-router";
+import {nextTick, reactive, ref, getCurrentInstance} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+
+import {login as loginApi, logout as logoutApi} from '../api';
 
 export default {
-  name: "Header",
+  name: 'Header',
 
   setup() {
     const isMaximized = ref(false);
@@ -97,35 +92,14 @@ export default {
     const searchInput = ref('');
     const loginModal = ref(false);
 
-    /** @type {any} 用户基本信息 */
-    const user = reactive({uin: '', nickName: '', headURL: ''});
+    // 用户基本信息
+    const user = reactive(/**  @type {User} */{uin: '', nickName: '', headURI: ''});
 
     const vc = getCurrentInstance();
-
-    // TODO 数据源API待修改
-    const $source = {};
 
     const router = useRouter(), route = useRoute();
 
     let navigation = null;
-
-    /**
-     * 开始登录
-     *
-     * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
-     */
-    const login = event => {
-      let param = {
-        db: db,                                                   // indexDB
-        isManual: event instanceof MouseEvent,                     // 是否是手动调用登录
-      };
-
-      Spinner.open();
-      $source.impl.login(param)
-          .then(userObj => userObj ? Object.assign(user, userObj) : null)
-          .catch(reason => Message.error(reason.message))
-          .finally(Spinner.close);
-    };
 
     if (window.electron) {
       window.electron.getWindowState().then(/** @param state {boolean}*/state => {
@@ -163,11 +137,74 @@ export default {
       ++backLength.value;
     });
 
-    // 尝试登录
-    nextTick(login);
-
     // 初始检测是否进入全屏状态
     isFullScreen.value = !!document.fullscreenElement;
+
+    /**
+     * 开始登录
+     *
+     * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
+     */
+    const login = async event => {
+
+      Spinner.open();
+
+      try {
+        /** @type {Electron.Cookie[]} */
+        let cookies;
+
+        if (event) {
+          let res = await loginApi(null);
+          /** @type {ModalOpenOption} */
+          const {option} = res.data || {};
+
+          if (!option || !option.url) {
+            return Message.error('登录失败！');
+          }
+
+          cookies = window.electron && JSON.parse(await window.electron.openModal(option));
+
+          if (!cookies || cookies.length < 1) {
+            return Message.info('已取消登录！');
+          }
+
+        } else {
+          // 从数据库获取用户信息
+          await db.open();
+          const usersInfo = await db.queryAll(db.tables.user.name);
+          const [{uin, cookies: cookieArray} = {}] = usersInfo || [];
+
+          cookies = uin && cookieArray;
+
+          if (!cookies || cookies.length < 1) {
+            // 中断且不提示任何消息
+            return;
+          }
+        }
+
+        const res = await loginApi(cookies);
+        const {user: userInfo, reason} = res.data;
+
+        if (!userInfo || !userInfo.uin) {
+          return Message.error(reason);
+        }
+
+        // 删除indexDB中存储的用户信息
+        await db.delete(db.tables.user.name, userInfo.uin);
+        // 添加新的用户信息到indexDB中
+        await db.insert(db.tables.user.name, userInfo);
+        // 将新的用户信息复制到视图展示的user对象上
+        Object.assign(user, userInfo);
+
+      } catch (e) {
+        Message.error(`登录失败： ${e.message} !`);
+      } finally {
+        Spinner.close();
+      }
+    };
+
+    // 尝试登录
+    nextTick(login);
 
     return {
       loginModal, isMaximized, backLength, forwardLength, isFullScreen, searchInput, user,
@@ -234,26 +271,16 @@ export default {
 
       login,
 
-      /**
-       * 开始退出登录
-       * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
-       */
-      logout(event) {
-        let uin = user ? user.uin : null;
-        if (!uin) {
-          return;
+      /** 退出登录 */
+      logout() {
+        if (user.uin) {
+          // 删除indexDB中存储的用户信息
+          db.delete(db.tables.user.name, user.uin).then(logoutApi).then(res => {
+            if (res.data && res.data.cookieURL) {
+              window.electron.removeAllCookie(res.data.cookieURL);
+            }
+          });
         }
-        user.uin = '';
-
-        let param = {
-          uin,
-          db: db,                                                   // indexDB
-          isManual: event instanceof MouseEvent,                     // 是否是手动调用退出登录
-        };
-
-        // 若是手动调用模式,则先关闭登录模态框
-        param.isManual ? (loginModal.value = false) : null;
-        $source.impl.logout(param);
       },
 
       /** 打开资源搜索页面 */

@@ -131,10 +131,32 @@
  */
 
 /**
+ * @typedef {Object} User                       登录用户信息
+ *
+ * @property {string | number}  uin             登录用户账号
+ * @property {string}           nickName        用户昵称
+ * @property {string}           headURI         用户头像URI
+ * @property {boolean}          vip             是否是vip
+ * @property {number}           level           vip等级
+ * @property {string}           levelIconURI    vip等级图标
+ * @property {string}           startTime       开通vip的时间
+ * @property {string}           endTime         vip到期时间
+ * @property {boolean}          autoPay         是否自动续费
+ * @property {any}              [key:string]    额外的信息
+ */
+
+/**
  * @typedef {Object} HttpInfo                    HTTP状态码和响应头信息
  *
  * @property {number}                 statusCode HTTP状态码
  * @property {Record<string, string>} headers    HTTP响应头
+ */
+
+/**
+ * @typedef {Object} HttpCookie                     HttpCookie信息
+ *
+ * @property {string} value                         cookie值
+ * @property {string} default                       默认cookie值
  */
 
 /** 默认的数据源API实现 */
@@ -291,6 +313,37 @@ export const DefaultSource = {
      * @return {Promise<{page, list:Special[], httpInfo:HttpInfo}>} 歌单信息列表集合
      */
     async specialSearch(keyword, page) {
-        return { page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+        return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 开始登录, 并获取用户基本信息 <br>
+     *
+     *  注意: {@param cookies} 参数至少需要包含一个cookie信息,否则认为获取登录配置选项
+     *
+     * @param {Electron.Cookie[] | null} cookies cookie信息
+     * @returns {Promise<{option:ModalOpenOption | null, httpInfo:HttpInfo} |
+     *                   {reason:string | null, user:User | null, httpInfo:HttpInfo}>} 异步Promise对象
+     */
+    async login(cookies) {
+        if (cookies == null || cookies.length < 1) {
+            // 访问受限
+            return {option: null, httpInfo: {statusCode: 403, headers: {}}};
+        }
+
+        return {
+            reason: '不支持的操作！', user: null,
+            httpInfo: {statusCode: cookies ? 200 : 404, headers: {}}
+        };
+    },
+
+    /**
+     * 退出登录
+     *
+     * @return {Promise<{cookieURL:string, httpInfo:HttpInfo}>} 异步Promise对象
+     */
+    async logout() {
+        // 访问受限
+        return {cookieURL: '', httpInfo: {statusCode: 403, headers: {}}};
     }
 }

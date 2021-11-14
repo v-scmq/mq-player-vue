@@ -79,6 +79,8 @@ import Spinner from '../components/Spinner';
 import {reactive, watch} from 'vue';
 import {useRouter} from 'vue-router';
 
+import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
+
 export default {
   name: 'SingerView',
 
@@ -129,21 +131,21 @@ export default {
       if (newTab === tabMap.SONG_TAB) {
         Spinner.open();
         return $source.impl.handleSingerInfo(singer).then(success =>
-            success ? $source.impl.singerSongList(singer, page) : null)
+            success ? getSingerSongList(page, singer) : null)
             .then(res => songList.splice(0, songList.length, ...res))
             .finally(Spinner.close);
       }
 
       if (newTab === tabMap.ALBUM_TAB) {
         Spinner.open();
-        return $source.impl.singerAlbumList(singer, page)
+        return getSingerAlbumList(page, singer)
             .then(res => albumList.splice(0, albumList.length, ...res))
             .finally(Spinner.close);
       }
 
       if (newTab === tabMap.MV_TAB) {
         Spinner.open();
-        return $source.impl.singerMvList(singer, page)
+        return getSingerMvList(page, singer)
             .then(res => mvList.splice(0, mvList.length, ...res))
             .finally(Spinner.close);
       }
@@ -208,7 +210,7 @@ export default {
         ++page.current;
         Spinner.open();
 
-        $source.impl.singerSongList(singer, page)
+        getSingerSongList(page, singer)
             .then(res => songList.push(...res))
             .finally(Spinner.close);
       },

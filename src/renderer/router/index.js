@@ -1,9 +1,9 @@
-import * as VueRouter from "vue-router";
+import {createRouter, createWebHashHistory} from 'vue-router';
 
-export default VueRouter.createRouter(/** @type {VueRouter.RouterOptions} */{
+export default createRouter(/** @type {RouterOptions | any} */{
     // 自定义路由连接被激活的class
     linkActiveClass: 'active',
-    history: VueRouter.createWebHashHistory('/'),
+    history: createWebHashHistory('/'),
     routes: [
         {
             path: '/', // 主页自动重定向到本地音乐页面

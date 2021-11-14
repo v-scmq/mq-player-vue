@@ -8,7 +8,7 @@
 ### 第三方资源
 
 参数说明
-> platform &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 1:腾讯 | 2:酷我 | 3:酷狗 <br>
+> platform &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 1:x | 2:y | 3:z <br>
 > quality(song) = 1:标准 | 2:高品质 | 3:无损 <br>
 > quality(mv) &nbsp;&nbsp; = 1:标清 | 2:高清 | 3:超清 | 4:蓝光 <br>
 
@@ -39,7 +39,7 @@
 #### 歌手MV列表(post)
 
 > 接口: /api/singer/mvs => data = {platform:number, page:Page, singer:Singer} <br>
-> 示例: /api/singer/mvs => data = {platform:1, page:{current:1, pageSize:30}, singer:{mid:"1234v"}0} <br>
+> 示例: /api/singer/mvs => data = {platform:1, page:{current:1, pageSize:30}, singer:{mid:"1234v"}} <br>
 > 返回: {page:Page, list:MV[]}
 
 #### 歌单列表(post)
@@ -71,7 +71,6 @@
 > 接口: /api/search/singers => data = {platform:number, keyword:string} <br>
 > 示例: /api/search/singers => data = {platform:1, keyword:'九张机'} <br>
 > 返回: {list:Singer[]}
-
 
 #### 歌曲搜索(post)
 
@@ -108,6 +107,18 @@
 > 接口: /api/singer/pic => data = {platform:number, mid:string} <br>
 > 示例: /api/singer/pic => data = {platform:1, mid:'1232v'} <br>
 > 返回: ['url1', 'url2']
+
+#### 获取登录配置选项 或 开始登录
+
+> 接口: /api/user/login => data = {platform:number, cookies:Electron.Cookie[]} <br>
+> 示例: /api/user/login => data = {platform:1, cookie:[]} <br>
+> 返回: {option:ModalOpenOption} | {reason:string | null, user:User | null}
+
+#### 退出登录
+
+> 接口: /api/user/logout => data = {platform:number} <br>
+> 示例: /api/user/logout => data = {platform:1} <br>
+> 返回: {cookieURL:string}
 
 #### 歌曲URL(get)
 

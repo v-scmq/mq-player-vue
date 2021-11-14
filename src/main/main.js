@@ -175,7 +175,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         options = (typeof options) === 'string' ? JSON.parse(options) : options;
 
         // 若指定了预加载文件名(不包含扩展名),则获取需要执行预加载文件的全路径
-        let preload = options.preloadName ? `${__dirname}${isProduction ? '' : '/../public'}/${options.preloadName}.js` : null;
+        const preload = options.preloadName && `${__dirname}${isProduction ? '' : '/../public'}/${options.preloadName}.js`;
 
         // 若模态框未初始化,则先初始化(窗口圆角效果, 需要设置窗口透明且不能打开开发者工具,否则无效果)
         modal = modal || new BrowserWindow({
