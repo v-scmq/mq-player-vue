@@ -1,21 +1,26 @@
 <template>
   <div class='v-row list-view' @click='onListViewClicked'>
-    <div class='item' v-for='(tag, index) in visibleTags' :key='index' :data-tag='tag.id'>{{ tag.name }}</div>
-    <div class="item" id="more">更多</div>
+    <div class='item' v-for='tag in visibleTags' :key='tag.id' :data-id='tag.id'
+         :class='{active: currentTagId === tag.id}'>{{ tag.name }}
+    </div>
+    <div class='item special-tag-more'>更多</div>
   </div>
-  <div ref="el" class='image-container' style='flex:1;'>
-    <div class='cover-item' v-for='(item,index) in list' :key='index'>
+
+  <div class='image-container' style='flex:1;'>
+    <div class='cover-item' v-for='(item, index) in specialList' :key='index'>
       <img class=cover :src='item.cover' loading="lazy" alt/>
       <div class='name'>{{ item.name }}</div>
     </div>
   </div>
 
-  <modal modality title="全部分类" ref="tagModal" width="70%" height="60%">
+  <modal modality title='全部分类' width='70%' height='60%' v-model:visible='tagModal'>
     <template v-slot:content>
-      <template v-for="(item, _index) in tags" :key='_index'>
+      <template v-for='(item, _index) in tags' :key='_index'>
         {{ item.title }}
-        <div class='v-row list-view'>
-          <div class='item' v-for='(tag, index) in item.items' :key='index' :data-index='index'>{{ tag.name }}</div>
+        <div class='v-row list-view' @click='onListViewClicked'>
+          <div class='item' v-for='(tag, index) in item.items' :key='index' :data-id='tag.id'
+               :class='{active: currentTagId === tag.id}'>{{ tag.name }}
+          </div>
         </div>
       </template>
     </template>
@@ -23,74 +28,76 @@
 </template>
 
 <script>
+import {getSpecialList} from '../api';
 import Spinner from '../components/Spinner';
 
-import {getCurrentInstance, nextTick, onMounted, reactive} from "vue";
+import {onMounted, reactive, ref} from 'vue';
 
 export default {
   name: 'SpecialList',
 
-  data: () => ({}),
   setup() {
+    // 所有歌单分类标签
+    const tags = reactive(/** @type {SpecialTags[]} */[]);
+    // 可见的歌单分类标签列表
+    const visibleTags = reactive(/** @type {Tag[]} */[]);
+    // 歌单列表
+    const specialList = reactive(/** @type {Special[]} */[]);
+    // 当前已选Tag的id
+    const currentTagId = ref(/** @type {string | number} */0);
+    // 分页信息
+    const page = reactive(/** @type {Page} */ {current: 1, size: 30});
 
-    const /** @type {any} */ tags = reactive([]);
-    const /** @type {any} */ list = reactive([]);
-    const /** @type {any} */ visibleTags = reactive([]);
-    const page = reactive({current: 1, size: 30});
-    const tag = {};
-
-
-    // TODO 数据源API待修改
-    const $source = {};
-
-    const vc = getCurrentInstance();
+    // 显示分类标签的模态框显隐控制
+    const tagModal = ref(false);
 
     onMounted(() => {
-      let el = vc.refs.el;
       Spinner.open();
-      $source.impl.specialList(null, page).then(res => {
-        if (res instanceof Array) {
-          list.splice(0, list.length, ...res);
 
-        } else {
-          tags.splice(0, tags.length, ...res.tags);
-          list.splice(0, list.length, ...res.list);
-          let random = Math.random();
+      getSpecialList(page, null).then(data => {
+        tags.splice(0, tags.length, ...data.tags);
+        specialList.splice(0, specialList.length, ...data.list);
+        let random = Math.random();
 
-          res.tags.forEach(item => {
-            let items = item.items, size = items.length;
-            let tag = size > 0 ? items[Math.floor(random * size)] : null;
-            tag ? visibleTags.push(tag) : null;
-          });
+        data.tags.forEach(item => {
+          const children = item.items;
+          const tag = children[(random * children.length) ^ 0];
+          tag && visibleTags.push(tag);
+        });
 
-          nextTick(() => {
-            let nodes = el.querySelectorAll('.list-view > .item:first-child');
-            nodes.forEach(node => node.classList.add('active'));
-          });
-        }
       }).finally(Spinner.close);
 
     });
 
     return {
-      tags, list, visibleTags, page,
+      tags, specialList, visibleTags, page, tagModal, currentTagId,
+
+      /**
+       * 若点击分类标签时,切换歌单数据;
+       * 若点击更多分类时,则打开歌单详细分类标签模态框
+       *
+       * @param {MouseEvent} event 鼠标点击事件
+       */
       onListViewClicked(event) {
-        let node = event.target;
-        if (node.id === 'more') {
-          vc.refs.tagModal.open();
-          return;
+        const node = event.target, classList = node.classList;
+        if (classList.contains('special-tag-more')) {
+          return tagModal.value = true;
         }
 
-        let attr = node.attributes.getNamedItem('custom-data');
         if (node.classList.contains('item')) {
-          node.parentNode.childNodes.forEach(item => item.classList.remove('active'));
-          node.classList.add('active');
+          const {value} = node.attributes.getNamedItem('data-id') || {};
 
-          if ((tag.id = attr ? attr.value : null)) {
+          if (value && value !== currentTagId.value) {
+            currentTagId.value = value;
+
             Spinner.open();
-            $source.impl.specialList(tag, page)
-                .then(data => list.splice(0, list.length, ...data))
-                .finally(Spinner.close);
+            page.current = 1;
+
+            getSpecialList(page, {id: currentTagId.value, name: ''}).then(data => {
+              specialList.splice(0, specialList.length, ...data.list);
+              page.total = data.page.total;
+
+            }).finally(Spinner.close);
           }
         }
       }

@@ -1,11 +1,14 @@
 <template>
-  <div class='v-row list-view' v-for='(children,index) in tags' :key='index' @click='onListViewClicked'>
-    <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'>{{ tag.name }}</div>
+  <div class='v-row list-view' v-for='(children, index) in tags' :key='index' @click='onListViewClicked'>
+    <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'
+         :class='{active: tag.id === singerTagParam[tag.group]}'>{{ tag.name }}
+    </div>
   </div>
-  <div ref="el" class='image-container' style='flex:1;'>
-    <div class='cover-item' v-for='(item,index) in list' :key='index'>
-      <img alt class=cover :src='item.cover' @click="navigateTo(item)"/>
-      <div @click="navigateTo(item)">{{ item.name }}</div>
+
+  <div class='image-container' style='flex:1;'>
+    <div class='cover-item' v-for='(singer, index) in singerList' :key='index' @click='navigateTo(singer)'>
+      <img alt class=cover :src='singer.cover' loading='lazy'/>
+      <div>{{ singer.name }}</div>
     </div>
   </div>
 </template>
@@ -13,7 +16,7 @@
 <script>
 import Spinner from '../components/Spinner';
 
-import {reactive, nextTick, getCurrentInstance, onMounted} from 'vue';
+import {reactive, onMounted} from 'vue';
 import {useRouter} from 'vue-router';
 
 import {getSingerList} from '../api';
@@ -22,60 +25,78 @@ export default {
   name: 'SingerListView',
 
   setup() {
-    const tags = reactive([]);
-    const /** @type {any} */ list = reactive([]);
-    const page = reactive({current: 1, size: 30});
-    const tag = reactive({en: null, area: null, sex: null, genre: null, group: null});
+    /**
+     * @typedef {Object} TagItemNode tag标签节点信息
+     *
+     * @property {string} name 分类标签名称
+     * @property {string | number} id 分类标签id
+     * @property {string} group 所属分类组
+     * @property {string} value `${分类标签分类组}-${分类标签id}`
+     */
 
-    const vc = getCurrentInstance();
+    const tags = reactive(/** @type {TagItemNode[][]} */[]);
+    const singerList = reactive(/** @type {Singer[]} */[]);
+    const page = reactive(/** @type {Page}*/{current: 1, size: 30, total: 0});
+    const singerTagParam = reactive( /** @type {SingerTagsParam} */{});
+
     const router = useRouter();
 
     onMounted(() => {
       Spinner.open();
-      getSingerList(page, null).then(({data}) => {
-        if (data instanceof Array) {
-          list.splice(0, list.length, ...data);
 
-        } else {
-          let tagList = [];
-          let array = Object.keys(data.tags);
-          array.forEach(key => {
-            //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => {en:id, area:id, sex:id}
-            tag[key] = null;
-            data.tags[key].forEach(item => item.value = `${key}-${item.id}`);
-            //  {en:[{id:1,name:'A'}], area:[{}], sex:[{}]} => [[], [], []]
-            tagList.push(data.tags[key]);
-          });
-          tags.splice(0, tags.length, ...tagList);
-          list.splice(0, list.length, ...data.list);
+      getSingerList(page, null).then(data => {
+        // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
+        Object.assign(page, data.page);
 
-          nextTick(() => {
-            let el = vc.refs.el.parentNode;
-            let nodes = el.querySelectorAll('.list-view .item:first-child');
-            nodes.forEach(node => node.classList.add('active'));
-          });
-        }
+        const tagList = [];
+
+        // 转换结构 => {a:[{id, name}], b:[{id, name}]} => [[{id, name, group:a, value:'a;${id}'}] , ...]
+        Object.keys(data.tags).forEach(key => {
+          const children = data.tags[key];
+          //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
+          singerTagParam[key] = children && children[0] && children[0].id; // 1 && 0 => 0
+
+          // {id, name} => {id, name, group:key, value:`${key};${id}`}
+          children.forEach(item => item.value = `${item.group = key};${item.id}`);
+
+          tagList.push(children);
+        });
+
+        // 添加歌手分类标签列表数据
+        tags.splice(0, tags.length, ...tagList);
+        // 添加歌手列表数据
+        singerList.splice(0, singerList.length, ...data.list);
 
       }).finally(Spinner.close);
     });
 
     return {
-      tags, list, page, tag,
+      tags, singerList, singerTagParam,
+
       onListViewClicked(event) {
-        let node = event.target, value;
-        let attr = node.attributes.getNamedItem('data-tag');
-
-        if ((value = attr ? attr.value : null)) {
-          let [group, id] = value.split('-'), nodes = node.parentNode.childNodes;
-          tag[group] = id;
-          nodes.forEach(item => item.classList.remove('active'));
-          node.classList.add('active');
-
-          Spinner.open();
-          getSingerList(page, tag)
-              .then(data => list.splice(0, list.length, ...data))
-              .finally(Spinner.close);
+        const {value} = event.target.attributes.getNamedItem('data-tag') || {};
+        if (!value) {
+          return;
         }
+
+        // 获取分类标签所属组 和 分类标签id
+        const [group, id] = value.split(';');
+
+        // 若未改变, 则什么也不做
+        if (singerTagParam[group] === id) {
+          return;
+        }
+
+        // 设定当前分类组对应的分类标签id
+        singerTagParam[group] = id;
+        // 重设为第一页
+        page.current = 1;
+
+        Spinner.open();
+        getSingerList(page, singerTagParam).then(data => {
+          page.total = data.page.total;
+          singerList.splice(0, singerList.length, ...data.list);
+        }).finally(Spinner.close);
       },
 
       navigateTo(singer) {

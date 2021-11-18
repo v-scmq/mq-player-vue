@@ -39,7 +39,7 @@
         </template>
 
         <template v-slot:singer='{item}'>
-            <span class='link' v-for='(singer,index) in item.singer' :key='index' :data-mid='singer.mid'>
+            <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
               {{ singer.name }}
             </span>
         </template>
@@ -87,9 +87,12 @@ export default {
   props: {query: Object},
 
   setup(props) {
-    const songList = reactive([]);
-    const /** @type [{name, cover}] */ albumList = reactive([]);
-    const /** @type {[{title, cover, singer}]} */ mvList = reactive([]);
+    const songList = reactive(/** @type {Singer[]} */[]);
+    const albumList = reactive(/** @type {Album[]} */[]);
+    const mvList = reactive(/** @type {Mv[]} */[]);
+
+    const singer = reactive(/** @type {Singer} */{});
+    const page = reactive(/** @type {Page} */{current: 1, size: 30, total: 1});
 
     const SONG_TAB = {title: '歌曲', update: true, error: null};
     const ALBUM_TAB = {title: '专辑', update: true, error: null};
@@ -97,13 +100,6 @@ export default {
     const DETAIL_TAB = {title: '详情', update: true, error: null};
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB});
-
-    const page = reactive({current: 1, size: 30, total: 1});
-
-    const singer = reactive({
-      mid: '', name: '', cover: '', introduce: '',
-      songCount: '-', albumCount: '-', mvCount: '-', fansCount: '-'
-    });
 
     const columns = reactive([
       {type: 'index', width: 100},
@@ -113,15 +109,12 @@ export default {
       {title: '时长', property: 'duration', width: 100}
     ]);
 
-    // TODO 数据源API待修改
-    const $source = {};
-
     const router = useRouter();
 
     /**
      *  处理选项卡改变事件
-     *  @param newTab { UnwrapRef<{update: boolean, title: string, error: null}>} 新选定的选项卡
-     *  @return {any} 任意值
+     *
+     *  @param { UnwrapRef<{update: boolean, title: string, error: null}>} newTab 新选定的选项卡
      */
     const handleTabChanged = newTab => {
       if (!newTab || !newTab.update) return;
@@ -130,8 +123,7 @@ export default {
 
       if (newTab === tabMap.SONG_TAB) {
         Spinner.open();
-        return $source.impl.handleSingerInfo(singer).then(success =>
-            success ? getSingerSongList(page, singer) : null)
+        return getSingerSongList(page, singer)
             .then(res => songList.splice(0, songList.length, ...res))
             .finally(Spinner.close);
       }
@@ -181,7 +173,7 @@ export default {
 
       /**
        * 表格行单元格双击时的回调方法
-       * @param index {Number} 行单元格索引
+       * @param {number} index 行单元格索引
        */
       onCellClick(index) {
         player.playMediaList(songList, index);
@@ -191,14 +183,17 @@ export default {
 
       /**
        * 专辑列表项点击
-       * @param event {MouseEvent} 鼠标点击事件
+       * @param {MouseEvent} event 鼠标点击事件
        */
       onAlbumItemClicked(event) {
         let node = event.target, classList = node.classList;
         if (classList.contains('cover') || classList.contains('name')) {
           let attr = node.parentNode.attributes.getNamedItem('data-index');
           let index = attr.value - 0, album = index >= 0 ? albumList[index] : null;
-          return album ? router.push({path: '/album-view', query: {...album}}) : null;
+          return album ? router.push({
+            path: '/album-view',
+            query: {id: album.id, mid: album.mid, cover: album.cover}
+          }) : null;
         }
       },
 

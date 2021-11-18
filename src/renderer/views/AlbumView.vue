@@ -1,6 +1,6 @@
 <template>
   <div class='v-row singer-info-container'>
-    <img alt class='cover' :src='album.cover'/>
+    <img alt class='cover' :src='album.cover '/>
     <div class='v-column'>
       <div>{{ album.name || '-' }}</div>
 
@@ -29,8 +29,10 @@
 
 <script>
 import {reactive, watch} from 'vue';
+
 import player from '../player';
 import Spinner from '../components/Spinner';
+import {getAlbumSongList} from '../api';
 
 export default {
   name: 'AlbumView',
@@ -40,7 +42,9 @@ export default {
   setup(props) {
     const songList = reactive([]);
     const page = reactive({current: 1, size: 30, total: 1});
-    const /** @type {any} */ album = reactive({mid: '', name: '', cover: '', company: ''});
+    /** @type {any} */
+    const album = reactive({mid: '', name: '', cover: '', company: ''});
+
     const columns = reactive([
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
@@ -49,15 +53,14 @@ export default {
       {title: '大小', property: 'size', width: 100}
     ]);
 
-    // TODO 数据源api待修改
-    const $source = {};
-
-    watch(() => props.query, newQuery => {
+    watch(() => props.query, /** @param {Album} newQuery */newQuery => {
       if (album.mid !== newQuery.mid) {
         Spinner.open();
-        $source.impl.albumSongList(Object.assign(album, newQuery), page)
-            .then(res => songList.splice(0, songList.length, ...res))
-            .finally(Spinner.close);
+        getAlbumSongList(page, newQuery).then(data => {
+          Object.assign(album, data.album || newQuery);
+          songList.splice(0, songList.length, ...data.list);
+
+        }).finally(Spinner.close);
       }
 
     }, {immediate: true});

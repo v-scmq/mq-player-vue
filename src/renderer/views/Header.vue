@@ -146,7 +146,6 @@ export default {
      * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
      */
     const login = async event => {
-
       Spinner.open();
 
       try {
@@ -154,9 +153,9 @@ export default {
         let cookies;
 
         if (event) {
-          let res = await loginApi(null);
+          const data = await loginApi(null);
           /** @type {ModalOpenOption} */
-          const {option} = res.data || {};
+          const {option} = data || {};
 
           if (!option || !option.url) {
             return Message.error('登录失败！');
@@ -182,8 +181,8 @@ export default {
           }
         }
 
-        const res = await loginApi(cookies);
-        const {user: userInfo, reason} = res.data;
+        const data = await loginApi(cookies);
+        const {user: userInfo, reason} = data;
 
         if (!userInfo || !userInfo.uin) {
           return Message.error(reason);
@@ -275,9 +274,9 @@ export default {
       logout() {
         if (user.uin) {
           // 删除indexDB中存储的用户信息
-          db.delete(db.tables.user.name, user.uin).then(logoutApi).then(res => {
-            if (res.data && res.data.cookieURL) {
-              window.electron.removeAllCookie(res.data.cookieURL);
+          db.delete(db.tables.user.name, user.uin).then(logoutApi).then(data => {
+            if (data && data.cookieURL) {
+              window.electron.removeAllCookie(data.cookieURL);
             }
           });
         }
