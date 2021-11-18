@@ -131,14 +131,18 @@ const handlePostRequest = (request, response, callback) => {
                     // 写入 状态信息 及 数据 到客户端
                     response.writeHead(statusCode, headers).end(JSON.stringify(data));
 
-                }).catch(reason => response.writeHead(403, {}).end(reason.message));
+                }).catch(reason =>
+                    response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
+                        .end(reason.message));
 
             } else {
-                response.writeHead(403, {}).end('没有对应的数据源api实现此接口');
+                const headers = {'content-type': 'text/plain; charset=utf-8'};
+                response.writeHead(403, headers).end('没有对应的数据源api实现此接口');
             }
 
         } catch (e) {
-            response.writeHead(403).end('无效的参数！')
+            const headers = {'content-type': 'text/plain; charset=utf-8'};
+            response.writeHead(403, headers).end('无效的参数！')
         }
     });
 
