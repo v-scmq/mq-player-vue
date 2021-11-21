@@ -898,7 +898,7 @@ html, body, #app {
     content: '/';
     margin: 0 4px;
     color: var(--text-base);
-    cursor: default;
+    pointer-events: none;
 }
 
 .table .table-cell .link:hover {
@@ -950,7 +950,7 @@ html, body, #app {
 
 .image-container.arc-rect .cover-item .cover {
     width: 16em; /* 100% */
-    height: 12em;
+    height: 10em;
     border-radius: 0.75em;
 }
 
