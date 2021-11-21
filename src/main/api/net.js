@@ -33,8 +33,8 @@ const http = options => new Promise(resolve => {
     // assert options.header instanceof Object === true
 
     // 若没有提供UA信息,则提供默认的UA信息
-    if (!options.headers['User-Agent']) {
-        options.headers['User-Agent'] = options.isMobile ?
+    if (!options.headers['user-agent']) {
+        options.headers['user-agent'] = options.isMobile ?
             // 用户代理 手机浏览器标识
             'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36'
             // 用户代理 PC浏览器标识
@@ -50,7 +50,7 @@ const http = options => new Promise(resolve => {
 
     // 若有提交的数据,必须设置请求的中的内容类型
     if (method === 'post' && options.data) {
-        options.headers['Content-Type'] = ((typeof options.data) === 'string') && options.dataType === 'form-data' ?
+        options.headers['content-type'] = ((typeof options.data) === 'string') && options.dataType === 'form-data' ?
             'application/x-www-form-urlencoded;charset=UTF-8' : 'application/json;charset=UTF-8';
     }
 
@@ -129,25 +129,25 @@ const http = options => new Promise(resolve => {
 });
 
 /**
- * 发起GET请求
+ * 发起get请求
  *
  * @param {RequestParam} options 配置选项对象
  * @returns {Promise<ResponseData>} 异步对象Promise
  */
 http.get = options => {
-    // 设置为GET请求
+    // 设置为get请求
     options.method = 'get';
     return http(options);
 };
 
 /**
- * 发起POST请求
+ * 发起post请求
  *
  * @param {RequestParam} options 配置选项对象
  * @returns {Promise<ResponseData>} 异步对象Promise
  */
 http.post = options => {
-    // 设置为POST请求
+    // 设置为post请求
     options.method = 'post';
     return http(options);
 };

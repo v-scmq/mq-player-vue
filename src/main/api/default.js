@@ -23,6 +23,9 @@
  * @property {string | undefined}           introduce  专辑介绍
  * @property {number | undefined}           songCount  专辑包含的歌曲数量
  * @property {string | undefined}           year       专辑发布年份
+ * @property {string | undefined}           genre       所属流派
+ * @property {string | undefined}           language    语种
+ * @property {string | undefined}           company     唱片公司
  */
 
 /**
@@ -45,15 +48,18 @@
 /**
  * @typedef {Object} Mv mv信息
  *
- * @property {string | number | undefined}              vid      mv id
- * @property {string | undefined}                       title    mv标题
- * @property {string | Singer | Singer[] | undefined}   singer   歌手信息
- * @property {string | undefined}                       cover    mv封面图
- * @property {string | undefined}                       duration 播放时长
- * @property {string | undefined}                       path     文件路径
- * @property {string | undefined}                       format   视频格式
- * @property {string | undefined}                       size     文件大小(如: 3.59MB)
- * @property {number | undefined}                       quality  画质等级
+ * @property {string | number | undefined}              id          mv id
+ * @property {string | number | undefined}              vid         mv vid
+ * @property {string | undefined}                       title       mv标题
+ * @property {string | Singer | Singer[] | undefined}   singer      歌手信息
+ * @property {string | undefined}                       cover       mv封面图
+ * @property {string | undefined}                       duration    播放时长
+ * @property {string | undefined}                       path        文件路径
+ * @property {string | undefined}                       format      视频格式
+ * @property {string | undefined}                       year        发布年份
+ * @property {number | undefined}                       playCount   播放量
+ * @property {string | undefined}                       size        文件大小(如: 3.59MB)
+ * @property {number | undefined}                       quality     画质等级
  */
 
 /**
@@ -62,6 +68,7 @@
  * @property {number} current               当前页
  * @property {number} size                  每页数据量大小
  * @property {number | undefined} total     数据总量
+ * @property {number | undefined} pageCount 总页数
  */
 
 /**
@@ -153,10 +160,12 @@
  */
 
 /**
- * @typedef {Object} HttpCookie                     HttpCookie信息
+ * @typedef {Object} HttpCookie                 HttpCookie信息
  *
- * @property {string} value                         cookie值
- * @property {string} default                       默认cookie值
+ * @property {string | number}    uin           账号
+ * @property {string | number}    randomId      随机id
+ * @property {string}             value         cookie值
+ * @property {string}             default       默认cookie值
  */
 
 /** 默认的数据源API实现 */
@@ -201,7 +210,7 @@ export const DefaultSource = {
      *
      * @param {Album} album 专辑信息对象,不能为null
      * @param {Page} page 分页信息对象,不能为null
-     * @return {Promise<{album:Album, list:Song[], httpInfo:HttpInfo}>} 专辑包含的歌曲List集合
+     * @return {Promise<{page:Page, album:Album, list:Song[], httpInfo:HttpInfo}>} 专辑包含的歌曲List集合
      */
     async albumSongList(album, page) {
         return {album, page, list: [], httpInfo: {statusCode: 200, headers: {}}};
@@ -314,6 +323,29 @@ export const DefaultSource = {
      */
     async specialSearch(keyword, page) {
         return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
+    },
+
+    /**
+     * 获取歌曲播放地址列表
+     *
+     * @param {string | number} id      歌曲id
+     * @param {string} mid              歌曲mid
+     * @param {number} quality          音质等级, [1, 3]
+     * @return {Promise<string | null>} 异步Promise对象
+     */
+    async getSongUrl(id, mid, quality) {
+        return id && mid && quality ? '' : null;
+    },
+
+    /**
+     * 获取MV播放地址列表
+     *
+     * @param {string} vid              mv vid
+     * @param {number} quality          画质等级, [1, 4]
+     * @return {Promise<string | null>} 异步Promise对象
+     */
+    async getMvUrl(vid, quality) {
+        return vid && quality ? '' : null;
     },
 
     /**

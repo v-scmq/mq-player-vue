@@ -41,7 +41,7 @@ export const getSingerAlbumList = (page, singer) =>
  *
  * @param {Page}    page     分页对象
  * @param {Album}   album    专辑信息
- * @returns {Promise<{album:Album | null, list:Song[]}>} 异步Promise对象
+ * @returns {Promise<{page:Page, album:Album | null, list:Song[]}>} 异步Promise对象
  */
 export const getAlbumSongList = (page, album) =>
     axios.post('/api/album/songs', {platform, page, album}).then(DataReducer);

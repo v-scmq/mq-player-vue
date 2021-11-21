@@ -31,29 +31,27 @@
 
     <div class='tab-content v-column'>
 
-      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
+      <table-view style='flex:auto;' :columns='columns' :data='songList' @row-dblclick='onCellClick'
                   v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
         <template v-slot:title='{item}'>
           {{ item.title }}
           <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
         </template>
 
-        <template v-slot:singer='{item}'>
-            <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
-              {{ singer.name }}
-            </span>
+        <template v-slot:singer='{item:{singer:singers = []}}'>
+          <span class='link' v-for='(singer, index) in singers' :key='index' :data-mid='singer.mid'>
+            {{ singer.name }}
+          </span>
         </template>
 
-        <template v-slot:album='{item}'>
-            <span class='link' v-if='item.album' :data-mid='item.album.mid'>
-              {{ item.album.name }}
-            </span>
+        <template v-slot:album='{item:{album}}'>
+          <span class='link' :data-mid='album && album.mid'>{{ album && album.name }}</span>
         </template>
       </table-view>
 
       <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
            v-show='tabMap.value===tabMap.ALBUM_TAB' @click='onAlbumItemClicked'>
-        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :data-index='index'>
+        <div class='v-column content-box' v-for='(item, index) in albumList' :key='index' :data-index='index'>
           <img class=cover :src='item.cover' loading='lazy' alt/>
           <div class='name'>{{ item.name }}</div>
         </div>
@@ -61,9 +59,14 @@
 
       <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
            v-show='tabMap.value===tabMap.MV_TAB'>
-        <div class='v-column content-box' v-for='(item,index) in mvList' :key='index'>
+        <div class='v-column content-box' v-for='(item, index) in mvList' :key='index'>
           <img class=cover :src='item.cover' loading='lazy' alt/>
-          <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
+          <div class='name'>
+            <span class='link' v-for='(singer, _index) in item.singer' :key='_index' :data-mid='singer.mid'>
+              {{ singer.name }}
+            </span>
+            -<span>{{ item.title }}</span>
+          </div>
         </div>
       </div>
 
@@ -75,36 +78,42 @@
 <script>
 import player from '../player';
 import Spinner from '../components/Spinner';
+import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
+import {convertSinger} from '../../utils';
 
 import {reactive, watch} from 'vue';
 import {useRouter} from 'vue-router';
 
-import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
+/**
+ *
+ * @typedef {Object} Tab              选项卡
+ *
+ * @property {string} title           选项卡标题
+ * @property {boolean} update         数据是否需要更新
+ * @property {Page | undefined} page  选项卡对应的视图是分页信息
+ */
 
 export default {
   name: 'SingerView',
-
   props: {query: Object},
 
   setup(props) {
-    const songList = reactive(/** @type {Singer[]} */[]);
+    const singer = reactive(/** @type {Singer} */{});
+    const songList = reactive(/** @type {Song[]} */[]);
     const albumList = reactive(/** @type {Album[]} */[]);
     const mvList = reactive(/** @type {Mv[]} */[]);
 
-    const singer = reactive(/** @type {Singer} */{});
-    const page = reactive(/** @type {Page} */{current: 1, size: 30, total: 1});
-
-    const SONG_TAB = {title: '歌曲', update: true, error: null};
-    const ALBUM_TAB = {title: '专辑', update: true, error: null};
-    const MV_TAB = {title: 'MV', update: true, error: null};
-    const DETAIL_TAB = {title: '详情', update: true, error: null};
+    const SONG_TAB = /** @type {Tab} */ {title: '歌曲', update: true, page: {current: 1, size: 30}};
+    const ALBUM_TAB = /** @type {Tab} */ {title: '专辑', update: true, page: {current: 1, size: 30}};
+    const MV_TAB = /** @type {Tab} */ {title: 'MV', update: true, page: {current: 1, size: 30}};
+    const DETAIL_TAB = /** @type {Tab} */ {title: '详情', update: true};
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB});
 
     const columns = reactive([
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
-      {title: '歌手', property: 'singer',},
+      {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
       {title: '时长', property: 'duration', width: 100}
     ]);
@@ -112,49 +121,70 @@ export default {
     const router = useRouter();
 
     /**
-     *  处理选项卡改变事件
+     * 处理选项卡改变事件
      *
-     *  @param { UnwrapRef<{update: boolean, title: string, error: null}>} newTab 新选定的选项卡
+     * @param {Tab} newTab 新选定的选项卡
      */
     const handleTabChanged = newTab => {
+      // 若未选定任何一个选项卡 或 当前选项卡无需更新数据, 则什么也不做
       if (!newTab || !newTab.update) return;
-
+      // 立刻重置为无需更新状态
       newTab.update = false;
 
       if (newTab === tabMap.SONG_TAB) {
         Spinner.open();
-        return getSingerSongList(page, singer)
-            .then(res => songList.splice(0, songList.length, ...res))
-            .finally(Spinner.close);
+        return getSingerSongList(newTab.page, singer).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+          // 修改歌手信息
+          data.singer && Object.assign(singer, data.singer);
+          // 添加歌曲
+          data.list.forEach(convertSinger);
+          songList.splice(0, songList.length, ...data.list);
+
+        }).catch(() => newTab.update = true).finally(Spinner.close);
       }
 
       if (newTab === tabMap.ALBUM_TAB) {
         Spinner.open();
-        return getSingerAlbumList(page, singer)
-            .then(res => albumList.splice(0, albumList.length, ...res))
-            .finally(Spinner.close);
+        return getSingerAlbumList(newTab.page, singer).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+          // 添加专辑
+          albumList.splice(0, albumList.length, ...data.list);
+
+        }).catch(() => newTab.update = true).finally(Spinner.close);
       }
 
       if (newTab === tabMap.MV_TAB) {
         Spinner.open();
-        return getSingerMvList(page, singer)
-            .then(res => mvList.splice(0, mvList.length, ...res))
-            .finally(Spinner.close);
+        getSingerMvList(newTab.page, singer).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+          // 添加Mv
+          data.list.forEach(convertSinger);
+          mvList.splice(0, mvList.length, ...data.list);
+
+        }).catch(() => newTab.update = true).finally(Spinner.close);
       }
     };
 
     // 监听查询参数改变
     watch(() => props.query, value => {
       if (singer.mid !== value.mid && value.mid) {
-        singer.mid = value.mid;
-        singer.name = value.name;
-        singer.cover = value.cover;
-        singer.songCount = value.songCount;
-        singer.albumCount = value.albumCount;
-        singer.mvCount = value.mvCount;
-        singer.fansCount = value.fansCount;
+        // 重设歌手信息
+        Object.assign(singer, value);
 
-        tabMap.tabList.forEach(tab => tab.error = !(tab.update = true))
+        tabMap.tabList.forEach(tab => {
+          tab.update = true;
+          if (tab.page) {
+            // 清除分页数据
+            tab.page.total = 0;
+            tab.page.current = 1;
+            tab.page.pageCount = 0;
+          }
+        });
+
         // 若当前是歌曲选项卡,则手动调用handleChange方法处理
         if (tabMap.value === tabMap.SONG_TAB) {
           handleTabChanged(tabMap.SONG_TAB);
@@ -166,10 +196,10 @@ export default {
     }, {immediate: true});
 
     // 监听选项卡选择改变
-    watch(() => tabMap.value, handleTabChanged);
+    watch(() => tabMap.value,/** @type {WatchCallback<UnwrapRef<Tab>, UnwrapRef<Tab>>} */ handleTabChanged);
 
     return {
-      tabMap, singer, columns, songList, albumList, mvList, page,
+      tabMap, singer, columns, songList, albumList, mvList,
 
       /**
        * 表格行单元格双击时的回调方法
@@ -182,33 +212,42 @@ export default {
       print: () => print(),
 
       /**
-       * 专辑列表项点击
+       * 当专辑列表项点击时,跳转到专辑视图
+       *
        * @param {MouseEvent} event 鼠标点击事件
        */
       onAlbumItemClicked(event) {
-        let node = event.target, classList = node.classList;
+        const node = event.target, classList = node.classList;
         if (classList.contains('cover') || classList.contains('name')) {
-          let attr = node.parentNode.attributes.getNamedItem('data-index');
-          let index = attr.value - 0, album = index >= 0 ? albumList[index] : null;
-          return album ? router.push({
-            path: '/album-view',
-            query: {id: album.id, mid: album.mid, cover: album.cover}
-          }) : null;
+          // 获取数据索引
+          let {value} = node.parentNode.attributes.getNamedItem('data-index') || {};
+          // 提取专辑信息
+          const album = albumList[value = (value - 0)] && {...albumList[value], singer: null};
+          // 若存在专辑信息, 则跳转到专辑视图
+          album && router.push({path: '/album-view', query: album});
         }
       },
 
+      /** 加载歌曲数据到表格视图中 */
       loadDataList() {
-        if (page.total < 2 || page.current >= page.total) {
-          return;
+        const page = tabMap.SONG_TAB.page;
+
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          ++page.current;
+          Spinner.open();
+
+          getSingerSongList(page, singer).then(data => {
+            // 重设置分页信息
+            data.page && Object.assign(page, data.page);
+            // 转换歌手为Array类型
+            data.list.forEach(convertSinger);
+            // 添加歌曲
+            songList.push(...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
         }
-
-        ++page.current;
-        Spinner.open();
-
-        getSingerSongList(page, singer)
-            .then(res => songList.push(...res))
-            .finally(Spinner.close);
-      },
+      }
     };
   }
 }

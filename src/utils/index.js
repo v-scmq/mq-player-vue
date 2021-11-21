@@ -1,6 +1,6 @@
-/*****************************************************************
- ******************** module: URIUtil ***************************
- *****************************************************************/
+/***************************************************************
+ *                    module: URIUtil                          *
+ ***************************************************************/
 
 /**
  * 获取本地文件资源在本地服务器上的API接口地址 <br>
@@ -11,7 +11,7 @@
  *
  * @param {string} path 文件绝对路径
  *
- * @returns {`/api/file?path=${string}`} 文件在本地服务器上的API接口地址
+ * @return {string} 文件在本地服务器上的API接口地址
  */
 export const getFileURL = path => `/api/file?path=${encodeURIComponent(path.replaceAll('\\', '/'))}`;
 
@@ -19,14 +19,37 @@ export const getFileURL = path => `/api/file?path=${encodeURIComponent(path.repl
  * 获取流式响应API接口地址
  *
  * @param {string} url URL地址字符串
- * @returns {`/api/stream?uri=${string}`} 流式响应API接口地址
+ * @return {string} 流式响应API接口地址
  */
 export const getStreamURI = url => `/api/stream?uri=${url ? encodeURIComponent(url) : ''}`;
 
+/**
+ * 获取歌曲在本地服务器上的URI地址
+ *
+ * @param {number} platform     音乐平台id
+ * @param {string | number} id  歌曲id
+ * @param {string} mid          歌曲mid
+ * @param {number} quality      歌曲音质等级
+ * @return {string}             歌曲资源在本地服务器上的URI
+ */
+export const getSongURI = (platform, id, mid, quality) =>
+    `/api/url/song?platform=${platform}&mid=${mid}&id=${id}&quality=${quality}`;
 
-/*****************************************************************
- ******************** module: TimeUtil ***************************
- *****************************************************************/
+/**
+ * 获取Mv在本地服务器上的URI地址
+ *
+ * @param {number} platform     音乐平台id
+ * @param {string} vid          Mv vid
+ * @param {number} quality      Mv 画质等级
+ * @return {string}             Mv 资源在本地服务器上的URI
+ */
+export const getMvURI = (platform, vid, quality) =>
+    `/api/url/song?platform=${platform}&mid=${vid}&quality=${quality}`;
+
+
+/***************************************************************
+ *                    module: TimeUtil                         *
+ ***************************************************************/
 
 /**
  * 将毫秒时间值转换为 00:00 或 00:00:00的时间格式字符串
@@ -66,9 +89,9 @@ export const secondToString = (value) => {
 }
 
 
-/*****************************************************************
- ******************** module: FileUtil ***************************
- *****************************************************************/
+/****************************************************************
+ *                    module: FileUtil                          *
+ ****************************************************************/
 
 /**
  * 解决字符序列不能用于Windows操作系统平台的文件或文件夹名称.
@@ -142,9 +165,34 @@ export const getMediaInfo = (file, isElectron) => {
     return {title, album: title, singer, size, path};
 };
 
+/**
+ * 转换歌手信息, 确保它应该是一个数组
+ *
+ * @param {Song | Mv | Album} value 歌手信息
+ * @return {Singer[]} 歌手信息列表
+ */
+export const convertSinger = value =>
+    value.singer instanceof Array ? value.singer :
+        value.singer instanceof Object ? [value.singer] :
+            value.singer ? [{name: value.singer}] : [];
+
 
 /*****************************************************************
- ******************** module: MD5Util (来源于互联网) **************
+ *                    module: ThreadUtil                         *
+ *****************************************************************/
+
+/**
+ * 睡眠指定的时间
+ *
+ * @param {number} timeout 睡眠超时(单位:毫秒)
+ * @return {Promise} 异步Promise对象
+ */
+export const sleep = (timeout = 3000) => new Promise(resolve =>
+    setTimeout(() => resolve(), Math.max(timeout, 3000)));
+
+
+/*****************************************************************
+ *                   module: MD5Util (来源于互联网)               *
  *****************************************************************/
 
 /**

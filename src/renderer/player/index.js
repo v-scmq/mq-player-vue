@@ -173,25 +173,13 @@ const player = {
     /**
      * 准备媒体资源
      *
-     * @param {Object} media 媒体资源路径
+     * @param {Object} media 媒体资源信息
      * @return {Promise<boolean>} 异步Promise对象
      */
     async prepare(media) {
-        if (!media) {
-            return false;
-        }
-
-        let listener = this.eventListener;
-        if (!media.path && !media.notReady) {
-            if (!await listener.prepareBefore(media)) {
-                media.notReady = true;
-                return false;
-            }
-        }
-
-        let path = media.path ? media.path : '';
+        let path = media && media.path;
         // 路径至少包含2个字符
-        if (path.length < 2) {
+        if (!path || path.length < 2) {
             this.nativePlayer.src = '';
             return false;
         }
@@ -203,6 +191,7 @@ const player = {
         // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
         this.nativePlayer.src = path;
 
+        const listener = this.eventListener;
         if (listener && listener.mediaChanged) {
             listener.mediaChanged(media);
         }
@@ -305,16 +294,7 @@ const player = {
      * @returns {boolean} 若播放器可播放则返回true
      */
     isPlayable() {
-        return this.nativePlayer.src !== "" && this.status !== Status.RELEASED;
-    },
-
-    /**
-     * 设置播放器错误的回调方法
-     *
-     * @param {Function} callback 回调方法
-     */
-    setOnError(callback) {
-        this.nativePlayer.onemptied = callback;
+        return this.nativePlayer.src !== '' && this.status !== Status.RELEASED;
     },
 
     /**
@@ -459,6 +439,19 @@ player.nativePlayer.onstalled = () => {
     player.status = Status.STALLED;
     if (listener && listener.statusChanged) {
         listener.statusChanged(Status.STALLED);
+    }
+
+    // 取消音频频谱数据监听
+    if (player.spectrumTimer) {
+        cancelAnimationFrame(player.spectrumTimer);
+    }
+};
+
+// 注册播放器发生错误时的回调
+player.nativePlayer.onerror = (event, source, lineno, colno, error) => {
+    let listener = player.eventListener;
+    if (listener && listener.error) {
+        listener.error(error);
     }
 
     // 取消音频频谱数据监听

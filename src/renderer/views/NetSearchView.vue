@@ -30,7 +30,6 @@
     </div>
 
     <div class='tab-content v-column'>
-
       <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
                   v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
         <template v-slot:title='{item}'>
@@ -38,16 +37,14 @@
           <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
         </template>
 
-        <template v-slot:singer='{item}'>
-            <span class='link' v-for='(singer,index) in item.singer' :key='index' :data-mid='singer.mid'>
-              {{ singer.name }}
-            </span>
+        <template v-slot:singer='{item:{singer:singers = []}}'>
+          <span class='link' v-for='(singer, index) in singers' :key='index' :data-mid='singer.mid'>
+            {{ singer.name }}
+          </span>
         </template>
 
-        <template v-slot:album='{item}'>
-            <span class='link' v-if='item.album' :data-mid='item.album.mid'>
-              {{ item.album.name }}
-            </span>
+        <template v-slot:album='{item:{album}}'>
+          <span class='link' :data-mid='album && album.mid'>{{ album && album.name }}</span>
         </template>
       </table-view>
 
@@ -75,31 +72,40 @@
 <script>
 import player from '../player';
 import Spinner from '../components/Spinner';
+import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '../api';
+import {convertSinger} from '../../utils';
 
 import {reactive, watch} from 'vue';
 import {useRouter} from 'vue-router';
 
+/**
+ *
+ * @typedef {Object} Tab              选项卡
+ *
+ * @property {string} title           选项卡标题
+ * @property {boolean} update         数据是否需要更新
+ * @property {Page | undefined} page  选项卡对应的视图是分页信息
+ */
+
 export default {
   name: 'NetSearchView',
 
-  props: {query: Object},
+  props: {query: String},
 
   setup(props) {
-    /** @type {{mid, name, cover, songCount, albumCount, mvCount, fansCount} | any} */
-    const singer = reactive({});
-    const songList = reactive([]);
-    const /** @type {any} */ mvList = reactive([]);
-    const /** @type {any} */  albumList = reactive([]);
-    const /** @type {any} */  specialList = reactive([]);
+    const singer = reactive(/** @type {Singer} */{});
+    const songList = reactive(/** @type {Song[]} */[]);
+    const mvList = reactive(/** @type {Mv[]} */[]);
+    const albumList = reactive(/** @type {Album[]} */[]);
+    const specialList = reactive(/** @type {Special[]} */[]);
 
-    const MV_TAB = {title: 'MV', update: true, error: null};
-    const SONG_TAB = {title: '歌曲', update: true, error: null};
-    const ALBUM_TAB = {title: '专辑', update: true, error: null};
-    const SPECIAL_TAB = {title: '歌单', update: true, error: null};
+    const MV_TAB =/** @type {Tab} */  {title: 'MV', update: true, page: {current: 1, pageSize: 30}};
+    const SONG_TAB =/** @type {Tab} */  {title: '歌曲', update: true, page: {current: 1, pageSize: 30}};
+    const ALBUM_TAB =/** @type {Tab} */  {title: '专辑', update: true, page: {current: 1, pageSize: 30}};
+    const SPECIAL_TAB =/** @type {Tab} */  {title: '歌单', update: true, page: {current: 1, pageSize: 30}};
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
-    const tabMap = reactive({value: SONG_TAB, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB, tabList});
+    const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB});
 
-    const page = reactive({current: 1, size: 30, total: 1});
     const columns = reactive([
       {type: 'index', width: 100},
       {title: '歌曲', property: 'title'},
@@ -108,25 +114,24 @@ export default {
       {title: '时长', property: 'duration', width: 100}
     ]);
 
-    // TODO 数据源API待修改
-    const $source = {};
     const router = useRouter();
     let $query = null;
 
-    /**
-     *  处理并获取歌手信息
-     * @param list {Array} 歌手信息列表
-     */
-    const handleSingerInfo = list => {
-      if (list && list[0] && list[0].mid) {
-        $source.impl.handleSingerInfo(Object.assign(singer, list[0]), true);
-      }
-    };
+    // /**
+    //  *  处理并获取歌手信息
+    //  *
+    //  * @param {Singer[]} list 歌手信息列表
+    //  */
+    // const handleSingerInfo = list => {
+    //   if (list && list[0] && list[0].mid) {
+    //     // $source.impl.handleSingerInfo(Object.assign(singer, list[0]), true);
+    //   }
+    // };
 
     /**
-     *  处理选项卡改变事件
-     *  @param newTab { UnwrapRef<{update: boolean, title: string, error: null}>} 新选定的选项卡
-     *  @return {any} 任意值
+     * 处理选项卡改变事件
+     *
+     * @param {Tab} newTab 新选定的选项卡
      */
     const handleTabChanged = newTab => {
       // 若未选定任何一个选项卡 或 当前选项卡无需更新数据, 则什么也不做
@@ -134,47 +139,79 @@ export default {
       // 立刻重置为无需更新状态
       newTab.update = false;
 
-      // 打开进度指示器
-      Spinner.open();
-      let api = $source.impl;
-
       // 若选定歌曲选项卡
       if (newTab === tabMap.SONG_TAB) {
+        // 打开进度指示器
+        Spinner.open();
+
         // 搜索歌手 => 处理歌手基本数据 => 捕捉异常 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
-        api.singerSearch($query)
-            .then(handleSingerInfo)
-            .catch(() => singer.mid = null)
-            .then(() => api.songSearch($query, page))
-            .then(list => songList.splice(0, songList.length, ...list))
-            .finally(Spinner.close);
-      }
+        searchSinger($query).then().catch(() => singer.mid = null)
+            .then(() => searchSong(newTab.page, $query)).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+          // 添加歌曲
+          data.list.forEach(convertSinger);
+          songList.splice(0, songList.length, ...data.list);
 
-      if (newTab === tabMap.ALBUM_TAB) {
-        $source.impl.albumSearch($query, page)
-            .then(list => albumList.splice(0, albumList.length, ...list))
-            .finally(Spinner.close);
-      }
+        }).catch(() => newTab.update = true).finally(Spinner.close);
 
-      if (newTab === tabMap.MV_TAB) {
-        $source.impl.mvSearch($query, page)
-            .then(list => mvList.splice(0, mvList.length, ...list))
-            .finally(Spinner.close);
-      }
+        // api.singerSearch($query)
+        //     .then(handleSingerInfo)
+        //     .catch(() => singer.mid = null)
+        //     .then(() => api.songSearch($query, page))
+        //     .then(list => songList.splice(0, songList.length, ...list))
+        //     .finally(Spinner.close);
 
-      if (newTab === tabMap.SPECIAL_TAB) {
-        $source.impl.specialSearch($query, page)
-            .then(list => specialList.splice(0, specialList.length, ...list))
-            .finally(Spinner.close);
+      } else if (newTab === tabMap.ALBUM_TAB) {
+        Spinner.open();
+
+        searchAlbum(newTab.page, $query).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+          // 添加专辑
+          albumList.splice(0, albumList.length, ...data.list);
+
+        }).finally(Spinner.close);
+
+      } else if (newTab === tabMap.MV_TAB) {
+        Spinner.open();
+        searchMv(newTab.page, $query).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+
+          // 添加Mv
+          data.list.forEach(convertSinger);
+          mvList.splice(0, mvList.length, ...data.list);
+
+        }).catch(() => newTab.update = true).finally(Spinner.close);
+
+      } else if (newTab === tabMap.SPECIAL_TAB) {
+        // 打开进度指示器
+        Spinner.open();
+        searchSpecial(newTab.page, $query).then(data => {
+          // 修改分页信息
+          data.page && Object.assign(newTab.page, data.page);
+
+          // 添加歌单
+          specialList.splice(0, specialList.length, ...data.list);
+
+        }).catch(() => newTab.update = true).finally(Spinner.close);
       }
     };
 
-    watch(() => tabMap.value, handleTabChanged);
+    watch(() => tabMap.value, /** @type {WatchCallback<UnwrapRef<Tab>, UnwrapRef<Tab>>} */ handleTabChanged);
 
     watch(() => props.query, newQuery => {
       // 若不相等 且 新的查询参数是有效的(不能null或undefined)
       if ($query !== newQuery.value && newQuery.value) {
         $query = newQuery.value;
-        tabMap.tabList.forEach(tab => tab.error = !(tab.update = true));
+        tabMap.tabList.forEach(tab => {
+          tab.update = true;
+          // 清除分页数据
+          tab.page.total = 0;
+          tab.page.current = 1;
+          tab.page.pageCount = 0;
+        });
 
         // 若当前是歌曲选项卡,则手动调用handleChange方法处理
         if (tabMap.value === tabMap.SONG_TAB) {
@@ -187,40 +224,52 @@ export default {
     }, {immediate: true});
 
     return {
-      tabMap, singer, mvList, songList, albumList, specialList, page, columns,
+      tabMap, singer, columns, songList, albumList, mvList, specialList,
 
       /**
        * 表格行单元格双击时的回调方法
-       * @param row {Number} 行单元格索引
+       *
+       * @param {number} row 行单元格索引
        */
       onCellClick: row => player.playMediaList(songList, row),
 
       print: () => print(),
 
       /**
-       * 专辑列表项点击
-       * @param event {MouseEvent} 鼠标点击事件
+       * 当专辑列表项点击时,跳转到专辑视图
+       *
+       * @param {MouseEvent} event 鼠标点击事件
        */
       onAlbumItemClicked(event) {
-        let node = event.target, classList = node.classList;
+        const node = event.target, classList = node.classList;
         if (classList.contains('cover') || classList.contains('name')) {
-          let attr = node.parentNode.attributes.getNamedItem('data-index');
-          let index = attr.value - 0, album = index >= 0 ? albumList[index] : null;
-          return album ? router.push({path: '/album-view', query: album}) : null;
+          // 获取数据索引
+          let {value} = node.parentNode.attributes.getNamedItem('data-index') || {};
+          // 提取专辑信息
+          const album = albumList[value = (value - 0)] && {...albumList[value], singer: null};
+          // 若存在专辑信息, 则跳转到专辑视图
+          album && router.push({path: '/album-view', query: album});
         }
       },
 
       loadDataList() {
-        if (page.total < 2 || page.current >= page.total) {
-          return;
+        const page = tabMap.SONG_TAB.page;
+
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          ++page.current;
+          Spinner.open();
+
+          searchSong(page, $query).then(data => {
+            // 重设置分页信息
+            data.page && Object.assign(page, data.page);
+            // 转换歌手为Array类型
+            data.list.forEach(convertSinger);
+            // 添加歌曲
+            songList.push(...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
         }
-
-        ++page.current;
-        Spinner.open();
-
-        $source.impl.songSearch($query, page)
-            .then(res => songList.push(...res))
-            .finally(Spinner.close);
       },
     };
   }

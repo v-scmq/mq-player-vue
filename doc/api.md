@@ -34,7 +34,7 @@
 
 > 接口: /api/album/songs => data = {platform:number, page:Page, album:Album} <br>
 > 示例: /api/album/songs => data = {platform:1, page:{current:1, pageSize:30}, album:{mid:"t02kl"}} <br>
-> 返回: {album:Album | null, list:Song[]}
+> 返回: {page:Page, album:Album | null, list:Song[]}
 
 #### 歌手MV列表(post)
 
@@ -52,13 +52,13 @@
 
 > 接口: /api/special/songs => data = {platform:number, page:Page, special:Special} <br>
 > 示例: /api/special/songs => data = {platform:1, page:{current:1, pageSize:30}, special:{id:'1sdlt0'}} <br>
-> 返回: {special:Special, page:Page, list:Song[]}
+> 返回: {page:Page, special:Special, list:Song[]}
 
 #### MV列表(post)
 
 > 接口: /api/mvs => data = {platform:number, page:Page, tag:{area:string, version:string}} <br>
 > 示例: /api/mvs => data = {platform:1, page:{current:1, pageSize:30}, tag:{area:'1', version:'2'}} <br>
-> 返回: {tags:MvTags, list:Mv[]}
+> 返回: {page:Page, tags:MvTags, list:Mv[]}
 
 #### 榜单及歌曲列表(post)
 

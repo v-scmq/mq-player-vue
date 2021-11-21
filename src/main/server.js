@@ -1,14 +1,12 @@
 import {createServer, request as httpRequest} from 'http';
 import {request as httpsRequest} from 'https';
-
 import {createReadStream, existsSync, statSync} from 'fs';
+import {sleep} from '../utils';
 
 import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
 
-const protocol = 'http';
-const host = 'localhost';
-const port = 9081;
+const protocol = 'http', host = 'localhost', port = 9081;
 
 // 本地服务器根路径
 export const BASE_URL = `${protocol}://${host}:${port}`;
@@ -22,7 +20,7 @@ const MIME_TYPE = {
     default: 'application/octet-stream'
 }
 
-// 数据来源
+// 数据源
 const DATA_SOURCE_IMPL = {
     [DefaultSource.id]: DefaultSource,
     [QQMusicSource.id]: QQMusicSource
@@ -50,9 +48,9 @@ const handleFileRequest = (request, response, path) => {
 
         // 响应头信息
         const headers = {
-            'Content-Type': MIME_TYPE[format] || MIME_TYPE.default,
-            'Content-Length': size,
-            'Access-Control-Allow-Origin': '*',
+            'content-type': MIME_TYPE[format] || MIME_TYPE.default,
+            'content-length': size,
+            'access-control-allow-origin': '*',
         };
 
         // Range请求头 => bytes=0-100 | bytes=0-
@@ -66,8 +64,8 @@ const handleFileRequest = (request, response, path) => {
             // 分段传输时,结束位置不能到达文件大小,否则不能播放
             end = end === size ? --end : end;
 
-            headers['Accept-Ranges'] = 'bytes';
-            headers['Content-Range'] = `bytes ${start}-${end}/${size}`;
+            headers['accept-ranges'] = 'bytes';
+            headers['content-range'] = `bytes ${start}-${end}/${size}`;
         }
 
         // 创建文件输入流, 并为其指定读取的开始和结束范围
@@ -90,8 +88,8 @@ const handleFileRequest = (request, response, path) => {
         inputStream.pipe(response);
 
     } else {
-        response.writeHead(404, {'content-type': 'text/html'})
-        response.end('<html lang="zh"><head><title>404 Not Found</title></head><body>未找到指定资源</body></html>');
+        response.writeHead(404, {'content-type': 'text/html; charset=utf-8'}).end(
+            '<html lang="zh"><head><title>404 Not Found</title></head><body>未找到指定资源</body></html>');
     }
 };
 
@@ -109,44 +107,96 @@ const handlePostRequest = (request, response, callback) => {
     request.on('data', /** @param {Buffer} chunk */chunk => buffers.push(chunk));
 
     request.once('end', () => {
-        debugger;
-        // 获取请求参数
         try {
+            debugger;
+
+            // 获取请求参数
             /** @type {{platform:number, [key:string]:any}} */
             const param = JSON.parse(buffers.toString());
             // 根据平台id查找对应的数据源实现
             const dataSource = DATA_SOURCE_IMPL[param.platform];
 
-            if (dataSource) {
-                callback(dataSource, param).then(/** @param {{[key:string]:any, httpInfo?: HttpInfo}} data */data => {
-                    debugger;
-                    data = data || {};
-                    //  获取状态码 和 响应头
-                    const {httpInfo: {statusCode = 200, headers = {}}} = data;
-                    // 从data对象上 删除 状态码 和 响应头信息
-                    delete data.httpInfo;
-                    // 当内容大小与实际大小不一致时,将导致客户端不能正确响应 (策略: 删除 内容大小 响应标头)
-                    delete headers['content-length'];
-
-                    // 写入 状态信息 及 数据 到客户端
-                    response.writeHead(statusCode, headers).end(JSON.stringify(data));
-
-                }).catch(reason =>
-                    response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
-                        .end(reason.message));
-
-            } else {
+            if (!dataSource) {
                 const headers = {'content-type': 'text/plain; charset=utf-8'};
-                response.writeHead(403, headers).end('没有对应的数据源api实现此接口');
+                return response.writeHead(403, headers).end('没有相应的数据源api实现此接口');
             }
 
+            /**
+             * @typedef {Object} HttpBaseResponse                   HTTP响应信息
+             *
+             * @property {HttpInfo | undefined}     httpInfo        HTTP状态信息
+             * @property {Page | undefined}         page            分页信息
+             * @property {any}                      [key:string]    额外的信息
+             */
+
+            // 睡眠一段时间后才开始发出HTTP请求
+            sleep().then(() => callback(dataSource, param)).then(/** @param {HttpBaseResponse} data */data => {
+                debugger;
+                data = data || {};
+                //  获取状态码 和 响应头
+                const {httpInfo: {statusCode = 200, headers = {}}} = data;
+                // 从data对象上 删除 状态码 和 响应头信息
+                delete data.httpInfo;
+                // 当内容大小与实际大小不一致时,将导致客户端不能正确响应 (策略: 删除 内容大小 响应标头)
+                delete headers['content-length'];
+
+                // 若存在分页, 则全局统一计算数据分页页数
+                data.page ? data.page.pageCount = Math.ceil(data.page.total / (data.page.size || 1)) : null;
+
+                // 写入 状态信息 及 数据 到客户端
+                response.writeHead(statusCode, headers).end(JSON.stringify(data));
+
+            }).catch(reason => response.writeHead(500, {'content-type': 'text/plain; charset=utf-8'}).end(reason.message));
+
         } catch (e) {
-            const headers = {'content-type': 'text/plain; charset=utf-8'};
-            response.writeHead(403, headers).end('无效的参数！')
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end('无效的参数！')
         }
     });
 
-    request.once('error', () => response.writeHead(403).end('请求失败！'));
+    request.once('error', () => response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end('请求失败！'));
+};
+
+/**
+ * 处理流式类型数据的get请求
+ *
+ * @param {module:http.IncomingMessage} request 客户端请求信息
+ * @param {module:http.ServerResponse} response 服务器响应信息
+ * @param {string} url URL地址
+ */
+const handleStreamRequest = (request, response, url) => {
+    if (!url || url.length < 7) { // 7 => 'http://' ;  8 => 'https://'
+        // 拒绝访问
+        return response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end('无效的URL');
+    }
+
+    /**
+     * 处理响应
+     *
+     * @param {module:http.IncomingMessage} newResponse 来自远程的响应信息
+     */
+    const handler = newResponse => {
+        // 写入响应标头(注意:所有响应头都将会被写入到本地客户端)
+        response.writeHead(newResponse.statusCode, newResponse.headers);
+        // 新的响应 (连接管道)=> 原来的响应
+        newResponse.pipe(response);
+    };
+
+    // 请求配置选项
+    const options = {
+        /*method: 'get',*/
+        headers: {
+            referer: url,
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'
+        }
+    };
+
+    // 发出新的请求(不同的协议, 使用不同的请求处理器发送)
+    const newRequest = url.includes('https:')
+        ? httpsRequest(url, options, handler)
+        : httpRequest(url, options, handler);
+
+    // 源请求 (连接管道)=> 新的请求
+    request.pipe(newRequest);
 };
 
 /**
@@ -155,7 +205,6 @@ const handlePostRequest = (request, response, callback) => {
  * @type {{[key:string]: Function}}
  */
 const RequestMappingHandler = {
-
     /**
      * 获取本地文件资源
      *
@@ -368,6 +417,76 @@ const RequestMappingHandler = {
     },
 
     /**
+     * 获取歌曲播放地址,然后以流的方式响应歌曲数据到客户端 <br>
+     *
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
+     * @param {URL} url 解析后的URL对象
+     */
+    '/api/url/song'(request, response, url) {
+        try {
+            // 歌曲id
+            const id = url.searchParams.get('id');
+            // 歌曲mid
+            const mid = url.searchParams.get('mid');
+            // 音质 => 1:标准 | 2:高品质 | 3:无损
+            const quality = (url.searchParams.get('quality') || 1) ^ 0;
+            // 数据源
+            const dataSource = DATA_SOURCE_IMPL[url.searchParams.get('platform')];
+            // 错误消息
+            const error = !dataSource ? '没有相应的数据源api实现此接口' : !mid ? '歌曲mid无效' : null;
+
+            if (error) {
+                // 拒绝访问
+                return response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(error);
+            }
+
+            dataSource.getSongUrl(id, mid, Math.min(Math.max(1, quality), 3))
+                .then(url => handleStreamRequest(request, response, url))
+                .catch(reason => response.writeHead(500, {'content-type': 'text/plain; charset=utf-8'})
+                    .end(reason.message));
+
+        } catch (e) {
+            // 捕捉异常,在此处做出错误消息
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e.message);
+        }
+    },
+
+    /**
+     * 获取歌曲播放地址,然后以流的方式响应歌曲数据到客户端 <br>
+     *
+     * @param {module:http.IncomingMessage} request 客户端请求信息
+     * @param {module:http.ServerResponse} response 服务器响应信息
+     * @param {URL} url 解析后的URL对象
+     */
+    '/api/url/mv'(request, response, url) {
+        try {
+            // mv vid
+            const vid = url.searchParams.get('vid');
+            // 画质 => 1:标清 | 2:高清 | 3:超清 | 4:蓝光
+            const quality = (url.searchParams.get('quality') || 1) ^ 0;
+            // 数据源
+            const dataSource = DATA_SOURCE_IMPL[url.searchParams.get('platform')];
+            // 错误消息
+            const error = !dataSource ? '没有相应的数据源api实现此接口' : !vid ? 'MV vid无效' : null;
+
+            if (error) {
+                // 拒绝访问
+                return response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(error);
+            }
+
+            dataSource.getMvUrl(vid, Math.min(Math.max(1, quality), 4))
+                .then(url => handleStreamRequest(request, response, url))
+                .catch(reason => response.writeHead(500, {'content-type': 'text/plain; charset=utf-8'})
+                    .end(reason.message));
+
+        } catch (e) {
+            // 捕捉异常,在此处做出错误消息
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e.message);
+        }
+    },
+
+    /**
      * 请求指定的站点, 并以数据流的方式响应 <br>
      * 示例: `api/stream/uri=${ encodeURIComponent('https://www.electronjs.org/') }`
      *
@@ -376,63 +495,38 @@ const RequestMappingHandler = {
      * @param {URL} url 解析后的URL对象
      */
     '/api/stream'(request, response, url) {
-        const uriParam = url.searchParams.get('uri');
-
         try {
-            const uri = uriParam ? new URL(uriParam) : null;
-            // 若未指定uri参数 或 path部分和代理服务器中的当前路径相同(不考虑是否同源)
-            if (!uri || uri.pathname === '/api/stream') {
-                // 拒绝访问
-                response.writeHead(403).end('无效的URL');
+            const uriParam = url.searchParams.get('uri');
+            const uri = new URL(uriParam);
 
-            } else {
-                /**
-                 * 处理响应
-                 *
-                 * @param {module:http.IncomingMessage} newResponse 来自远程的响应信息
-                 */
-                const handler = newResponse => {
-                    // 写入响应标头(注意:所有响应头都将会被写入到本地客户端)
-                    response.writeHead(newResponse.statusCode, newResponse.headers);
-                    // 新的响应 (连接管道)=> 原来的响应
-                    newResponse.pipe(response);
-                };
-
-                // 请求配置选项
-                const options = {/*method: 'get',*/ headers: {referer: uriParam}};
-
-                // 发出新的请求(不同的协议, 使用不同的请求处理器发送)
-                const newRequest = uri.protocol === 'https:'
-                    ? httpsRequest(uriParam, options, handler)
-                    : httpRequest(uriParam, options, handler);
-
-                // 源请求 (连接管道)=> 新的请求
-                request.pipe(newRequest);
-            }
+            // 若未指定uri参数 或 path部分和当前服务器中的当前路径相同(不考虑是否同源)
+            // 则拒绝此次访问(通过指定以下方法的url参数为null)
+            handleStreamRequest(request, response, uri.pathname === '/api/stream' ? null : uriParam);
 
         } catch (e) {
             // 捕捉异常,在此处做出错误消息
-            response.writeHead(403).end(e.message);
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e.message);
         }
     }
 };
 
 // 创建HTTP服务
 createServer((request, response) => {
-    // 获取解析后的URL对象
-    const url = new URL(`${BASE_URL}${request.url}`);
-    // 获取URL路径字符串 和 请求处理器
-    const path = url.pathname, handler = RequestMappingHandler[path];
-
     try {
+        // 获取解析后的URL对象
+        const url = new URL(`${BASE_URL}${request.url}`);
+        // 获取URL路径字符串 和 请求处理器
+        const path = url.pathname, handler = RequestMappingHandler[path];
+
         if (handler) {
             handler(request, response, url);
         } else {
             handleFileRequest(request, response, `${__dirname}/${path}`)
         }
-    } catch (error) {
-        response.writeHead(500, {'content-type': 'text/html'})
-        response.end(`<html lang="zh"><head><title>500 Server Error</title></head><body>服务器发生了错误 ${error}</body></html>`);
+
+    } catch (e) {
+        response.writeHead(500, {'content-type': 'text/html'}).end(
+            `<html lang="zh"><head><title>500 Server Error</title></head><body>服务器发生了错误: ${e.message}</body></html>`);
     }
 
 }).listen(port, host);

@@ -36,8 +36,9 @@ export default {
 
     const tags = reactive(/** @type {TagItemNode[][]} */[]);
     const singerList = reactive(/** @type {Singer[]} */[]);
-    const page = reactive(/** @type {Page}*/{current: 1, size: 30, total: 0});
     const singerTagParam = reactive( /** @type {SingerTagsParam} */{});
+    // TODO 分页/无限滚动 + 列表虚拟滚动 + Grid布局
+    const page =  /** @type {Page}*/{current: 1, size: 30, total: 0};
 
     const router = useRouter();
 
@@ -73,8 +74,13 @@ export default {
     return {
       tags, singerList, singerTagParam,
 
-      onListViewClicked(event) {
-        const {value} = event.target.attributes.getNamedItem('data-tag') || {};
+      /**
+       * 歌手分类标签被点击时, 加载最新的歌手数据列表
+       *
+       * @param {NamedNodeMap} attributes HTML节点属性(原参数{@link PointerEvent})
+       */
+      onListViewClicked({target: {attributes}}) {
+        const {value} = attributes.getNamedItem('data-tag') || {};
         if (!value) {
           return;
         }
@@ -83,7 +89,7 @@ export default {
         const [group, id] = value.split(';');
 
         // 若未改变, 则什么也不做
-        if (singerTagParam[group] === id) {
+        if (singerTagParam[group] === id || !group) {
           return;
         }
 
@@ -94,11 +100,19 @@ export default {
 
         Spinner.open();
         getSingerList(page, singerTagParam).then(data => {
-          page.total = data.page.total;
+          // 重设分页信息
+          data.page && Object.assign(page, data.page);
+          // 添加歌手数据
           singerList.splice(0, singerList.length, ...data.list);
-        }).finally(Spinner.close);
+
+        }).catch(() => --page.current).finally(Spinner.close);
       },
 
+      /**
+       * 跳转到歌手视图
+       *
+       * @param {Singer | any} singer 歌手信息
+       */
       navigateTo(singer) {
         router.push({path: '/singer-view', query: singer});
       }

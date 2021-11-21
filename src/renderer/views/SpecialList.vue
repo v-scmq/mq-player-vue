@@ -46,7 +46,7 @@ export default {
     // 当前已选Tag的id
     const currentTagId = ref(/** @type {string | number} */0);
     // 分页信息
-    const page = reactive(/** @type {Page} */ {current: 1, size: 30});
+    const page = /** @type {Page} */ {current: 1, size: 30};
 
     // 显示分类标签的模态框显隐控制
     const tagModal = ref(false);
@@ -55,9 +55,11 @@ export default {
       Spinner.open();
 
       getSpecialList(page, null).then(data => {
+        data.page && Object.assign(page, data.page);
         tags.splice(0, tags.length, ...data.tags);
         specialList.splice(0, specialList.length, ...data.list);
-        let random = Math.random();
+
+        const random = Math.random();
 
         data.tags.forEach(item => {
           const children = item.items;
@@ -70,7 +72,7 @@ export default {
     });
 
     return {
-      tags, specialList, visibleTags, page, tagModal, currentTagId,
+      tags, specialList, visibleTags, tagModal, currentTagId,
 
       /**
        * 若点击分类标签时,切换歌单数据;
@@ -84,7 +86,7 @@ export default {
           return tagModal.value = true;
         }
 
-        if (node.classList.contains('item')) {
+        if (classList.contains('item')) {
           const {value} = node.attributes.getNamedItem('data-id') || {};
 
           if (value && value !== currentTagId.value) {
@@ -94,8 +96,8 @@ export default {
             page.current = 1;
 
             getSpecialList(page, {id: currentTagId.value, name: ''}).then(data => {
+              data.page && Object.assign(page, data.page);
               specialList.splice(0, specialList.length, ...data.list);
-              page.total = data.page.total;
 
             }).finally(Spinner.close);
           }

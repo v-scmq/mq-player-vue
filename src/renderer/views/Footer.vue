@@ -85,12 +85,11 @@
 </template>
 
 <script>
-import {ref, reactive, getCurrentInstance, onBeforeUnmount} from 'vue';
-import MusicViewer from './MusicViewer';
-import {secondToString} from '../../utils';
 import player from '../player';
 import Message from '../components/Message';
-import Spinner from '../components/Spinner';
+import {secondToString, sleep} from '../../utils';
+import {ref, reactive, getCurrentInstance, onBeforeUnmount} from 'vue';
+import MusicViewer from './MusicViewer';
 
 export default {
   name: 'Footer',
@@ -116,9 +115,6 @@ export default {
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
     const vc = getCurrentInstance();
-
-    // TODO 数据源API待修改
-    const $source = {};
 
     /**
      * 获取播放器媒体播放索引
@@ -219,12 +215,14 @@ export default {
     /**
      * 当播放速率值改变时,给播放器设置这个速率值
      * 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」
+     *
      * @param {number} newValue 播放速率
      */
     const handleSpeedChange = newValue => player.setSpeed(1.5 * newValue + 0.5);
 
     /**
      * 鼠标滚轮在音量面板上滚动时,重新设置播放器音量
+     *
      * @param {WheelEvent} event 鼠标滚轮滚动事件
      */
     const onVolumeScroll = event => {
@@ -256,7 +254,8 @@ export default {
 
       /**
        * 播放器当前时间改变回调
-       * @param time {number} 播放进度时间(单位秒)
+       *
+       * @param {number} time 播放进度时间(单位秒)
        */
       timeChanged(time) {
         // 当滑动条没有再拖动时,才同步播放进度到滑动条视图
@@ -268,6 +267,7 @@ export default {
 
       /**
        * 播放器时长改变回调
+       *
        * @param {number} duration 播放器时长(单位秒)
        */
       durationChanged(duration) {
@@ -276,7 +276,8 @@ export default {
 
       /**
        * 媒体改变回调
-       * @param $media 媒体信息
+       *
+       * @param {Object} $media 媒体信息
        */
       mediaChanged($media) {
         media.title = $media.title;
@@ -286,8 +287,7 @@ export default {
         media.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
             ((singer instanceof Object ? singer.name : singer) || '未知');
 
-        let cover = (album instanceof Object) ? album.cover : $media.cover;
-        media.cover = cover || DEFAULT_COVER;
+        media.cover = (album instanceof Object) ? album.cover : $media.cover || DEFAULT_COVER;
 
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
@@ -295,6 +295,7 @@ export default {
 
       /**
        * 播放器由于缓冲而回调此方法
+       *
        * @param {number} value 缓存进度值
        */
       bufferChanged(value) {
@@ -306,27 +307,10 @@ export default {
         play(getIndex(true), true);
       },
 
-      /**
-       * 准备媒体资源之前的回调处理, 这通常用来处理来自网络媒体资源的路径.
-       *
-       * @param media 媒体资源信息对象
-       * @return {Promise<boolean>} 是否获得网络资源路径
-       */
-      prepareBefore(media) {
-        Spinner.open();
-        return new Promise(resolve => {
-          $source.impl.handleMusicInfo(media).then(state => {
-            if (!state) {
-              Message.warning('网络资源获取失败！');
-            }
-            resolve(state);
-
-          }).catch(() => {
-            Message.error('获取网络资源出现错误！');
-            resolve(null);
-
-          }).finally(Spinner.close);
-        });
+      error(reason) {
+        Message.error(reason.message);
+        Message.info('即将播放下一首');
+        sleep().then(() => play(getIndex(true), true));
       }
     });
 

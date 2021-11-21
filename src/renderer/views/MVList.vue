@@ -8,20 +8,20 @@
   <div class='image-container arc-rect' style='flex:1;'>
     <div class='cover-item' v-for='(item, index) in mvList' :key='index'>
       <img class='cover' alt loading='lazy' :src='item.cover'/>
-
-      <div class='name' v-if='item.singer instanceof Array'>
-         <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
-              {{ singer.name }}
-          </span>
+      <div class='name'>
+       <span class='link' v-for='(singer, _index) in item.singer' :key='_index' :data-mid='singer.mid'>
+            {{ singer.name }}
+       </span>
+        -<span>{{ item.title }}</span>
       </div>
-      <div v-else>{{ item.singer && (item.singer.name || item.singer) }}</div>
     </div>
   </div>
 </template>
 
 <script>
-import Spinner from '../components/Spinner';
 import {getMvList} from '../api';
+import {convertSinger} from '../../utils';
+import Spinner from '../components/Spinner';
 
 import {reactive, onMounted} from 'vue';
 
@@ -40,8 +40,8 @@ export default {
 
     const tags = reactive(/** @type {TagItemNode[][]} */[]);
     const mvList = reactive(/** @type {Mv[]} */[]);
-    const page = reactive(/** @type {Page} */{current: 1, size: 30});
     const mvTagParam = reactive(/** @type {MvTagsParam} */ {});
+    const page =  /** @type {Page} */{current: 1, size: 30};
 
     onMounted(() => {
       Spinner.open();
@@ -64,21 +64,26 @@ export default {
           tagList.push(children);
         });
 
+        // 添加Mv分类标签信息
         tags.splice(0, tags.length, ...tagList);
+
+        // 添加Mv数据
+        data.list.forEach(convertSinger);
         mvList.splice(0, mvList.length, ...data.list);
 
       }).finally(Spinner.close);
     });
 
     return {
-      tags, mvList, mvTagParam, page,
+      tags, mvList, mvTagParam,
 
       /**
-       * ListView被点击时,设置被点击的列表项的class
-       * @param event {MouseEvent} 鼠标事件
+       * Mv分类标签被点击时, 加载最新的Mv数据列表
+       *
+       * @param {NamedNodeMap} attributes HTML节点属性(原参数{@link PointerEvent})
        */
-      onListViewClicked(event) {
-        const {value} = event.target.attributes.getNamedItem('data-tag') || {};
+      onListViewClicked({target: {attributes}}) {
+        const {value} = attributes.getNamedItem('data-tag') || {};
         if (!value) {
           return;
         }
@@ -99,7 +104,10 @@ export default {
         Spinner.open();
 
         getMvList(page, mvTagParam).then(data => {
-          page.total = data.page.total;
+          Object.assign(page, data.page);
+
+          // 转换歌手为Array类型
+          data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
         }).finally(Spinner.close);
