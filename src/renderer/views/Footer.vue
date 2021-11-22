@@ -78,8 +78,8 @@
       </div>
     </div>
 
-    <teleport to='body'>
-      <music-viewer :visible='viewerVisible' :cover='media.cover' @close='viewerVisible=false'/>
+    <teleport to='body' v-if='viewerVisible'>
+      <music-viewer :cover='media.cover' @close='viewerVisible=false'/>
     </teleport>
   </div>
 </template>

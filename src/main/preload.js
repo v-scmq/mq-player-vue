@@ -17,18 +17,37 @@ contextBridge.exposeInMainWorld('electron', {
     getWindowState: () => ipcRenderer.invoke('get-window-state'),
 
     /**
-     * 当窗口最小化时,执行特定的回调方法
-     *
-     * @param {Function} callback 待执行回调方法
+     * @typedef {(event:Electron.IpcRendererEvent, isMaximize: boolean) => void} WindowStateListener 窗口状态监听器
      */
-    setOnWindowMaximized: callback => ipcRenderer.on('maximized', callback),
 
     /**
-     * 当窗口还原时,执行特定的回调方法
+     * 当窗口最小化时,执行特定的回调方法
      *
-     * @param {Function} callback 待执行回调方法
+     * @param {WindowStateListener | null} callback 待执行回调方法. 若为null将移除监听器
+     * @param {string} callbackId  回调方法句柄id(用于关联Function对象, 需要保证唯一性)
      */
-    setOnWindowRestore: callback => ipcRenderer.on('restored', callback),
+    onWindowStateChange: (callback, callbackId) => {
+        const channel = 'maximize';
+
+        if (callback) {
+            /*
+             * TODO 从渲染进程传到preload中的callback已经不是同一个Function对象,
+             *      可理解为方法 实参 和 形参 不是通一个Function对象
+             *  解决方案: 从方法参数传递一个唯一关联callback(Function)的id, 在preload中为发生了变化的callback绑定id
+             */
+            callback.$callbackId = callbackId;
+            ipcRenderer.addListener(channel, callback);
+
+        } else {
+            // 获取所有监听器, 循环找callbackId, 若找到匹配的则移除
+            ipcRenderer.listeners(channel).forEach(listener => {
+                if (listener['$callbackId'] === callbackId) {
+                    ipcRenderer.removeListener(channel, listener);
+                    delete listener['$callbackId'];
+                }
+            });
+        }
+    },
 
     /**
      * @typedef ModalOpenOption 打开模态框时所需的配置选项

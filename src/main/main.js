@@ -70,9 +70,11 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         // 当浏览器窗口关闭时,解除mainWindow引用指向
         mainWindow.once('closed', () => mainWindow = null);
         // 当浏览器窗口最大化时,发送窗口最大化消息到渲染进程
-        mainWindow.on('maximize', async () => mainWindow.webContents.send('maximized'));
+        mainWindow.on('maximize', async () =>
+            mainWindow.webContents.send('maximize', true));
         // 当浏览器窗口还原时,发送窗口还原消息到渲染进程
-        mainWindow.on('unmaximize', async () => mainWindow.webContents.send('restored'));
+        mainWindow.on('unmaximize', async () =>
+            mainWindow.webContents.send('maximize', false));
 
         // 在渲染进程中,请求最小化浏览器窗口
         ipcMain.handle('window-minimize', async () => mainWindow.minimize());

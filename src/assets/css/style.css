@@ -972,3 +972,74 @@ html, body, #app {
     font-size: 18px;
     border-radius: 1em;
 }
+
+.title-bar .icon.disabled {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.title-bar > .option-container > .icon {
+    margin: 0 4px;
+    padding: 6px;
+    width: 1em;
+    height: 1em;
+}
+
+.title-bar > .option-container > .icon:hover {
+    background: rgba(210, 212, 216, 0.8);
+}
+
+.window-state-bar {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.window-state-bar .icon {
+    -webkit-app-region: no-drag;
+}
+
+.window-state-bar > .icon {
+    margin: 2px 8px;
+    padding: 6px;
+}
+
+.window-state-bar > .separator {
+    height: 1em;
+    display: flex;
+    margin: 0 0.5em;
+    border-left: 2px solid #222;
+}
+
+.window-state-bar:not(.viewer) > .icon:hover {
+    background: rgba(210, 212, 216, 0.8);
+}
+
+.window-state-bar:not(.viewer) > .icon.close:hover {
+    background: rgb(232, 17, 35);
+    fill: white;
+}
+
+.window-state-bar.viewer > .icon:hover {
+    cursor: pointer;
+    fill: #f56c6c;
+    /*#eebe76*/
+}
+
+.window-state-bar:not(.viewer) > .icon {
+    width: 1em;
+    height: 1em;
+}
+
+.window-state-bar.viewer > .icon {
+    width: 1.75em;
+    height: 1.75em;
+}
+
+.window-state-bar.viewer > .icon {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.window-state-bar.viewer .icon {
+    fill: rgb(210, 210, 210);
+}

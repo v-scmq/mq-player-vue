@@ -27,29 +27,34 @@
       <text-field placeholder='请输入内容' v-model='searchInput' suffixIcon='search' @keyup.enter='openNetSearchView'/>
     </div>
 
-    <div class='v-row window-tool no-drag' style='flex:1;justify-content:flex-end;'>
+    <window-state-bar>
       <!-- 皮肤 -->
       <icon class='icon-menu skin viewer-hidden' name='skin'/>
       <!-- 设置 -->
       <icon class='icon-menu setting viewer-hidden' name='setting' @click='openSystemSetting'/>
-      <!-- 隐藏播放详情视图(播放详情时可见) -->
-      <icon class='icon-menu viewer-show hide-viewer' name='arrow-down' style='margin:0 auto 0 0.5em;'/>
+    </window-state-bar>
 
-      <!-- 全屏/退出全屏(播放详情时可见) -->
-      <icon class='icon-menu screen viewer-show' :name='isFullScreen ? "fulled-screen" :"full-screen" '
-            @click='setScreenState'/>
-      <!-- 图标分割符 -->
-      <span class='separator viewer-hidden'></span>
+    <!--    <div class='v-row window-tool no-drag' style='flex:1;justify-content:flex-end;'>-->
 
-      <!-- 窗口最小化状态控制 -->
-      <icon class='icon-menu state-icon' name='minimize' @click='minimize'/>
 
-      <!-- 窗口最大化/还原状态控制 -->
-      <icon class='icon-menu state-icon' :name='isMaximized ? "maximized" : "maximize" ' @click='maximizeOrRestore'/>
+    <!--      &lt;!&ndash; 隐藏播放详情视图(播放详情时可见) &ndash;&gt;-->
+    <!--      <icon class='icon-menu viewer-show hide-viewer' name='arrow-down' style='margin:0 auto 0 0.5em;'/>-->
 
-      <!-- 窗口关闭控制  -->
-      <icon class='icon-menu close state-icon' name='close' @click='closeWindow'/>
-    </div>
+    <!--      &lt;!&ndash; 全屏/退出全屏(播放详情时可见) &ndash;&gt;-->
+    <!--      <icon class='icon-menu screen viewer-show' :name='isFullScreen ? "fulled-screen" :"full-screen" '-->
+    <!--            @click='setScreenState'/>-->
+    <!--      &lt;!&ndash; 图标分割符 &ndash;&gt;-->
+    <!--      <span class='separator viewer-hidden'></span>-->
+
+    <!--      &lt;!&ndash; 窗口最小化状态控制 &ndash;&gt;-->
+    <!--      <icon class='icon-menu state-icon' name='minimize' @click='minimize'/>-->
+
+    <!--      &lt;!&ndash; 窗口最大化/还原状态控制 &ndash;&gt;-->
+    <!--      <icon class='icon-menu state-icon' :name='isMaximized ? "maximized" : "maximize" ' @click='maximizeOrRestore'/>-->
+
+    <!--      &lt;!&ndash; 窗口关闭控制  &ndash;&gt;-->
+    <!--      <icon class='icon-menu close state-icon' name='close' @click='closeWindow'/>-->
+    <!--    </div>-->
 
     <modal title='QQ登录' id='login-modal' width='600px' height='400px' v-model:visible='loginModal'>
       <template v-slot:content>
@@ -75,54 +80,27 @@
 import db from '../database';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
+import WindowStateBar from './WindowStateBar';
 
-import {nextTick, reactive, ref, getCurrentInstance} from 'vue';
+import {nextTick, reactive, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
-
 import {login as loginApi, logout as logoutApi} from '../api';
 
 export default {
   name: 'Header',
+  components: {WindowStateBar},
 
   setup() {
-    const isMaximized = ref(false);
     const backLength = ref(0);
     const forwardLength = ref(0);
-    const isFullScreen = ref(false);
     const searchInput = ref('');
     const loginModal = ref(false);
 
     // 用户基本信息
-    const user = reactive(/**  @type {User} */{uin: '', nickName: '', headURI: ''});
-
-    const vc = getCurrentInstance();
-
+    const user = reactive(/**  @type {User} */{});
     const router = useRouter(), route = useRoute();
 
     let navigation = null;
-
-    if (window.electron) {
-      window.electron.getWindowState().then(/** @param state {boolean}*/state => {
-        isMaximized.value = state;
-        vc.refs.el.classList.toggle('un-maximized', state);
-      });
-
-      // 当窗口最大化时,显示为已经最大化的图标
-      window.electron.setOnWindowMaximized(() => {
-        isMaximized.value = true;
-        vc.refs.el.classList.toggle('un-maximized', false);
-      });
-
-      // 当窗口未最大化时,显示为需要最大化图标
-      window.electron.setOnWindowRestore(() => {
-        isMaximized.value = false;
-        vc.refs.el.classList.toggle('un-maximized', true);
-      });
-
-    } else {
-      // 当窗口最大化时,显示为已经最大化的图标
-      isMaximized.value = !!document.fullscreenElement;
-    }
 
     router.afterEach((to, from) => {
       if (from.path === '/' || !navigation) {
@@ -136,9 +114,6 @@ export default {
       }
       ++backLength.value;
     });
-
-    // 初始检测是否进入全屏状态
-    isFullScreen.value = !!document.fullscreenElement;
 
     /**
      * 开始登录
@@ -206,7 +181,7 @@ export default {
     nextTick(login);
 
     return {
-      loginModal, isMaximized, backLength, forwardLength, isFullScreen, searchInput, user,
+      loginModal, backLength, forwardLength, searchInput, user,
       /** 后退 */
       back() {
         if (backLength.value) {
@@ -230,42 +205,6 @@ export default {
       /** 刷新 */
       refresh() {
         location.reload();
-      },
-
-      /** 最小化窗口 */
-      minimize() {
-        window.electron ? window.electron.setWindowMinimize() : null;
-      },
-
-      /** 最大化或还原窗口 */
-      maximizeOrRestore() {
-        if (window.electron) {
-          window.electron.setWindowMaximizeOrRestore();
-        } else {
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-            // 当窗口未最大化时,显示为需要最大化图标
-            isMaximized.value = false;
-          } else {
-            document.documentElement.requestFullscreen();
-            // 当窗口最大化时,显示为已经最大化的图标
-            isMaximized.value = true;
-          }
-        }
-      },
-
-      /** 关闭窗口 */
-      closeWindow() {
-        window.close();
-      },
-
-      /** 设置全屏或退出全屏 */
-      setScreenState() {
-        let node = document.querySelector('#music-viewer');
-        let state = !(document.fullscreenElement || !node);
-        state ? node.requestFullscreen() : document.exitFullscreen();
-        isFullScreen.value = state;
-        vc.refs.el.classList.toggle('full-screen', state);
       },
 
       login,
@@ -350,73 +289,73 @@ export default {
   text-overflow: ellipsis;
 }
 
-.title-bar .window-tool > .icon-menu {
-  margin: 2px 8px;
-  padding: 6px;
-}
+/*.title-bar .window-tool > .icon-menu {*/
+/*  margin: 2px 8px;*/
+/*  padding: 6px;*/
+/*}*/
 
-.title-bar .window-tool > .separator {
-  height: 1em;
-  display: flex;
-  margin: 0 0.5em;
-  border-left: 2px solid #222;
-}
+/*.title-bar .window-tool > .separator {*/
+/*  height: 1em;*/
+/*  display: flex;*/
+/*  margin: 0 0.5em;*/
+/*  border-left: 2px solid #222;*/
+/*}*/
 
-.title-bar:not(.viewer) > .window-tool > .icon-menu:hover {
-  background: rgba(210, 212, 216, 0.8);
-}
+/*.title-bar:not(.viewer) > .window-tool > .icon-menu:hover {*/
+/*  background: rgba(210, 212, 216, 0.8);*/
+/*}*/
 
-.title-bar:not(.viewer) > .window-tool > .icon-menu.close:hover {
-  background: rgb(232, 17, 35);
-  fill: white;
-}
+/*.title-bar:not(.viewer) > .window-tool > .icon-menu.close:hover {*/
+/*  background: rgb(232, 17, 35);*/
+/*  fill: white;*/
+/*}*/
 
-.title-bar.viewer > .window-tool > .icon-menu:hover {
-  cursor: pointer;
-  fill: #f56c6c;
-  /*#eebe76*/
-}
+/*.title-bar.viewer > .window-tool > .icon-menu:hover {*/
+/*  cursor: pointer;*/
+/*  fill: #f56c6c;*/
+/*  !*#eebe76*!*/
+/*}*/
 
-.title-bar .icon.disabled {
-  opacity: 0.2;
-  pointer-events: none;
-}
+/*.title-bar .icon.disabled {*/
+/*  opacity: 0.2;*/
+/*  pointer-events: none;*/
+/*}*/
 
-.title-bar > .option-container > .icon {
-  margin: 0 4px;
-  padding: 6px;
-  width: 1em;
-  height: 1em;
-}
+/*.title-bar > .option-container > .icon {*/
+/*  margin: 0 4px;*/
+/*  padding: 6px;*/
+/*  width: 1em;*/
+/*  height: 1em;*/
+/*}*/
 
-.title-bar > .option-container > .icon:hover {
-  background: rgba(210, 212, 216, 0.8);
-}
+/*.title-bar > .option-container > .icon:hover {*/
+/*  background: rgba(210, 212, 216, 0.8);*/
+/*}*/
 
-.title-bar:not(.viewer) > .window-tool > .icon-menu {
-  width: 1em;
-  height: 1em;
-}
+/*.title-bar:not(.viewer) > .window-tool > .icon-menu {*/
+/*  width: 1em;*/
+/*  height: 1em;*/
+/*}*/
 
-.title-bar.viewer > .window-tool > .viewer-show {
-  width: 1.75em;
-  height: 1.75em;
-}
+/*.title-bar.viewer > .window-tool > .viewer-show {*/
+/*  width: 1.75em;*/
+/*  height: 1.75em;*/
+/*}*/
 
-.title-bar.viewer > .window-tool > .state-icon {
-  width: 1.5em;
-  height: 1.5em;
-}
+/*.title-bar.viewer > .window-tool > .state-icon {*/
+/*  width: 1.5em;*/
+/*  height: 1.5em;*/
+/*}*/
 
-.title-bar.viewer > .window-tool .icon-menu {
-  fill: rgb(210, 210, 210);
-}
+/*.title-bar.viewer > .window-tool .icon-menu {*/
+/*  fill: rgb(210, 210, 210);*/
+/*}*/
 
-.title-bar:not(.viewer) > .window-tool > .viewer-show,
-.title-bar.viewer > .fixed-left-bar,
-.title-bar.viewer > .option-container,
-.title-bar.viewer > .window-tool > .viewer-hidden,
-.title-bar.viewer.full-screen > .window-tool > .state-icon {
-  display: none;
-}
+/*.title-bar:not(.viewer) > .window-tool > .viewer-show,*/
+/*.title-bar.viewer > .fixed-left-bar,*/
+/*.title-bar.viewer > .option-container,*/
+/*.title-bar.viewer > .window-tool > .viewer-hidden,*/
+/*.title-bar.viewer.full-screen > .window-tool > .state-icon {*/
+/*  display: none;*/
+/*}*/
 </style>

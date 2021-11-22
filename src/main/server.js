@@ -6,7 +6,7 @@ import {sleep} from '../utils';
 import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
 
-const protocol = 'http', host = 'localhost', port = 9081;
+const protocol = 'http', host = 'localhost', port = 9082;
 
 // 本地服务器根路径
 export const BASE_URL = `${protocol}://${host}:${port}`;
