@@ -34,28 +34,6 @@
       <icon class='icon-menu setting viewer-hidden' name='setting' @click='openSystemSetting'/>
     </window-state-bar>
 
-    <!--    <div class='v-row window-tool no-drag' style='flex:1;justify-content:flex-end;'>-->
-
-
-    <!--      &lt;!&ndash; 隐藏播放详情视图(播放详情时可见) &ndash;&gt;-->
-    <!--      <icon class='icon-menu viewer-show hide-viewer' name='arrow-down' style='margin:0 auto 0 0.5em;'/>-->
-
-    <!--      &lt;!&ndash; 全屏/退出全屏(播放详情时可见) &ndash;&gt;-->
-    <!--      <icon class='icon-menu screen viewer-show' :name='isFullScreen ? "fulled-screen" :"full-screen" '-->
-    <!--            @click='setScreenState'/>-->
-    <!--      &lt;!&ndash; 图标分割符 &ndash;&gt;-->
-    <!--      <span class='separator viewer-hidden'></span>-->
-
-    <!--      &lt;!&ndash; 窗口最小化状态控制 &ndash;&gt;-->
-    <!--      <icon class='icon-menu state-icon' name='minimize' @click='minimize'/>-->
-
-    <!--      &lt;!&ndash; 窗口最大化/还原状态控制 &ndash;&gt;-->
-    <!--      <icon class='icon-menu state-icon' :name='isMaximized ? "maximized" : "maximize" ' @click='maximizeOrRestore'/>-->
-
-    <!--      &lt;!&ndash; 窗口关闭控制  &ndash;&gt;-->
-    <!--      <icon class='icon-menu close state-icon' name='close' @click='closeWindow'/>-->
-    <!--    </div>-->
-
     <modal title='QQ登录' id='login-modal' width='600px' height='400px' v-model:visible='loginModal'>
       <template v-slot:content>
         <div class='v-column' style='color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;'>
