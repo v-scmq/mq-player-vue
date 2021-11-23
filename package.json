@@ -3,7 +3,6 @@
   "name": "mq-player-vue",
   "productName": "MQ音乐",
   "description": "MQ音乐",
-  "main": "background.js",
   "version": "1.0.0",
   "author": "SCMQ",
   "private": true,

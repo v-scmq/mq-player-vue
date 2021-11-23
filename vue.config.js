@@ -70,10 +70,10 @@ module.exports = {
         hotOnly: false,
         proxy: {
             '/api': {
-                target: 'http://localhost:9081/',
-                changeOrigin: true, // 是否跨域
-                ws: true, // 代理长连接
-                pathRewrite: {'^/api': 'api'} // 重写路径,将路径替换,避免打包后,放到服务器,不能访问
+                target: 'http://localhost:9082/api',    // 代理 '/api'
+                changeOrigin: true,                     // 是否跨域
+                ws: true,                               // 代理长连接
+                pathRewrite: {'^/api': ''}              // 重写路径,将路径替换,避免打包后,放到服务器,不能访问
             },
             '/socket': {
                 target: 'ws://localhost:9999/',
@@ -85,10 +85,11 @@ module.exports = {
     pluginOptions: {
         // vue-cli-plugin-electron-builder配置
         electronBuilder: {
-            preload: 'src/main/preload.js',
-            outputDir: 'dist_electron',
-            mainProcessFile: 'src/main/main.js',
-            mainProcessWatch: ['src/main'],
+            preload: 'src/main/preload.js',         // 渲染页面预加载文件
+            outputDir: 'dist_electron',             // 输出目录
+            mainProcessFile: 'src/main/main.js',    // 主进程文件
+            mainProcessWatch: ['src/main'],         // 监听此目录下所有文件的变化
+            customFileProtocol: '/',                // 自定义文件协议(使用/表示在服务器上的根路径), 默认是 'app://./'
             builderOptions: {
                 win: {
                     // icon: 'src/assets/icons/icon.ico',

@@ -84,6 +84,10 @@ app.whenReady().then(() => {
          %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js <br>
      目前最佳方案:在preload.js中引入music-metadata,并且将preload.js在electron-builder插件配置选项中引入
 
+  3) 在Electron14以后警告不能在package.json中使用 【main:'background.js'】作为配置项,
+     若移除此配置项,在打包构建时,会找不到主进程相关文件(此时默认为index.js),
+     解决办法: 在node-modules/vue-cli-plugin-electron-builder/index.js中的bundleMain方法中
+              修改mainConfig.entry(isBuild ? 'background' : 'index') => mainConfig.entry('index')
 > 3.文件上传总结
 
 不论以下哪一种方式,form表单中的按钮默认有提交功能,若需要显示按钮,则应该用`<input type='button' value='按钮文本'/>`
