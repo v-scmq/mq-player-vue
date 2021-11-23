@@ -70,7 +70,7 @@ export default {
 
       /** 最小化窗口 */
       minimize() {
-        window.electron ? window.electron.setWindowMinimize() : null;
+        window.electron && window.electron.setWindowMinimize();
       },
 
       /** 最大化或还原窗口 */

@@ -1,11 +1,11 @@
 <template>
-  <div class="v-column music-viewer">
+  <div class='v-column music-viewer'>
     <window-state-bar viewer style='flex:none'>
       <!-- 关闭播放详情视图 -->
       <icon class='icon-menu' name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
     </window-state-bar>
 
-    <img id='background-cover' alt :src="cover"/>
+    <img id='background-cover' alt :src='cover'/>
     <canvas class='canvas-view' width='1600' height='400' ref='canvasNode'></canvas>
   </div>
 </template>
@@ -13,10 +13,10 @@
 <script>
 import player from '../player';
 import WindowStateBar from './WindowStateBar';
-import {getCurrentInstance, onBeforeUnmount, onMounted} from "vue";
+import {getCurrentInstance, onBeforeUnmount, onMounted} from 'vue';
 
 export default {
-  name: "PlayDetailView",
+  name: 'PlayDetailView',
   components: {WindowStateBar},
 
   props: {
@@ -88,10 +88,10 @@ export default {
     //         potInt.x
     //     );
     //
-    //     gradient.addColorStop(0, "rgba(226, 225, 0, .4)");
-    //     gradient.addColorStop(0.3, "rgba(226, 225, 0, .4)");
-    //     gradient.addColorStop(0.3, "rgba(226, 225, 0, .4)");
-    //     gradient.addColorStop(1, "rgba(226, 225, 0, 0)");
+    //     gradient.addColorStop(0, 'rgba(226, 225, 0, .4)');
+    //     gradient.addColorStop(0.3, 'rgba(226, 225, 0, .4)');
+    //     gradient.addColorStop(0.3, 'rgba(226, 225, 0, .4)');
+    //     gradient.addColorStop(1, 'rgba(226, 225, 0, 0)');
     //     if (i < 360 / du) {
     //       this._canvasContext.moveTo(
     //           Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
@@ -105,7 +105,7 @@ export default {
     //       );
     //     }
     //
-    //     this._canvasContext.lineCap = "round";
+    //     this._canvasContext.lineCap = 'round';
     //     this._canvasContext.strokeStyle = gradient;
     //     this._canvasContext.stroke();
     //     this._canvasContext.closePath();
@@ -123,7 +123,7 @@ export default {
     //           Math.PI * 2,
     //           false
     //       );
-    //       this._canvasContext.fillStyle = "rgba(226, 225, 0, .5)";
+    //       this._canvasContext.fillStyle = 'rgba(226, 225, 0, .5)';
     //     }
     //     this._canvasContext.fill();
     //     this._canvasContext.closePath();
@@ -140,8 +140,8 @@ export default {
     //       );
     //     }
     //
-    //     this._canvasContext.lineCap = "round";
-    //     this._canvasContext.strokeStyle = "rgba(226, 225, 0, 1)";
+    //     this._canvasContext.lineCap = 'round';
+    //     this._canvasContext.strokeStyle = 'rgba(226, 225, 0, 1)';
     //     this._canvasContext.stroke();
     //     this._canvasContext.closePath();
     //   }
@@ -151,19 +151,19 @@ export default {
       canvas = getCurrentInstance().refs.canvasNode;
       canvasContext = canvas.getContext('2d');
 
-      //柱状图颜色
-      //1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整
+      // 柱状图颜色
+      // 1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整
       color = canvasContext.createLinearGradient(canvas.width * 0.5, 0, canvas.width * 0.5, 400);
-      color.addColorStop(0, "#0990ee");
-      color.addColorStop(0.1, "#FF00FF");
-      color.addColorStop(0.4, "#f30b7c");
-      color.addColorStop(0.7, "#9744e0");
-      color.addColorStop(1, "#e85ce8");
+      color.addColorStop(0, '#0990ee');
+      color.addColorStop(0.1, '#FF00FF');
+      color.addColorStop(0.4, '#f30b7c');
+      color.addColorStop(0.7, '#9744e0');
+      color.addColorStop(1, '#e85ce8');
 
-      // #7EC0EE", "#9AFF9A", "#FF86C1", "#FFA07A", "#FF00FF
+      // #7EC0EE', '#9AFF9A', '#FF86C1', '#FFA07A', '#FF00FF
 
-      // 进行首次渲染
-      player.setAudioSpectrumListener(rectRenderFrame);
+      // 异步执行音频频谱监听(若是第一次调用, AudioAnalyser相关的对象在创建时可能发生阻塞)
+      setTimeout(() => player.setAudioSpectrumListener(rectRenderFrame));
     });
 
     onBeforeUnmount(() => player.setAudioSpectrumListener(color = canvasContext = canvas = null));

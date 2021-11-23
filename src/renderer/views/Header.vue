@@ -1,6 +1,6 @@
 <template>
-  <div class='title-bar v-row' ref='el'>
-    <div class='v-row no-drag fixed-left-bar' style='padding:4px;'>
+  <div class='title-bar v-row'>
+    <div class='v-row fixed-left-bar' style='padding:4px;'>
       <!--  用户头像图片 -->
       <img alt draggable='false' class='user-icon image' :src='user.headURI' v-if='user.uin'
            @click='loginModal = true'/>
@@ -15,7 +15,7 @@
       </span>
     </div>
 
-    <div class='v-row option-container no-drag' style='margin:0 4px 0 16px;'>
+    <div class='v-row option-container' style='margin:0 4px 0 16px;'>
       <!-- 后退 -->
       <icon class='back' name='back' :class='{disabled: backLength === 0}' style='margin-left:0' @click='back'/>
       <!-- 前进 -->
@@ -223,117 +223,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.title-bar {
-  -webkit-app-region: drag;
-}
-
-.title-bar.un-maximized {
-  margin: 2px 2px 0 2px; /* 设置间距,用以鼠标在窗口边沿操作(如缩放)*/
-}
-
-.title-bar .no-drag > * {
-  -webkit-app-region: no-drag;
-}
-
-.title-bar .user-icon.image {
-  width: 3em;
-  height: 3em;
-  background: none;
-  border-radius: 3em;
-}
-
-.title-bar .user-icon.container {
-  width: 3em;
-  height: 3em;
-  overflow: hidden;
-  border-radius: 3em;
-  box-sizing: border-box;
-  background: rgb(188, 191, 193);
-}
-
-.title-bar .user-icon.container > .icon {
-  width: 4em;
-  height: 4em;
-  margin: 0 0 0 -8px;
-  fill: rgb(251, 251, 251);
-}
-
-.title-bar .user-name {
-  margin: 0 8px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/*.title-bar .window-tool > .icon-menu {*/
-/*  margin: 2px 8px;*/
-/*  padding: 6px;*/
-/*}*/
-
-/*.title-bar .window-tool > .separator {*/
-/*  height: 1em;*/
-/*  display: flex;*/
-/*  margin: 0 0.5em;*/
-/*  border-left: 2px solid #222;*/
-/*}*/
-
-/*.title-bar:not(.viewer) > .window-tool > .icon-menu:hover {*/
-/*  background: rgba(210, 212, 216, 0.8);*/
-/*}*/
-
-/*.title-bar:not(.viewer) > .window-tool > .icon-menu.close:hover {*/
-/*  background: rgb(232, 17, 35);*/
-/*  fill: white;*/
-/*}*/
-
-/*.title-bar.viewer > .window-tool > .icon-menu:hover {*/
-/*  cursor: pointer;*/
-/*  fill: #f56c6c;*/
-/*  !*#eebe76*!*/
-/*}*/
-
-/*.title-bar .icon.disabled {*/
-/*  opacity: 0.2;*/
-/*  pointer-events: none;*/
-/*}*/
-
-/*.title-bar > .option-container > .icon {*/
-/*  margin: 0 4px;*/
-/*  padding: 6px;*/
-/*  width: 1em;*/
-/*  height: 1em;*/
-/*}*/
-
-/*.title-bar > .option-container > .icon:hover {*/
-/*  background: rgba(210, 212, 216, 0.8);*/
-/*}*/
-
-/*.title-bar:not(.viewer) > .window-tool > .icon-menu {*/
-/*  width: 1em;*/
-/*  height: 1em;*/
-/*}*/
-
-/*.title-bar.viewer > .window-tool > .viewer-show {*/
-/*  width: 1.75em;*/
-/*  height: 1.75em;*/
-/*}*/
-
-/*.title-bar.viewer > .window-tool > .state-icon {*/
-/*  width: 1.5em;*/
-/*  height: 1.5em;*/
-/*}*/
-
-/*.title-bar.viewer > .window-tool .icon-menu {*/
-/*  fill: rgb(210, 210, 210);*/
-/*}*/
-
-/*.title-bar:not(.viewer) > .window-tool > .viewer-show,*/
-/*.title-bar.viewer > .fixed-left-bar,*/
-/*.title-bar.viewer > .option-container,*/
-/*.title-bar.viewer > .window-tool > .viewer-hidden,*/
-/*.title-bar.viewer.full-screen > .window-tool > .state-icon {*/
-/*  display: none;*/
-/*}*/
-</style>
