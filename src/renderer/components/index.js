@@ -7,6 +7,7 @@ import Slider from './Slider';
 import Modal from './Modal';
 import Pagination from './Pagination';
 import Icon from './Icon';
+import GridView from './GridView'
 
 export default {
     /**
@@ -24,5 +25,6 @@ export default {
         Vue.component(Modal.name, Modal);
         Vue.component(Pagination.name, Pagination);
         Vue.component(Icon.name, Icon);
+        Vue.component(GridView.name, GridView);
     }
 }

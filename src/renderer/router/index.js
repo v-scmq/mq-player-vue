@@ -99,7 +99,11 @@ export default createRouter(/** @type {RouterOptions | any} */{
                 {
                     path: '/component-list/icon', meta: {title: '图标'},
                     component: () => import('../views/doc/SVGIcon')
-                }
+                },
+                {
+                    path: '/component-list/grid-view', meta: {title: '虚拟滚动网格组件'},
+                    component: () => import('../views/doc/GridView')
+                },
             ]
         }
     ]
