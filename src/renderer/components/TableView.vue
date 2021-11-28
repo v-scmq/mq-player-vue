@@ -1,68 +1,78 @@
 <template>
-  <!-- 使用 getCurrentInstance().refs.el 替代 getCurrentInstance().vnode.el -->
-  <div class='table' tabindex='0' ref='el' @keydown='onKeydown' :style="{'--table-cell-height':`${cellHeight}px`}">
+  <div class='table' tabindex='0' ref='el' @keydown='onKeydown' :style='{"--table-cell-height":`${cellHeight}px`}'>
     <!-- 表格列信息 -->
-    <div class='column'>
-      <template v-for='(column,index) in columns' :key='index'>
-        <div class='table-cell' :style='{flex:column.flex}'>
-          <check-box v-if="column.type === 'checkbox' " v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
-          <template v-else>
-            {{ column.type === 'index' ? data.length : column.title }}
-          </template>
-        </div>
-      </template>
-      <div class='table-cell gutter' :style='{width:gutterWidth}'>
-        <div>
-          <svg width='1em' height='1em' viewBox='0 0 16 16'>
-            <path
-                d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z'/>
-          </svg>
-        </div>
+    <div class='table-row-columns' :style='{gridTemplateColumns:`${columnWidths} ${gutterWidth}`}'>
+      <div class='table-cell' v-for='(column,index) in columns' :key='index'>
+        <check-box v-if="column.type === 'checkbox' " v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
+        <template v-else>{{ column.type === 'index' ? data.length : column.title }}</template>
       </div>
+
+      <div class='table-cell gutter'>+</div>
     </div>
 
     <!-- 表格内容虚拟滚动部分 -->
     <div class='scroll-wrapper' @scroll='updateVisibleData' style='flex:auto;overflow-y:auto;position:relative'>
       <div style='position:absolute;left:0;right:0;z-index:-1;' :style='{minHeight:`${maxScrollHeight}px`}'/>
       <!-- 表格内容部分  -->
-      <div class='content-wrapper' :style='{paddingRight: data.length < visibleRowCount ? gutterWidth : null}'>
-        <!-- 行单元格 -->
-        <div class='table-row-cell' :key='row' v-for='(item,row) in visibleData'
-             :class='{selected:selectedItems[row+offsetIndex]}' @click='onTableRowClicked($event,row)'>
-          <!-- 单元格 -->
-          <div class='table-cell' :key='col' v-for='(column,col) in columns' :style='{flex:column.flex}'>
-            <check-box v-if="column.type==='checkbox'" v-model='selectedItems[row+offsetIndex]'
+      <div class='content-wrapper' style='display:grid;position:sticky;top:0' @click='onTableCellClick'
+           :style='{gridTemplateColumns:columnWidths, paddingRight:hasScrollbar ? null : gutterWidth}'
+           @pointermove='onHover'>
+
+        <!-- 单元格 -->
+        <template v-for='(item, row) in visibleData'>
+          <div class='table-cell' :key='`${row}-${col}`' v-for='(column, col) in columns' :data-row='row'
+               :class='{selected: selectedItems[row + offsetIndex], hover:hoverRow ===row}'>
+            <check-box v-if="column.type==='checkbox'" v-model='selectedItems[row + offsetIndex]'
                        @update:modelValue='onItemCheckChanged(row)'/>
-            <slot v-else :name='column.property' :item='item'> {{ column.getCellValue(item, column, row) }}</slot>
+            <slot v-else :name='column.property' :item='item'> {{ valueGetters[col](item, column, row) }}</slot>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import {
-  ref, reactive, computed, watch, nextTick,
-  getCurrentInstance, onMounted, onBeforeUnmount,
-} from 'vue';
+import {ref, reactive, computed, watch, getCurrentInstance, onMounted, onBeforeUnmount} from 'vue';
+
+/**
+ * @typedef {Object} TableRowData 表格行单元格数据对象
+ *
+ * @property {any} [key:string] 数据取值属性
+ */
+
+/**
+ *  @typedef {(item:TableRowData, column:TableColumn, rowIndex:number) => any} CellValueGetter
+ */
+
+/**
+ * @typedef {Object} TableColumn 表格列信息
+ *
+ * @property {string | undefined} title 列标题
+ * @property {'checkbox' | 'index' | undefined} type 列类型(若是 'checkbox', 则则指定标题和单元格取值相关属性都无效)
+ * @property {string | undefined} width 列宽,默认为 1fr; 取值参考{@link CSSStyleDeclaration.gridTemplateColumns}
+ * @property {string | undefined} property 单元格取值属性名称
+ * @property {CellValueGetter | undefined} valueGetter 自定义单元格取值方法
+ */
 
 export default {
   name: 'TableView',
   props: {
     /* 表格列信息 */
-    columns: {type: Array},
+    columns: {default:/** @type {TableColumn[]} */ []},
     /* 表格内容部分的行单元格高度 */
     cellHeight: {type: Number, default: 40},
     /* 表格数据 */
-    data: {type: Array, default: () => []}
+    data: {default: /** @type {TableRowData[]} */ []}
   },
 
-  emits: ['row-click', 'row-dblclick', /* 无限滚动 */ 'infinite-scroll'],
+  emits: [
+    /** 行单元格点击事件 */ 'row-click',
+    /** 行单元格双击事件 */ 'row-dblclick',
+    /** 无限滚动 */ 'infinite-scroll'
+  ],
 
   setup(props, {emit}) {
-    let resizeObserve, el, scrollWrapper, contentWrapper;
-
     //列标题尾部填充单元格宽度
     const gutterWidth = ref('0px');
     // 可视区域单元格数量
@@ -73,6 +83,8 @@ export default {
     const visibleData = reactive([]);
     // 已选择的数据记录
     const selectedItems = reactive({});
+    // 正处于指针设备悬浮上的行索引
+    const hoverRow = ref(-1);
     // 是否全选
     const isSelectAll = ref(false);
 
@@ -80,6 +92,23 @@ export default {
     const maxScrollHeight = computed(() => props.data.length * props.cellHeight);
     // 检测是否是多选模式
     const isMultipleSelect = computed(() => props.columns.find(column => column.type === 'checkbox'));
+    // 列宽 => grid-template-columns: minmax(100px, 1fr) 100px 1fr ;
+    const columnWidths = computed(() => props.columns.map(column => column.width || '1fr').join(' '));
+    // 是否有垂直滚动条
+    const hasScrollbar = computed(() => props.data.length > visibleRowCount.value);
+
+    // 获取单元格值的getter. 已废弃深度获取值, 如 column:{property: 'singer.name'},
+    //                      推荐使用 column:{ valueGetter: item => item.singer?.name)
+    /** @type {ComputedRef<CellValueGetter[]>} */
+    const valueGetters = computed(() => props.columns.map(column =>
+        column.valueGetter || (column.type === 'checkbox' ? null :
+            column.type === 'index' ? getSequenceValue : getPropertyValue)
+    ));
+
+    // 表格内容滚动元素的高度
+    let scrollWrapperHeight = 1;
+
+    let resizeObserve, el, scrollWrapper;
 
     // 无限滚动计时器
     let infiniteScrollTimer = null;
@@ -108,42 +137,68 @@ export default {
     };
 
     /**
-     * 获取单元格的多级属性值(当某一级属性值不能获取时,将中断获取)
-     *
-     * @param {Object} item               当前行单元格数据对象
-     * @param {Object} column             当前单元格所在列配置信息
-     * @return {string | number | Object} 当前单元格的值
-     */
-    const getDeepPropertyValue = (item, column) => {
-      let value = item;
-      for (let property of column._properties) {
-        if (value) {
-          value = value[property];
-        } else {
-          return null;
-        }
-      }
-      return value;
-    };
-
-    /**
      * 更新可视区域
      *
      * @param {Event} event 滚动事件
      */
-    const updateVisibleData = (event) => {
-      let top = scrollWrapper.scrollTop;
-      let start = Math.floor(top / props.cellHeight);
+    const updateVisibleData = (event = null) => {
+      // 当数据总量小于等于可视区域数据量时, 直接展示所有数据
+      if (!hasScrollbar.value) { // props.data.length <= visibleRowCount.vue
+        // 重置起始索引为0
+        offsetIndex.value = 0;
+        // 渲染所有数据
+        visibleData.splice(0, visibleData.length, ...props.data);
+
+        // 若计时器正在使用,则清除计时器
+        if (infiniteScrollTimer !== null) {
+          clearTimeout(infiniteScrollTimer);
+          infiniteScrollTimer = null;
+        }
+
+        return;
+      }
+
+
+      // 0 |-----------------|  0
+      // 1 |-----------------|  40
+      // 2 |-----------------|  80
+      // 3 |-----------------|  120
+      // 4 |-----------------|  160
+      // 5 |-----------------|  200
+      // 6 |-----------------|  240
+
+      // 假设行单元格高度为40, 发生滚动后, 若 top = 50, 则
+      // start = top:50 / cellHeight:40 = 1
+
+      // 获取已滚动距离
+      const top = scrollWrapper.scrollTop;
+
+      // 可视数据起始索引、可视数据结束索引
+      let start, end;
+
+      // 是否滚动到底部, 对于出现滚动条元素的元素 scrollTop + height - scrollHeight = 0
+      // 注意: 理论上使用 === 即可, 但是在某些情况下(如缩放,见MDN)scrollTop可能出现小数, 因此最好使用 >=
+      const isAtBottom = top + scrollWrapperHeight >= maxScrollHeight.value;
+
+      // 若滚动已到达底部
+      if (isAtBottom) {
+        end = props.data.length;
+        start = end - visibleRowCount.value;
+
+      } else {
+        start = (top / props.cellHeight) ^ 0;
+        end = start + visibleRowCount.value;
+      }
 
       // 获取可视区域对应的数据([start,end]范围内的数据)
-      let list = props.data.slice(offsetIndex.value = start, start + visibleRowCount.value);
-      visibleData.splice(0, visibleData.length, ...list);
+      visibleData.splice(0, visibleData.length, ...props.data.slice(start, end));
 
-      // 出现滚动条元素的scrollTop + 被滚动元素的scrollHeight 可以检测是否滚动到底部
-      const isAtBottom = (top + contentWrapper.scrollHeight) > maxScrollHeight.value;
-      top = isAtBottom ? start * props.cellHeight : top;
+      // 重置起始索引为start
+      offsetIndex.value = start;
+
+      // 注: *** 已使用css position:sticky + top:0 固定在可视区域; 以下方案不再使用 ***
       // 将整个内容部分在y轴方向平移到可视区域
-      contentWrapper.style.transform = `translate3d(0, ${top}px, 0)`;
+      // contentWrapper.style.transform = `translate3d(0, ${top}px, 0)`;
 
       // 若计时器正在使用,则清除计时器
       if (infiniteScrollTimer !== null) {
@@ -161,16 +216,35 @@ export default {
     };
 
     /**
-     * 表格行单元个被点击时的回调
-     * @param {MouseEvent} event 事件
-     * @param {number} index 被点击行单元格索引(传入的只是在可视区域的索引)
+     * 表格单元格被点击时的回调
+     *
+     * @param {PointerEvent} event 指针设备点击事件
      */
-    const onTableRowClicked = (event, index) => {
+    const onTableCellClick = (event) => {
+      let {detail,/** @type {HTMLElement} */ target} = event;
+      // 获取已有的class
+      const className = target.className;
+
+      // 若不是单元格 且不是 内容元素, 那么查找单元格
+      if (!className.includes('table-cell') && !className.includes('content-wrapper')) {
+        // 若未找到, 则什么也不做
+        if ((target = target.closest('.table-cell')) == null) {
+          return;
+        }
+      }
+
+      /** @type {Attr | string | null} */
+      let value = target.attributes.getNamedItem('data-row');
+
+      if (!value || !(value = value.value)) {
+        return;
+      }
+
       // 转换为实际的行单元格索引
-      index += offsetIndex.value;
+      const index = (value ^ 0) + offsetIndex.value;
 
       // 若是单击
-      if (event.detail === 1) {
+      if (detail === 1) {
         emit('row-click', index);
         let map = selectedItems;
 
@@ -195,7 +269,7 @@ export default {
         // 将当前行数据设置为选中
         map[index] = true;
 
-      } else if (event.detail === 2) {
+      } else if (detail === 2) {
         emit('row-dblclick', index);
       }
     };
@@ -279,9 +353,6 @@ export default {
       /** @type {HTMLElement | any} */
       el = getCurrentInstance().refs.el;
       scrollWrapper = el.querySelector('.scroll-wrapper');
-      contentWrapper = el.querySelector('.content-wrapper');
-
-      let oldTableHeight = null;
 
       // 计算滚动条宽度
       let overflowY = el.style.overflowY;
@@ -293,44 +364,25 @@ export default {
 
       /** 当根元素宽高发生变化时,回调此方法 */
       resizeObserve = new ResizeObserver(() => {
-        let height = scrollWrapper.offsetHeight;
-        if (!height) {
-          return
-        }
-
-        // 若高度没有发生变化
-        if (oldTableHeight === height) {
-          return scrollWrapper.scrollTop = offsetIndex.value * props.cellHeight;
-        }
+        // 获取滚动元素高度
+        const height = Math.max(1, scrollWrapper.offsetHeight);
 
         // 若高度发生变化
-        let count = Math.ceil((oldTableHeight = height) / props.cellHeight);
-        // 若可视行单元格数量发生变化
-        if (visibleRowCount.value !== count) {
-          visibleRowCount.value = count;
+        if (scrollWrapperHeight !== height) {
+          // 更新滚动元素的高度缓存值
+          scrollWrapperHeight = height;
 
-          // 若没有任何数据
-          if (!props.data || !props.data.length) {
-            offsetIndex.value = 0;
-            return visibleData.length ? visibleData.splice(0, visibleData.length) : null;
+          // 计算可视行单元格数量
+          const count = Math.ceil(height / props.cellHeight);
+
+          // 若可视行单元格数量发生变化
+          if (visibleRowCount.value !== count) {
+            visibleRowCount.value = count;
+
+            // 更新可视区域数据
+            updateVisibleData();
           }
-
-          // 若所有数据小于可视行数,则全部显示
-          if (props.data.length <= count) {
-            offsetIndex.value = 0;
-            return visibleData.splice(0, visibleData.length, ...props.data);
-          }
-
-          // 数组切片,提取填充可视范围的数据
-          if (offsetIndex.value + count >= props.data.length) {
-            offsetIndex.value = props.data.length - count;
-          }
-
-          let list = props.data.slice(offsetIndex.value, count + offsetIndex.value);
-          visibleData.splice(0, visibleData.length, ...list);
         }
-        nextTick(() => scrollWrapper.scrollTop = offsetIndex.value * props.cellHeight);
-
       });
 
       resizeObserve.observe(el);
@@ -341,57 +393,14 @@ export default {
         resizeObserve.unobserve(el);
         resizeObserve.disconnect();
       }
-      resizeObserve = scrollWrapper = contentWrapper = null;
+      resizeObserve = scrollWrapper = null;
     });
 
-    // 当新增、删除、修改列信息时,重新为列配置对象配置单元格宽度和获取值的方法.
-    watch(props.columns, newColumns => {
-      for (let column of newColumns) {
-        column._properties ? delete column._properties : null;
-        column.flex = column.width ? `0 0 ${column.width}px` : '1';
-
-        if (column.type === 'checkbox') {
-          column.getCellValue = null;
-          continue;
-        }
-
-        if (column.valueGetter instanceof Function) {
-          column.getCellValue = column.valueGetter;
-          continue;
-        }
-
-        if (column.type === 'index') {
-          column.getCellValue = getSequenceValue;
-          continue;
-        }
-
-        if (!column.property.includes('.')) {
-          column.getCellValue = getPropertyValue;
-          continue;
-        }
-
-        // 处理列配置信息提供了多级属性名称的单元格值
-        // 当某一级属性值不能获取时,将中断获取
-        column._properties = column.property.split('.');
-        column.getCellValue = getDeepPropertyValue;
-      }
-    }, {immediate: true});
-
-    // 监听表格数据变化
-    watch(props.data, newData => {
-      // 更新可视区域数据
-      let node = scrollWrapper, count = visibleRowCount.value;
-      if (offsetIndex.value + count < newData.length) {
-        updateVisibleData();
-      } else {
-        let oldValue = node.scrollTop;
-        node.scrollTop = (newData.length - count) * props.cellHeight;
-        // 若scrollTop值未发生改变,主动调用方法更新数据
-        node.scrollTop === oldValue ? updateVisibleData() : null;
-      }
-    });
+    // 监听表格数据变化, 更新可视区域数据
+    watch(props.data, updateVisibleData);
 
     return {
+      columnWidths,
       // 列标题尾部填充单元格宽度
       gutterWidth,
 
@@ -403,6 +412,8 @@ export default {
       visibleData,
       // 已选择的数据记录
       selectedItems,
+      // 正处于指针设备悬浮上的行索引
+      hoverRow,
       // 是否全选
       isSelectAll,
 
@@ -410,12 +421,22 @@ export default {
       isMultipleSelect,
       /** 计算虚拟滚动部分撑开表格内容而出现滚动条的最大高度 */
       maxScrollHeight,
+      // 是否有垂直滚动条
+      hasScrollbar,
 
       updateVisibleData,
-      onTableRowClicked,
+      onTableCellClick,
       onItemCheckChanged,
       onKeydown,
-      headerCheckChange
+      headerCheckChange,
+      valueGetters,
+
+      onHover(event) {
+        const attr = event.target.attributes
+            .getNamedItem('data-row');
+        const value = attr && attr.value;
+        hoverRow.value = value ? (value ^ 0) : -1;
+      }
     };
   }
 }

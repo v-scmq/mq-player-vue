@@ -56,7 +56,7 @@ export default {
         Object.keys(data.tags).forEach(key => {
           const children = data.tags[key];
           //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
-          mvTagParam[key] = children && children[0] && children[0].id; // 1 && 0 => 0
+          mvTagParam[key] = children[0] && children[0].id; // 1 && 0 => 0
 
           // {id, name} => {id, name, group:key, value:`${key};${id}`}
           children.forEach(item => item.value = `${item.group = key};${item.id}`);

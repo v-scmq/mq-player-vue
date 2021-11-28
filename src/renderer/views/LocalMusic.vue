@@ -1,5 +1,5 @@
 <template>
-  <div class="v-row" style="margin: 0 0 12px 0;">
+  <div class="v-row has-margin" style="margin: 0 0 12px 0;">
     <Button text="播放全部" @click="playSelect" prefixIcon='play-select' prefixIconSize='1.5em'/>
     <Button text="批量操作" @click="onMultiple" prefixIconSize='1.5em'
             :prefixIcon="multiple ? 'exit-multiple' : 'multiple' "/>
@@ -7,7 +7,7 @@
     <Button text="删除列" @click="doDelColumn"/>
     <Button text="修改列" @click="doUpdColumn"/>
 
-    <text-field v-model="inputKey" placeholder="搜索本地歌曲" @input="handleMusicFilter"/>
+    <text-field v-model="inputKey" placeholder="搜索本地歌曲" @input="handleMusicFilter" style='margin:0 10px 0 auto'/>
 
     <Button text='导入歌曲' @click="onImportButtonClicked" prefixIcon='import' prefixIconSize='1.5em'/>
     <input type="file" style="display:none" ref="fileChooser" multiple accept="audio/*" @change="addMusic"/>
@@ -30,13 +30,13 @@ export default {
   name: "LocalMusic",
 
   setup() {
-    const columns = reactive([
-      {type: 'index', width: 100},
+    const columns = reactive(/** @type {TableColumn[]} */[
+      {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: 100},
-      {title: '大小', property: 'size', width: 100}
+      {title: '时长', property: 'duration', width: '100px'},
+      {title: '大小', property: 'size', width: '100px'}
     ]);
 
     /** @type {[{path, title, singer, album, duration, size , [property:string]}]} */
@@ -231,7 +231,7 @@ export default {
       },
 
       /********* 后期会删除的3个方法 **********/
-      doAddColumn: () => columns.push({title: '采样率', property: 'sampleRate'}),
+      doAddColumn: () => columns.push(/**@type {TableColumn} */ {title: '采样率', property: 'sampleRate'}),
       doDelColumn: () => columns.splice(columns.length - 1),
       doUpdColumn: () => columns[1].property = columns[1].property === 'size' ? 'title' : 'size',
     };
@@ -239,13 +239,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.v-row > .button {
-  margin: 0 4px;
-}
-
-.v-row > .text-field {
-  margin: 0 10px 0 auto;
-}
-</style>

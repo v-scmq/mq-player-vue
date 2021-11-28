@@ -5,12 +5,19 @@
     </div>
   </div>
 
-  <div class='image-container' style='flex:1;'>
-    <div class='cover-item' v-for='(singer, index) in singerList' :key='index' @click='navigateTo(singer)'>
-      <img alt class=cover :src='singer.cover' loading='lazy'/>
-      <div>{{ singer.name }}</div>
-    </div>
-  </div>
+  <!--  <div class='image-container' style='flex:1;'>-->
+  <!--    <div class='cover-item' v-for='(singer, index) in singerList' :key='index' @click='navigateTo(singer)'>-->
+  <!--      <img alt class=cover :src='singer.cover' loading='lazy'/>-->
+  <!--      <div>{{ singer.name }}</div>-->
+  <!--    </div>-->
+  <!--  </div>-->
+  <grid-view style='margin-top:1em' :data='singerList' cell-widths='repeat(auto-fit, 13em)'
+             :cell-height='234' @cell-click='navigateTo'>
+    <template v-slot='{item}'>
+      <img alt class=cover :src='item.cover' loading='lazy'/>
+      <div>{{ item.name }}</div>
+    </template>
+  </grid-view>
 </template>
 
 <script>
@@ -55,7 +62,7 @@ export default {
         Object.keys(data.tags).forEach(key => {
           const children = data.tags[key];
           //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
-          singerTagParam[key] = children && children[0] && children[0].id; // 1 && 0 => 0
+          singerTagParam[key] = children[0] && children[0].id; // 1 && 0 => 0
 
           // {id, name} => {id, name, group:key, value:`${key};${id}`}
           children.forEach(item => item.value = `${item.group = key};${item.id}`);
