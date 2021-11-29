@@ -1,17 +1,18 @@
 <template>
   <div class='v-row list-view' @click='onListViewClicked'>
     <div class='item' v-for='tag in visibleTags' :key='tag.id' :data-id='tag.id'
-         :class='{active: currentTagId === tag.id}'>{{ tag.name }}
+         :class='{active: specialTagParam.id === tag.id}'>{{ tag.name }}
     </div>
     <div class='item special-tag-more'>更多</div>
   </div>
 
-  <div class='image-container' style='flex:1;'>
-    <div class='cover-item' v-for='(item, index) in specialList' :key='index'>
-      <img class=cover :src='item.cover' loading="lazy" alt/>
+  <grid-view style='margin-top:1em' :data='specialList' cell-widths='repeat(auto-fit, 13em)'
+             :cell-height='234' @infinite-scroll='loadData'>
+    <template v-slot='{item}'>
+      <img alt class=cover :src='item.cover' loading='lazy'/>
       <div class='name'>{{ item.name }}</div>
-    </div>
-  </div>
+    </template>
+  </grid-view>
 
   <modal modality title='全部分类' width='70%' height='60%' v-model:visible='tagModal'>
     <template v-slot:content>
@@ -19,7 +20,7 @@
         {{ item.title }}
         <div class='v-row list-view' @click='onListViewClicked'>
           <div class='item' v-for='(tag, index) in item.items' :key='index' :data-id='tag.id'
-               :class='{active: currentTagId === tag.id}'>{{ tag.name }}
+               :class='{active: specialTagParam.id === tag.id}'>{{ tag.name }}
           </div>
         </div>
       </template>
@@ -44,7 +45,7 @@ export default {
     // 歌单列表
     const specialList = reactive(/** @type {Special[]} */[]);
     // 当前已选Tag的id
-    const currentTagId = ref(/** @type {string | number} */0);
+    const specialTagParam = reactive(/** @type {Tag} */{id: ''});
     // 分页信息
     const page = /** @type {Page} */ {current: 1, size: 30};
 
@@ -67,12 +68,16 @@ export default {
           tag && visibleTags.push(tag);
         });
 
+        // 断言能够获得数据
+        const [{items: [tag]}] = data.tags;
+        tag && Object.assign(specialTagParam, tag);
+
       }).finally(Spinner.close);
 
     });
 
     return {
-      tags, specialList, visibleTags, tagModal, currentTagId,
+      tags, specialList, visibleTags, tagModal, specialTagParam,
 
       /**
        * 若点击分类标签时,切换歌单数据;
@@ -89,20 +94,37 @@ export default {
         if (classList.contains('item')) {
           const {value} = node.attributes.getNamedItem('data-id') || {};
 
-          if (value && value !== currentTagId.value) {
-            currentTagId.value = value;
+          if (value && value !== specialTagParam.id) {
+            specialTagParam.id = value;
 
             Spinner.open();
             page.current = 1;
 
-            getSpecialList(page, {id: currentTagId.value, name: ''}).then(data => {
+            getSpecialList(page, specialTagParam).then(data => {
               data.page && Object.assign(page, data.page);
               specialList.splice(0, specialList.length, ...data.list);
 
             }).finally(Spinner.close);
           }
         }
+      },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadData() {
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          getSpecialList(page, specialTagParam).then(data => {
+            data.page && Object.assign(page, data.page);
+            specialList.splice(0, specialList.length, ...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
       }
+
     };
 
   }

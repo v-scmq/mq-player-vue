@@ -110,12 +110,12 @@ export default {
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB});
 
-    const columns = reactive([
-      {type: 'index', width: 100},
+    const columns = reactive(/** @type {TableColumn[]} */[
+      {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: 100}
+      {title: '时长', property: 'duration', width: '100px'}
     ]);
 
     const router = useRouter();

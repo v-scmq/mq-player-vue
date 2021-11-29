@@ -12,10 +12,10 @@
 
     <!-- 表格内容虚拟滚动部分 -->
     <div class='scroll-wrapper' @scroll='updateVisibleData' style='flex:auto;overflow-y:auto;position:relative'>
-      <div style='position:absolute;left:0;right:0;z-index:-1;' :style='{minHeight:`${maxScrollHeight}px`}'/>
+      <div style='position:absolute;left:0;right:0;z-index:-1;' :style='{minHeight: `${maxScrollHeight}px`}'/>
       <!-- 表格内容部分  -->
       <div class='content-wrapper' style='display:grid;position:sticky;top:0' @click='onTableCellClick'
-           :style='{gridTemplateColumns:columnWidths, paddingRight:hasScrollbar ? null : gutterWidth}'
+           :style='{gridTemplateColumns: columnWidths, paddingRight: hasScrollbar ? null : gutterWidth}'
            @pointermove='onHover'>
 
         <!-- 单元格 -->
@@ -24,7 +24,7 @@
                :class='{selected: selectedItems[row + offsetIndex], hover:hoverRow ===row}'>
             <check-box v-if="column.type==='checkbox'" v-model='selectedItems[row + offsetIndex]'
                        @update:modelValue='onItemCheckChanged(row)'/>
-            <slot v-else :name='column.property' :item='item'> {{ valueGetters[col](item, column, row) }}</slot>
+            <slot v-else :name='column.property' :item='item'> {{ valueGetters[col](item, row, column) }}</slot>
           </div>
         </template>
       </div>
@@ -42,14 +42,14 @@ import {ref, reactive, computed, watch, getCurrentInstance, onMounted, onBeforeU
  */
 
 /**
- *  @typedef {(item:TableRowData, column:TableColumn, rowIndex:number) => any} CellValueGetter
+ * @typedef {(item:TableRowData, rowIndex:number, column:TableColumn) => string | number | boolean} CellValueGetter
  */
 
 /**
  * @typedef {Object} TableColumn 表格列信息
  *
  * @property {string | undefined} title 列标题
- * @property {'checkbox' | 'index' | undefined} type 列类型(若是 'checkbox', 则则指定标题和单元格取值相关属性都无效)
+ * @property {'checkbox' | 'index' | undefined} type 列类型(若是 'checkbox', 则指定标题和单元格取值相关属性都无效)
  * @property {string | undefined} width 列宽,默认为 1fr; 取值参考{@link CSSStyleDeclaration.gridTemplateColumns}
  * @property {string | undefined} property 单元格取值属性名称
  * @property {CellValueGetter | undefined} valueGetter 自定义单元格取值方法
@@ -116,23 +116,23 @@ export default {
     /**
      * 获取序号列单元格值
      *
-     * @param {Object} item   当前行单元格数据对象
-     * @param {Object} column 当前单元格所在列配置信息
+     * @param {TableRowData} item   当前行单元格数据对象
      * @param {number} index  当前行单元格索引
      * @return {string}       当前行单元格序号字符串
      */
-    const getSequenceValue = (item, column, index) => {
+    const getSequenceValue = (item, index) => {
       return (index = ++index + offsetIndex.value) < 10 ? `0${index}` : index;
     };
 
     /**
      * 获取单元格的普通属性值
      *
-     * @param {Object} item      当前行单元格数据对象
-     * @param {Object} column    当前单元格所在列配置信息
-     * @return {string | number} 当前单元格的值
+     * @param {TableRowData} item 当前行单元格数据对象
+     * @param {number} index 当前行单元格索引
+     * @param {TableColumn} column 当前单元格所在列配置信息
+     * @return {string | number | boolean} 当前单元格的值
      */
-    const getPropertyValue = (item, column) => {
+    const getPropertyValue = (item, index, column) => {
       return item[column.property];
     };
 

@@ -5,14 +5,8 @@
     </div>
   </div>
 
-  <!--  <div class='image-container' style='flex:1;'>-->
-  <!--    <div class='cover-item' v-for='(singer, index) in singerList' :key='index' @click='navigateTo(singer)'>-->
-  <!--      <img alt class=cover :src='singer.cover' loading='lazy'/>-->
-  <!--      <div>{{ singer.name }}</div>-->
-  <!--    </div>-->
-  <!--  </div>-->
   <grid-view style='margin-top:1em' :data='singerList' cell-widths='repeat(auto-fit, 13em)'
-             :cell-height='234' @cell-click='navigateTo'>
+             :cell-height='234' @cell-click='navigateTo' @infinite-scroll='loadData'>
     <template v-slot='{item}'>
       <img alt class=cover :src='item.cover' loading='lazy'/>
       <div>{{ item.name }}</div>
@@ -44,7 +38,7 @@ export default {
     const tags = reactive(/** @type {TagItemNode[][]} */[]);
     const singerList = reactive(/** @type {Singer[]} */[]);
     const singerTagParam = reactive( /** @type {SingerTagsParam} */{});
-    // TODO 分页/无限滚动 + 列表虚拟滚动 + Grid布局
+    // 无限滚动 + 列表虚拟滚动
     const page =  /** @type {Page}*/{current: 1, size: 30, total: 0};
 
     const router = useRouter();
@@ -54,7 +48,7 @@ export default {
 
       getSingerList(page, null).then(data => {
         // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
-        Object.assign(page, data.page);
+        data.page && Object.assign(page, data.page);
 
         const tagList = [];
 
@@ -122,7 +116,26 @@ export default {
        */
       navigateTo(singer) {
         router.push({path: '/singer-view', query: singer});
+      },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadData() {
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          getSingerList(page, singerTagParam).then(data => {
+            // 重设分页信息
+            data.page && Object.assign(page, data.page);
+            // 添加歌手数据
+            singerList.splice(0, singerList.length, ...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
       }
+
     };
   },
 }

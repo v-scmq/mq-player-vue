@@ -39,15 +39,17 @@ export default {
   setup() {
     /** @type {RankItem | null} */
     let currentRankItem = null;
+
     const rankList = reactive(/** @type {Rank[]} */ []);
     const songList = reactive(/** @type {Song[]} */ []);
     const page =  /** @type {Page} */ {current: 1, size: 30};
-    const columns = reactive([
-      {type: 'index', width: 100},
+
+    const columns = reactive(/** @type {TableColumn[]} */[
+      {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: 100},
+      {title: '时长', property: 'duration', width: '100px'},
     ]);
 
     Spinner.open();

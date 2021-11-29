@@ -5,17 +5,32 @@
     </div>
   </div>
 
-  <div class='image-container arc-rect' style='flex:1;'>
-    <div class='cover-item' v-for='(item, index) in mvList' :key='index'>
-      <img class='cover' alt loading='lazy' :src='item.cover'/>
-      <div class='name'>
-       <span class='link' v-for='(singer, _index) in item.singer' :key='_index' :data-mid='singer.mid'>
+  <!--  <div class='image-container arc-rect' style='flex:1;'>-->
+  <!--    <div class='cover-item' v-for='(item, index) in mvList' :key='index'>-->
+  <!--      <img class='cover' alt loading='lazy' :src='item.cover'/>-->
+  <!--      <div class='name'>-->
+  <!--       <span class='link' v-for='(singer, _index) in item.singer' :key='_index' :data-mid='singer.mid'>-->
+  <!--            {{ singer.name }}-->
+  <!--       </span>-->
+  <!--        -<span>{{ item.title }}</span>-->
+  <!--      </div>-->
+  <!--    </div>-->
+  <!--  </div>-->
+
+  <grid-view class='arc-rect' style='margin-top:1em' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
+             :cell-height='206' @infinite-scroll='loadData'>
+    <template v-slot='{item}'>
+      <img alt class=cover :src='item.cover' loading='lazy'/>
+      <div>
+        <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
             {{ singer.name }}
        </span>
         -<span>{{ item.title }}</span>
       </div>
-    </div>
-  </div>
+    </template>
+  </grid-view>
+
+
 </template>
 
 <script>
@@ -111,9 +126,28 @@ export default {
           mvList.splice(0, mvList.length, ...data.list);
 
         }).finally(Spinner.close);
-      }
-    };
+      },
 
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadData() {
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          getMvList(page, mvTagParam).then(data => {
+            Object.assign(page, data.page);
+
+            // 转换歌手为Array类型
+            data.list.forEach(convertSinger);
+            mvList.splice(0, mvList.length, ...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
+      }
+
+    };
   }
 }
 </script>

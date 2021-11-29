@@ -63,12 +63,12 @@ export default {
     const album = reactive(/** @type {Album} */ {mid: '', name: '', cover: '', company: ''});
     const page = /** @type {Page} */ {current: 1, size: 30, total: 1};
 
-    const columns = reactive([
-      {type: 'index', width: 100},
+    const columns = reactive(/** @type {TableColumn} */[
+      {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
-      {title: '歌手', valueGetter: item => item.singer ? item.singer.name : null},
-      {title: '时长', property: 'duration', width: 100},
-      {title: '大小', property: 'size', width: 100}
+      {title: '歌手', property: 'singer'},
+      {title: '时长', property: 'duration', width: '100px'},
+      {title: '大小', property: 'size', width: '100px'}
     ]);
 
     watch(() => props.query, /** @param {Album} newQuery */newQuery => {
@@ -122,32 +122,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.image-container {
-  padding: 1em 0 0 0;
-  margin: 0.5em 0 0 0;
-}
-
-.image-container > .content-box {
-  align-items: center;
-  margin: 0 3em 3em 0;
-}
-
-.cover, .content-box .cover {
-  width: 13em;
-  height: 13em;
-  cursor: pointer;
-  border-radius: 8em;
-  transition: transform .75s cubic-bezier(0, 1, .75, 1);
-}
-
-.content-box .name {
-  max-width: 13em;
-  /*默认换行white-space: normal;*/
-}
-
-.content-box:hover .cover {
-  transform: scale(1.07);
-}
-</style>

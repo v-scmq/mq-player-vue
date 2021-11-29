@@ -90,7 +90,7 @@ import {useRouter} from 'vue-router';
 export default {
   name: 'NetSearchView',
 
-  props: {query: String},
+  props: {query: Object},
 
   setup(props) {
     const singer = reactive(/** @type {Singer} */{});
@@ -106,27 +106,16 @@ export default {
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB});
 
-    const columns = reactive([
-      {type: 'index', width: 100},
+    const columns = reactive(/** @type {TableColumn[]} */[
+      {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: 100}
+      {title: '时长', property: 'duration', width: '100px'}
     ]);
 
     const router = useRouter();
     let $query = null;
-
-    // /**
-    //  *  处理并获取歌手信息
-    //  *
-    //  * @param {Singer[]} list 歌手信息列表
-    //  */
-    // const handleSingerInfo = list => {
-    //   if (list && list[0] && list[0].mid) {
-    //     // $source.impl.handleSingerInfo(Object.assign(singer, list[0]), true);
-    //   }
-    // };
 
     /**
      * 处理选项卡改变事件
@@ -144,9 +133,14 @@ export default {
         // 打开进度指示器
         Spinner.open();
 
-        // 搜索歌手 => 处理歌手基本数据 => 捕捉异常 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
-        searchSinger($query).then().catch(() => singer.mid = null)
-            .then(() => searchSong(newTab.page, $query)).then(data => {
+        // 搜索歌手 => 处理并展示歌手基本数据 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
+        searchSinger($query).then(data => {
+          const [singerInfo] = data.list || [];
+          singerInfo && Object.assign(singer, singerInfo);
+
+          return searchSong(newTab.page, $query);
+
+        }).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
           // 添加歌曲
@@ -154,13 +148,6 @@ export default {
           songList.splice(0, songList.length, ...data.list);
 
         }).catch(() => newTab.update = true).finally(Spinner.close);
-
-        // api.singerSearch($query)
-        //     .then(handleSingerInfo)
-        //     .catch(() => singer.mid = null)
-        //     .then(() => api.songSearch($query, page))
-        //     .then(list => songList.splice(0, songList.length, ...list))
-        //     .finally(Spinner.close);
 
       } else if (newTab === tabMap.ALBUM_TAB) {
         Spinner.open();

@@ -47,13 +47,6 @@ export const getAlbumSongList = (page, album) =>
     axios.post('/api/album/songs', {platform, page, album}).then(DataReducer);
 
 /**
- * @typedef {Object} Tag        标签信息
- *
- * @property {string} id   分类标签id
- * @property {string} name          分类标签名
- * @property {any} [key:string]     额外的信息
- */
-/**
  * 获取歌手MV列表
  *
  * @param {Page}    page     分页对象
@@ -120,7 +113,7 @@ export const searchSinger = (keyword) =>
  * @returns {Promise<{page:Page, list:Song[]}>} 异步Promise对象
  */
 export const searchSong = (page, keyword) =>
-    axios.post('/api/ranks/songs', {platform, page, keyword}).then(DataReducer);
+    axios.post('/api/search/songs', {platform, page, keyword}).then(DataReducer);
 
 /**
  * 获取专辑搜索列表
@@ -130,7 +123,7 @@ export const searchSong = (page, keyword) =>
  * @returns {Promise<{page:Page, list:Album[]}>} 异步Promise对象
  */
 export const searchAlbum = (page, keyword) =>
-    axios.post('/api/ranks/songs', {platform, page, keyword}).then(DataReducer);
+    axios.post('/api/search/albums', {platform, page, keyword}).then(DataReducer);
 
 /**
  * 获取歌单搜索列表
