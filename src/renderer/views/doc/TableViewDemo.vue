@@ -9,13 +9,13 @@ export default {
   name: "TableViewDemo",
 
   setup() {
-    const columns = reactive([
-      {type: 'index', width: 100},
+    const columns = reactive(/** @type {TableColumn[]} */[
+      {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: 100},
-      {title: '大小', property: 'size', width: 100}
+      {title: '时长', property: 'duration', width: '100px'},
+      {title: '大小', property: 'size', width: '100px'}
     ]);
 
     const data = reactive([]);

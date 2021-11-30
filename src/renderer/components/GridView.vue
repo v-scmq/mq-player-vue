@@ -5,7 +5,8 @@
     <div style='position:absolute;left:0;right:0;z-index:-1;'
          :style='{minHeight:`${maxScrollHeight}px`}'></div>
 
-    <div class='content-wrapper' :style='{gridTemplateColumns: cellWidths}'>
+    <div class='content-wrapper' :style='{gridTemplateColumns: cellWidths}'
+         @touchend='infiniteScrollEmitter' @wheel='infiniteScrollEmitter'>
       <div class='item-cell' v-for='(item, index) in visibleData' :key='index' :data-index='index'>
         <slot :item='item'>{{ item }}</slot>
       </div>
@@ -59,15 +60,16 @@ export default {
     /** @type {number | null} 组件根元素高度 */
     let offsetHeight = 1;
 
+    /** @type {boolean | null} 标记是否滚到底部 */
+    let isAtBottom = false;
+
     /** @type {number | null} 无限滚动计时器 */
     let infiniteScrollTimer = null;
 
     /**
      * 更新可视区域数据
-     *
-     * @param {Event} event 滚动事件
      */
-    const updateVisibleData = (event = null) => {
+    const updateVisibleData = () => {
       // 可见数据总量 = 可见行数 * 可见列数
       const visibleCount = visibleRowCount * visibleColumnCount.value;
 
@@ -75,11 +77,7 @@ export default {
       if (props.data.length <= visibleCount) {
         visibleData.splice(0, visibleData.length, ...props.data);
 
-        // 若计时器正在使用,则清除计时器
-        if (infiniteScrollTimer !== null) {
-          clearTimeout(infiniteScrollTimer);
-          infiniteScrollTimer = null;
-        }
+        isAtBottom = visibleData.length > 0;
 
         return;
       }
@@ -97,7 +95,7 @@ export default {
       const top = el.scrollTop;
       // 是否滚动到底部, 对于出现滚动条元素的元素 scrollTop + height - scrollHeight = 0
       // 注意: 理论上使用 === 即可, 但是在某些情况下(如缩放,见MDN)scrollTop可能出现小数, 因此最好使用 >=
-      const isAtBottom = top + offsetHeight >= maxScrollHeight.value;
+      isAtBottom = top + offsetHeight >= maxScrollHeight.value;
 
       // 可视数据起始索引、可视数据结束索引
       let start, end;
@@ -126,20 +124,6 @@ export default {
       // 注: *** 已使用css position:sticky + top:0 固定在可视区域; 以下方案不再使用 ***
       // 将整个内容部分在y轴方向平移到可视区域
       // contentWrapper.style.transform = `translate3d(0, ${top}px, 0)`;
-
-      // 若计时器正在使用,则清除计时器
-      if (infiniteScrollTimer != null) {
-        clearTimeout(infiniteScrollTimer);
-        infiniteScrollTimer = null;
-      }
-
-      // 若滚动到底部(event存在的情况下,可以证明是由鼠标滚动引起的)
-      if (event && isAtBottom) {
-        infiniteScrollTimer = setTimeout(() => {
-          infiniteScrollTimer = null;
-          emit('infinite-scroll')
-        }, 500);
-      }
     };
 
     onMounted(() => {
@@ -216,13 +200,14 @@ export default {
       resizeObserver.observe(el);
     });
 
+    // 组件被卸载前, 解除引用
     onBeforeUnmount(() => {
       if (resizeObserver) {
         resizeObserver.unobserve(el);
         resizeObserver.disconnect();
       }
       resizeObserver = contentWrapper = el = null;
-      infiniteScrollTimer = offsetHeight = null;
+      isAtBottom = infiniteScrollTimer = offsetHeight = null;
     });
 
     // 监听表格数据变化
@@ -250,6 +235,38 @@ export default {
           index >= 0 && index < props.data.length
           && emit('cell-click', props.data[index]);
         }
+      },
+
+      /**
+       * (无限滚动事件Emitter) 满足以下条件时, 将发出无限滚动事件
+       *
+       * 1.当视图可视区域已将数据滚动到最底部
+       * 2.在触摸设备上通过从下向上拖动 或 在非触摸设备上使用滚轮向下滚动
+       *
+       * @param {WheelEvent | TouchEvent} event
+       */
+      infiniteScrollEmitter(event) {
+        /*
+          TODO: 触摸设备上拖动方向检测, 可在touchstart 和 touchend 上 比较2次的clientY ;
+                即使滚动到底底部, 此时从上向下拖动似乎并不会引起isAtBottom的错误判断, 因为监听的时拖动结束
+                拖动开始时,内容就开始发生了滚动,从而isAtBottom是false .
+
+         */
+        // 若没有滚动到底部, 则什么也不做
+        if (!isAtBottom || event.deltaY <= 0) {
+          return
+        }
+
+        // 若计时器正在使用,则清除计时器
+        if (infiniteScrollTimer !== null) {
+          clearTimeout(infiniteScrollTimer);
+          infiniteScrollTimer = null;
+        }
+
+        infiniteScrollTimer = setTimeout(() => {
+          infiniteScrollTimer = null;
+          emit('infinite-scroll')
+        }, 500);
       }
 
     };
