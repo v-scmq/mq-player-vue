@@ -2,9 +2,17 @@
   <div class='slider' ref='el' :class='{vertical}' @click='onSliderClicked'>
     <div class='track'/>
     <div class='buffering' v-if='buffering >= 0' :style='{width:`${buffering * 100}%`}'/>
-    <div class='fill' :style='{width: !vertical && `${value}%`, height: vertical && `${value}%`}'/>
-    <div class='thumb' :style='{left: !vertical && `${value}%`, top: vertical && `${100 - value}%` }'
-         @pointerdown='onDragStart'/>
+
+    <template v-if='vertical'>
+      <div class='fill' :style='{height: `${value}%`}'/>
+      <div class='thumb' ref='thumb' :style='{top: `${100 - value}%`}' @pointerdown='onDragStart'/>
+    </template>
+
+    <template v-else>
+      <div class='fill' :style='{width: `${value}%`}'/>
+      <div class='thumb' ref='thumb' :style='{left: `${value}%`}' @pointerdown='onDragStart'/>
+    </template>
+
   </div>
 </template>
 
@@ -24,7 +32,7 @@
  * @update 2021-09-02
  */
 
-import {ref, watch, onMounted, computed} from 'vue';
+import {ref, watch, computed} from 'vue';
 
 export default {
   name: 'Slider',
@@ -38,11 +46,20 @@ export default {
   emits: ['update:modelValue', 'change'],
 
   setup(props, {emit}) {
-    const el = ref(null);  // 组件根元素引用
-    let thumb = null;      // 滑  块div元素(dom对象)
-    let offsetX = null;    // 鼠标在滑块上按下时距离滑块的做左偏移量
-    let offsetLeft = null; // 滑块距离父元素slider的左偏移量(单位px)
-    let dragged = null;    // 滑块是否发生过拖动
+    /** @type {Ref<HTMLElement | null>} 组件根元素引用 */
+    const el = ref(null);
+
+    /** @type {Ref<HTMLElement | null>} 滑块d元素 */
+    const thumb = ref(null);
+
+    /** @type {number | null} 鼠标在滑块上按下时距离滑块的做左偏移量 */
+    let offsetX = null;
+
+    /** @type {number | null} 滑块距离父元素slider的左偏移量(单位px) */
+    let offsetLeft = null;
+
+    /** @type {boolean | null} 滑块是否发生过拖动 */
+    let dragged = null;
 
     // 进度值
     const value = computed(() => /** @type {number} */ props.modelValue * 100);
@@ -59,7 +76,7 @@ export default {
 
       let value = props.vertical;
       offsetX = value ? e.clientY : e.clientX;
-      offsetLeft = value ? thumb.offsetTop : thumb.offsetLeft;
+      offsetLeft = value ? thumb.value.offsetTop : thumb.value.offsetLeft;
       document.onpointermove = onDragging;
       document.onpointerup = onDragEnd;
     };
@@ -125,8 +142,6 @@ export default {
       }
     };
 
-    onMounted(() => thumb = el.value.querySelector('.thumb'));
-
     // 发出change事件,以便侦测数据值改变
     watch(() => props.modelValue, newValue => emit('change', newValue));
 
@@ -136,7 +151,7 @@ export default {
      */
     const isNotDragging = () => offsetX == null;
 
-    return {el, value, onSliderClicked, onDragStart, isNotDragging};
+    return {el, thumb, value, onSliderClicked, onDragStart, isNotDragging};
   }
 }
 </script>

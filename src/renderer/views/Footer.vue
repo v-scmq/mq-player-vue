@@ -114,6 +114,7 @@ export default {
 
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
+    /** @type {Ref<Object | null>} */
     const progressSlider = ref(null);   // 进度Slider
 
     /**

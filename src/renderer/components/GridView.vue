@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue';
+import {computed, reactive, ref, watch, onBeforeUnmount, onMounted} from 'vue';
 
 export default {
   name: 'grid-view',
@@ -42,8 +42,9 @@ export default {
     const maxScrollHeight = computed(() => Math.ceil(
         props.data.length / visibleColumnCount.value * props.cellHeight));
 
-    // 组件根元素引用
-    const el = ref(/** @type {HTMLElement | null} */null);
+    // (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
+    /** @type {Ref<HTMLElement | null>} 组件根元素引用 */
+    const el = ref(null);
 
     // 可见的行数 (无需作为响应式数据使用,因为没有参与数据响应式更新)
     let visibleRowCount = 1;
@@ -95,7 +96,7 @@ export default {
       const top = el.value.scrollTop;
       // 是否滚动到底部, 对于出现滚动条元素的元素 scrollTop + height - scrollHeight = 0
       // 注意: 理论上使用 === 即可, 但是在某些情况下(如缩放,见MDN)scrollTop可能出现小数, 因此最好使用 >=
-      isAtBottom = top + offsetHeight >= maxScrollHeight.value;
+      isAtBottom = top >= maxScrollHeight.value - offsetHeight;
 
       // 可视数据起始索引、可视数据结束索引
       let start, end;
@@ -223,8 +224,8 @@ export default {
       onClick(event) {
         /** @type {HTMLElement} */
         let target = event.target;
-        if (!target.className.includes('item-cell')) {
-          if((target = target.closest('.item-cell')) == null){
+        if (!target.classList.contains('item-cell')) {
+          if ((target = target.closest('.item-cell')) == null) {
             return;
           }
         }

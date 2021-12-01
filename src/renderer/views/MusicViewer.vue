@@ -149,7 +149,7 @@ export default {
 
     onMounted(() => {
       const canvas = canvasRef.value;
-      canvasContext = canvas.value.getContext('2d');
+      canvasContext = canvas.getContext('2d');
 
       // 柱状图颜色
       // 1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整

@@ -106,8 +106,9 @@ export default {
             column.type === 'index' ? getSequenceValue : getPropertyValue)
     ));
 
-    // 组件根元素引用 (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
-    const el = ref(/** @type {HTMLElement | null} */ null);
+    // (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
+    /** @type {Ref<HTMLElement | null>} 组件根元素引用 */
+    const el = ref(null);
 
     // 表格内容滚动元素的高度
     let scrollWrapperHeight = 1;
@@ -214,10 +215,10 @@ export default {
     const onTableCellClick = (event) => {
       let {detail,/** @type {HTMLElement} */ target} = event;
       // 获取已有的class
-      const className = target.className;
+      const classList = target.classList;
 
       // 若不是单元格 且不是 内容元素, 那么查找单元格
-      if (!className.includes('table-cell') && !className.includes('content-wrapper')) {
+      if (!classList.contains('table-cell') && !classList.contains('content-wrapper')) {
         // 若未找到, 则什么也不做
         if ((target = target.closest('.table-cell')) == null) {
           return;
