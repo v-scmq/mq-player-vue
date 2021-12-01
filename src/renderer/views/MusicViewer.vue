@@ -6,14 +6,14 @@
     </window-state-bar>
 
     <img id='background-cover' alt :src='cover'/>
-    <canvas class='canvas-view' width='1600' height='400' ref='canvasNode'></canvas>
+    <canvas class='canvas-view' width='1600' height='400' ref='canvasRef'></canvas>
   </div>
 </template>
 
 <script>
 import player from '../player';
 import WindowStateBar from './WindowStateBar';
-import {getCurrentInstance, onBeforeUnmount, onMounted} from 'vue';
+import {onBeforeUnmount, onMounted, ref} from 'vue';
 
 export default {
   name: 'PlayDetailView',
@@ -27,8 +27,8 @@ export default {
 
   setup() {
 
-    /** @type {HTMLCanvasElement | null} */
-    let canvas = null;
+    /** @type {Ref<HTMLCanvasElement | null>} */
+    const canvasRef = ref(null);
     /** @type {CanvasRenderingContext2D | null} */
     let canvasContext = null;
     /** @type {CanvasGradient | null} */
@@ -40,7 +40,7 @@ export default {
      * @param {Uint8Array} dataArray 音频频谱数据
      */
     const rectRenderFrame = (dataArray) => {
-      let width = canvas.width, height = canvas.height - 1;
+      let width = canvasRef.value.width, height = canvasRef.value.height - 1;
       let step = Math.round(dataArray.length / 60);
       canvasContext.clearRect(0, 0, width, height);
       canvasContext.beginPath();
@@ -148,12 +148,12 @@ export default {
     // };
 
     onMounted(() => {
-      canvas = getCurrentInstance().refs.canvasNode;
-      canvasContext = canvas.getContext('2d');
+      const canvas = canvasRef.value;
+      canvasContext = canvas.value.getContext('2d');
 
       // 柱状图颜色
       // 1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整
-      color = canvasContext.createLinearGradient(canvas.width * 0.5, 0, canvas.width * 0.5, 400);
+      color = canvasContext.createLinearGradient(canvas.value.width * 0.5, 0, canvas.width * 0.5, 400);
       color.addColorStop(0, '#0990ee');
       color.addColorStop(0.1, '#FF00FF');
       color.addColorStop(0.4, '#f30b7c');
@@ -166,7 +166,9 @@ export default {
       setTimeout(() => player.setAudioSpectrumListener(rectRenderFrame));
     });
 
-    onBeforeUnmount(() => player.setAudioSpectrumListener(color = canvasContext = canvas = null));
+    onBeforeUnmount(() => player.setAudioSpectrumListener(color = canvasContext = null));
+
+    return {canvasRef};
   }
 }
 </script>

@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import {computed, getCurrentInstance, onBeforeUnmount, onMounted, reactive, ref, watch} from "vue";
+import {computed, onBeforeUnmount, onMounted, reactive, ref, watch} from 'vue';
 
 export default {
   name: 'grid-view',
@@ -42,14 +42,14 @@ export default {
     const maxScrollHeight = computed(() => Math.ceil(
         props.data.length / visibleColumnCount.value * props.cellHeight));
 
+    // 组件根元素引用
+    const el = ref(/** @type {HTMLElement | null} */null);
+
     // 可见的行数 (无需作为响应式数据使用,因为没有参与数据响应式更新)
     let visibleRowCount = 1;
 
     // 可见数据起始索引
     let offsetIndex = 0;
-
-    /** @type {HTMLElement} 组件根元素 */
-    let el;
 
     /** @type {HTMLElement} 内容元素(grid布局部分) */
     let contentWrapper;
@@ -92,7 +92,7 @@ export default {
       // start = top:208 / cellHeight:208 * visibleColumnCount:6
 
       // 已滚动距离、元素高度、最大滚动高度(实际上是maxScrollHeight.value)
-      const top = el.scrollTop;
+      const top = el.value.scrollTop;
       // 是否滚动到底部, 对于出现滚动条元素的元素 scrollTop + height - scrollHeight = 0
       // 注意: 理论上使用 === 即可, 但是在某些情况下(如缩放,见MDN)scrollTop可能出现小数, 因此最好使用 >=
       isAtBottom = top + offsetHeight >= maxScrollHeight.value;
@@ -127,8 +127,7 @@ export default {
     };
 
     onMounted(() => {
-      el = getCurrentInstance().refs.el;
-      contentWrapper = el.querySelector('.content-wrapper');
+      contentWrapper = el.value.querySelector('.content-wrapper');
 
       // 缓存组件根元素之前的宽度和高度
       let oldWidth, oldHeight;
@@ -144,7 +143,7 @@ export default {
         // 获取组件根元素内容高度
         const height = Math.max(1, contentRect.height);
         // 获取组件根元素实际高度
-        offsetHeight = el.offsetHeight;
+        offsetHeight = el.value.offsetHeight;
 
         // 标记是否需要更新可视区域数据
         let update = false;
@@ -197,16 +196,16 @@ export default {
         update && updateVisibleData();
       });
 
-      resizeObserver.observe(el);
+      resizeObserver.observe(el.value);
     });
 
     // 组件被卸载前, 解除引用
     onBeforeUnmount(() => {
       if (resizeObserver) {
-        resizeObserver.unobserve(el);
+        resizeObserver.unobserve(el.value);
         resizeObserver.disconnect();
       }
-      resizeObserver = contentWrapper = el = null;
+      resizeObserver = contentWrapper = null;
       isAtBottom = infiniteScrollTimer = offsetHeight = null;
     });
 
@@ -214,7 +213,7 @@ export default {
     watch(props.data, updateVisibleData);
 
     return {
-      maxScrollHeight, visibleData, updateVisibleData,
+      el, maxScrollHeight, visibleData, updateVisibleData,
 
       /**
        * 单元格被点击时的回调
@@ -225,7 +224,9 @@ export default {
         /** @type {HTMLElement} */
         let target = event.target;
         if (!target.className.includes('item-cell')) {
-          target = target.closest('.item-cell');
+          if((target = target.closest('.item-cell')) == null){
+            return;
+          }
         }
 
         let value = target.attributes.getNamedItem('data-index');

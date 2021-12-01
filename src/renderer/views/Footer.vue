@@ -88,7 +88,7 @@
 import player from '../player';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
-import {ref, reactive, getCurrentInstance, onBeforeUnmount} from 'vue';
+import {ref, reactive, onBeforeUnmount} from 'vue';
 import MusicViewer from './MusicViewer';
 
 export default {
@@ -114,7 +114,7 @@ export default {
 
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
-    const vc = getCurrentInstance();
+    const progressSlider = ref(null);   // 进度Slider
 
     /**
      * 获取播放器媒体播放索引
@@ -259,7 +259,7 @@ export default {
        */
       timeChanged(time) {
         // 当滑动条没有再拖动时,才同步播放进度到滑动条视图
-        let slider = vc.refs.progressSlider;
+        let slider = progressSlider.value;
         if (!slider || slider.isNotDragging()) {
           media.timeValue = time / player.getDuration();
         }
@@ -308,7 +308,7 @@ export default {
       },
 
       error(reason) {
-        Message.error(reason.message);
+        reason && Message.error(reason.message);
         Message.info('即将播放下一首');
         sleep().then(() => play(getIndex(true), true));
       }
@@ -318,7 +318,7 @@ export default {
     onBeforeUnmount(() => player.release());
 
     return {
-      media, isPlaying, DEFAULT_COVER, viewerVisible, volume, speed, modeIcon,
+      media, isPlaying, DEFAULT_COVER, viewerVisible, volume, speed, modeIcon, progressSlider,
       getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange,
       onVolumeScroll, onSpeedPaneScroll
     }

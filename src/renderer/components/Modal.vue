@@ -54,13 +54,13 @@ export default {
       innerVisible, opened,
 
       /**
-       * 鼠标点击 遮罩层 或 关闭图标 时, 然后关闭对话框.
+       * 点击 遮罩层 或 关闭图标 时, 然后关闭对话框.
        *
-       * @param {MouseEvent | PointerEvent} event 鼠标点击事件
+       * @param {PointerEvent} event 点击事件
        */
       close(event) {
         const classList = event.target.classList;
-        // 若鼠标点击关闭图标 或 (不是模式对话框 且 鼠标点击的是遮罩层), 那么关闭对话框
+        // 若点击关闭图标 或 (不是模式对话框 且 点击的是遮罩层), 那么关闭对话框
         if (classList.contains('close-icon') || (!props.modality && classList.contains('modal'))) {
           // 开始动画,模态框将从当前位置开始移动直至不在可视区域内
           opened.value = false;

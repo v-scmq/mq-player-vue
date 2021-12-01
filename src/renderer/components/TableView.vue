@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import {ref, reactive, computed, watch, getCurrentInstance, onMounted, onBeforeUnmount} from 'vue';
+import {ref, reactive, computed, watch, onMounted, onBeforeUnmount} from 'vue';
 
 /**
  * @typedef {Object} TableRowData 表格行单元格数据对象
@@ -106,13 +106,16 @@ export default {
             column.type === 'index' ? getSequenceValue : getPropertyValue)
     ));
 
+    // 组件根元素引用 (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
+    const el = ref(/** @type {HTMLElement | null} */ null);
+
     // 表格内容滚动元素的高度
     let scrollWrapperHeight = 1;
 
     /** @type {ResizeObserver | null} 组件根元素resize观察者 */
     let resizeObserve;
-    /** @type {HTMLElement | null} 组件根元素和滚动元素 */
-    let el, scrollWrapper;
+    /** @type {HTMLElement | null} 组件内部滚动元素 */
+    let scrollWrapper;
 
     /** @type {boolean | null} 标记是否滚到底部 */
     let isAtBottom = false;
@@ -180,7 +183,7 @@ export default {
 
       // 是否滚动到底部, 对于出现滚动条元素的元素 scrollTop + height - scrollHeight = 0
       // 注意: 理论上使用 === 即可, 但是在某些情况下(如缩放,见MDN)scrollTop可能出现小数, 因此最好使用 >=
-      isAtBottom = top + scrollWrapperHeight >= maxScrollHeight.value;
+      isAtBottom = top >= maxScrollHeight.value - scrollWrapperHeight;
 
       // 若滚动已到达底部
       if (isAtBottom) {
@@ -236,7 +239,7 @@ export default {
         emit('row-click', index);
         let map = selectedItems;
 
-        // --------若是多选模式,即启用表头复选框时,即是多选模式-------
+        // --------若是多选模式(启用表头复选框时,即是多选模式)-------
         if (isMultipleSelect.value) {
           // 若选中则取消选中(移除索引)
           if (map[index]) {
@@ -338,17 +341,15 @@ export default {
     // };
 
     onMounted(() => {
-      /** @type {HTMLElement | any} */
-      el = getCurrentInstance().refs.el;
-      scrollWrapper = el.querySelector('.scroll-wrapper');
+      scrollWrapper = el.value.querySelector('.scroll-wrapper');
 
       // 计算滚动条宽度
-      let overflowY = el.style.overflowY;
-      el.style.overflowY = 'scroll';
+      let overflowY = el.value.style.overflowY;
+      el.value.style.overflowY = 'scroll';
 
       // offsetWidth = 内容(包含滚动条) + padding + border ; clientWidth = 内容宽度 + padding
-      gutterWidth.value = `${el.offsetWidth - el.clientWidth}px`;
-      el.style.overflowY = overflowY;
+      gutterWidth.value = `${el.value.offsetWidth - el.value.clientWidth}px`;
+      el.value.style.overflowY = overflowY;
 
       /** 当根元素宽高发生变化时,回调此方法 */
       resizeObserve = new ResizeObserver(() => {
@@ -373,16 +374,16 @@ export default {
         }
       });
 
-      resizeObserve.observe(el);
+      resizeObserve.observe(el.value);
     });
 
     // 组件被卸载前, 解除引用
     onBeforeUnmount(() => {
       if (resizeObserve != null) {
-        resizeObserve.unobserve(el);
+        resizeObserve.unobserve(el.value);
         resizeObserve.disconnect();
       }
-      resizeObserve = scrollWrapper = el = null;
+      resizeObserve = scrollWrapper = null;
       isAtBottom = infiniteScrollTimer = scrollWrapperHeight = null;
     });
 
@@ -413,6 +414,8 @@ export default {
       maxScrollHeight,
       // 是否有垂直滚动条
       hasScrollbar,
+      // 组件根元素引用
+      el,
 
       updateVisibleData,
       onTableCellClick,

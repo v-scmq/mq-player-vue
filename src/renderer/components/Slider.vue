@@ -1,9 +1,10 @@
 <template>
-  <div class='slider' ref='el' :class='{"vertical": vertical}' @click='onSliderClicked'>
+  <div class='slider' ref='el' :class='{vertical}' @click='onSliderClicked'>
     <div class='track'/>
-    <div class='buffering' v-if='buffering!=null' :style='{width:`${buffering*100}%`}'/>
-    <div class='fill'/>
-    <div class='thumb' @mousedown.prevent='onDragStart'/>
+    <div class='buffering' v-if='buffering >= 0' :style='{width:`${buffering * 100}%`}'/>
+    <div class='fill' :style='{width: !vertical && `${value}%`, height: vertical && `${value}%`}'/>
+    <div class='thumb' :style='{left: !vertical && `${value}%`, top: vertical && `${100 - value}%` }'
+         @pointerdown='onDragStart'/>
   </div>
 </template>
 
@@ -23,7 +24,7 @@
  * @update 2021-09-02
  */
 
-import {watch, onMounted, getCurrentInstance} from 'vue';
+import {ref, watch, onMounted, computed} from 'vue';
 
 export default {
   name: 'Slider',
@@ -36,26 +37,31 @@ export default {
 
   emits: ['update:modelValue', 'change'],
 
-  setup: (props, {emit}) => {
-    let el = null;
-    let fill = null;       // 填充块div元素(dom对象)
+  setup(props, {emit}) {
+    const el = ref(null);  // 组件根元素引用
     let thumb = null;      // 滑  块div元素(dom对象)
     let offsetX = null;    // 鼠标在滑块上按下时距离滑块的做左偏移量
     let offsetLeft = null; // 滑块距离父元素slider的左偏移量(单位px)
     let dragged = null;    // 滑块是否发生过拖动
 
+    // 进度值
+    const value = computed(() => /** @type {number} */ props.modelValue * 100);
+
     /**
-     * 鼠标开始拖动(鼠标在滑块上按下)时触发, 此时并还未开始拖动,仅仅是准备好拖动.
+     * 开始拖动(指针设备在滑块上按下)时触发, 此时并还未开始拖动,仅仅是准备好拖动.
      * 需要注意检测中断拖动不能依靠滑块(div)元素本身,需要借助document对象 或 window对象
      * 因为元素本身在鼠标移动后,所监听的鼠标释放事件并不会触发,但是document或window一定会触发
-     * @param {MouseEvent} e 鼠标事件
+     *
+     * @param {PointerEvent} e 鼠标事件
      */
     const onDragStart = e => {
+      e.preventDefault();
+
       let value = props.vertical;
       offsetX = value ? e.clientY : e.clientX;
       offsetLeft = value ? thumb.offsetTop : thumb.offsetLeft;
-      document.onmousemove = onDragging;
-      document.onmouseup = onDragEnd;
+      document.onpointermove = onDragging;
+      document.onpointerup = onDragEnd;
     };
 
     /**
@@ -72,16 +78,16 @@ export default {
       dragged = null;
       offsetX = null;
       offsetLeft = null;
-      document.onmousemove = null;
-      document.onmouseup = null;
+      document.onpointermove = null;
+      document.onpointerup = null;
     };
 
     /**
      * 滑块被拖动时触发.在此过程中,只会提交input事件以修改value属性值
-     * @param {MouseEvent} e 鼠标事件
+     * @param {PointerEvent} e 指针事件
      */
     const onDragging = e => {
-      let total = props.vertical ? el.clientHeight : el.clientWidth;
+      let total = props.vertical ? el.value.clientHeight : el.value.clientWidth;
 
       // 增量 = 现在的e.clientX|e.clientY - 鼠标按下时的e.clientX|e.clientY(即offsetX)
       let value = props.vertical ? e.clientY : e.clientX;
@@ -103,11 +109,12 @@ export default {
     /**
      * 滑动条被点击时触发,随着先后触发input事件和change事件
      * 触发change事件并传出第二个参数值true 以方便侦测滑动条的值是人为改变
-     * @param {MouseEvent} e 鼠标事件
+     *
+     * @param {PointerEvent} e 指针事件
      */
     const onSliderClicked = e => {
-      if (e.target === el) {
-        let value = props.vertical ? e.offsetY / el.clientHeight : e.offsetX / el.clientWidth;
+      if (e.target === el.value) {
+        let value = props.vertical ? e.offsetY / el.value.clientHeight : e.offsetX / el.value.clientWidth;
         value = value.toFixed(3) - 0;
         value = props.vertical ? 1 - value : value;
 
@@ -118,42 +125,10 @@ export default {
       }
     };
 
-    /**
-     * 设置滑块的位置和填充块的宽度
-     * @param {number} value 滑动条模型绑定的值的100倍(滑动条绑定的value在[0,1]区间内)
-     */
-    const setStyle = value => {
-      if (props.vertical) {
-        fill.style.height = `${value}%`;
-        thumb.style.top = `${100 - value}%`;
-        // TODO 打包后, props.vertical明确指定是true,但还是将fill的width以横向模式设置
-        //      从调试断点来看进入了,else,但若是在if和else中做console输出的日志是正常的
-        fill.style.width = thumb.style.left = null;
+    onMounted(() => thumb = el.value.querySelector('.thumb'));
 
-      } else {
-        fill.style.width = value = `${value}%`;
-        thumb.style.left = value;
-        fill.style.height = thumb.style.top = null;
-      }
-    };
-
-    onMounted(() => {
-      /** @type {HTMLElement} */
-      el = getCurrentInstance().refs.el;
-      fill = el.querySelector('.fill');
-      thumb = el.querySelector('.thumb');
-      // 当值大于0时需要更新滑块和填充块
-      if (props.modelValue > 0) {
-        setStyle(props.modelValue * 100);
-      }
-    });
-
-    watch(() => props.modelValue, newValue => {
-      // 若没有拖动,则更新滑块和填充块的位置
-      setStyle(newValue * 100);
-      // 发出change事件,以便侦测数据值改变
-      emit('change', newValue);
-    });
+    // 发出change事件,以便侦测数据值改变
+    watch(() => props.modelValue, newValue => emit('change', newValue));
 
     /**
      * 检测滑块是否正在被拖动
@@ -161,7 +136,7 @@ export default {
      */
     const isNotDragging = () => offsetX == null;
 
-    return {onSliderClicked, onDragStart, isNotDragging}
+    return {el, value, onSliderClicked, onDragStart, isNotDragging};
   }
 }
 </script>
