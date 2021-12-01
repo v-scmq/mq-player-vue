@@ -133,18 +133,28 @@ const handlePostRequest = (request, response, callback) => {
             sleep().then(() => callback(dataSource, param)).then(/** @param {HttpBaseResponse} data */data => {
                 debugger;
                 data = data || {};
+
                 //  获取状态码 和 响应头
                 const {httpInfo: {statusCode = 200, headers = {}}} = data;
+
                 // 从data对象上 删除 状态码 和 响应头信息
                 delete data.httpInfo;
-                // 当内容大小与实际大小不一致时,将导致客户端不能正确响应 (策略: 删除 内容大小 响应标头)
-                delete headers['content-length'];
 
                 // 若存在分页, 则全局统一计算数据分页页数
                 data.page ? data.page.pageCount = Math.ceil(data.page.total / (data.page.size || 1)) : null;
 
+                // 原始数据(Object) => JSON字符串 => Buffer
+                const buffer = Buffer.from(JSON.stringify(data));
+
+                // 当内容大小与实际大小不一致时,将导致客户端不能正确响应
+                // 策略: 指定正确的内容大小响应标头 或 删除内容大小响应标头
+                headers['content-length'] = buffer.length; // delete headers['content-length'];
+
+                // 重设响应内容类型标头
+                headers['content-type'] = 'application/json; charset=utf-8';
+
                 // 写入 状态信息 及 数据 到客户端
-                response.writeHead(statusCode, headers).end(JSON.stringify(data));
+                response.writeHead(statusCode, headers).end(buffer);
 
             }).catch(reason => response.writeHead(500, {'content-type': 'text/plain; charset=utf-8'}).end(reason.message));
 
