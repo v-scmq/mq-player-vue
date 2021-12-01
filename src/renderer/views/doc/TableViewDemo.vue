@@ -1,38 +1,60 @@
 <template>
-  <table-view :data="data" :columns="columns" style="flex:1;" @infinite-scroll='addData'/>
+  <table-view :data='data' :columns='columns' style='flex:1;' @infinite-scroll='addData'/>
 </template>
 
 <script>
-import {reactive} from "vue";
+import {reactive} from 'vue';
 
 export default {
-  name: "TableViewDemo",
+  name: 'TableViewDemo',
 
   setup() {
     const columns = reactive(/** @type {TableColumn[]} */[
       {type: 'index', width: '100px'},
-      {title: '歌曲', property: 'title'},
-      {title: '歌手', property: 'singer'},
-      {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: '100px'},
-      {title: '大小', property: 'size', width: '100px'}
+      {title: '日期', property: 'date'},
+      {title: '名称', property: 'name'},
+      {title: '状态', property: 'state', width: '100px'},
+      {title: '城市', property: 'city', width: '100px'},
+      {title: '地址', property: 'address'},
+      {title: '邮编', property: 'zip', width: '100px'}
     ]);
 
-    const data = reactive([]);
-
-    for (let index = 0; index < 100; ++index) {
-      data.push({
-        title: '九张机',
-        singer: '叶炫清',
-        album: '九张机',
-        duration: '3:58',
-        size: '8.40MB'
-      });
-    }
+    const data = reactive([
+      {
+          date: '2021-11-01',
+          name: 'Tom',
+          state: 'California',
+          city: 'Los Angeles',
+          address: 'No. 189, Grove St, Los Angeles',
+          zip: 'CA 90036',
+      },
+      {
+          date: '2021-11-05',
+          name: 'Tony',
+          state: 'California',
+          city: 'Los Angeles',
+          address: 'No. 189, Grove St, Los Angeles',
+          zip: 'CA 90038',
+      },
+      {
+          date: '2021-11-10',
+          name: 'Jack',
+          state: 'California',
+          city: 'Los Angeles',
+          address: 'No. 189, Grove St, Los Angeles',
+          zip: 'CA 90030',
+      }
+    ]);
 
     const addData = () => {
-      console.info('添加数据');
+      for (let index = 0; index < 100; ++index) {
+        data.push(data[index % 3]);
+      }
     };
+
+    // 最大支持 1 << 20 = 1048576
+
+    addData();
 
     return {columns, data, addData};
   }
