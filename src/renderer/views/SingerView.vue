@@ -49,26 +49,26 @@
         </template>
       </table-view>
 
-      <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show='tabMap.value===tabMap.ALBUM_TAB' @click='onAlbumItemClicked'>
-        <div class='v-column content-box' v-for='(item, index) in albumList' :key='index' :data-index='index'>
-          <img class=cover :src='item.cover' loading='lazy' alt/>
+      <grid-view cell-widths='repeat(auto-fit, 13em)' v-show='tabMap.value===tabMap.ALBUM_TAB' :data='albumList'
+                 @infinite-scroll='loadAlbumData' :cell-height='234' @cell-click='onAlbumItemClicked'>
+        <template v-slot='{item}'>
+          <img alt class=cover :src='item.cover' loading='lazy'/>
           <div class='name'>{{ item.name }}</div>
-        </div>
-      </div>
+        </template>
+      </grid-view>
 
-      <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show='tabMap.value===tabMap.MV_TAB'>
-        <div class='v-column content-box' v-for='(item, index) in mvList' :key='index'>
-          <img class=cover :src='item.cover' loading='lazy' alt/>
-          <div class='name'>
-            <span class='link' v-for='(singer, _index) in item.singer' :key='_index' :data-mid='singer.mid'>
+      <grid-view class='arc-rect' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
+                 :cell-height='206' @infinite-scroll='loadMvData' v-show='tabMap.value===tabMap.MV_TAB'>
+        <template v-slot='{item}'>
+          <img alt class=cover :src='item.cover' loading='lazy'/>
+          <div>
+            <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
               {{ singer.name }}
             </span>
             -<span>{{ item.title }}</span>
           </div>
-        </div>
-      </div>
+        </template>
+      </grid-view>
 
       <div v-show='tabMap.value===tabMap.DETAIL_TAB' class='label'>{{ singer.introduce }}</div>
     </div>
@@ -214,18 +214,11 @@ export default {
       /**
        * 当专辑列表项点击时,跳转到专辑视图
        *
-       * @param {MouseEvent} event 鼠标点击事件
+       * @param {Album} album 鼠标点击事件
        */
-      onAlbumItemClicked(event) {
-        const node = event.target, classList = node.classList;
-        if (classList.contains('cover') || classList.contains('name')) {
-          // 获取数据索引
-          let {value} = node.parentNode.attributes.getNamedItem('data-index') || {};
-          // 提取专辑信息
-          const album = albumList[value = (value - 0)] && {...albumList[value], singer: null};
-          // 若存在专辑信息, 则跳转到专辑视图
-          album && router.push({path: '/album-view', query: album});
-        }
+      onAlbumItemClicked(album) {
+        // 若存在专辑信息, 则跳转到专辑视图
+        album && router.push({path: '/album-view', query: {...album, singer: null}});
       },
 
       /** 加载歌曲数据到表格视图中 */
@@ -247,37 +240,48 @@ export default {
 
           }).catch(() => --page.current).finally(Spinner.close);
         }
+      },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadAlbumData() {
+        const page = tabMap.MV_TAB.page;
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          getSingerAlbumList(page, singer).then(data => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+            // 添加专辑
+            albumList.push(...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
+      },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadMvData() {
+        const page = tabMap.MV_TAB.page;
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          getSingerMvList(page, singer).then(data => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+            // 添加Mv
+            data.list.forEach(convertSinger);
+            mvList.push(...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
       }
+
     };
   }
 }
 </script>
-
-<style scoped>
-.image-container {
-  padding: 1em 0 0 0;
-  margin: 0.5em 0 0 0;
-}
-
-.image-container > .content-box {
-  align-items: center;
-  margin: 0 3em 3em 0;
-}
-
-.cover, .content-box .cover {
-  width: 13em;
-  height: 13em;
-  cursor: pointer;
-  border-radius: 8em;
-  transition: transform .75s cubic-bezier(0, 1, .75, 1);
-}
-
-.content-box .name {
-  max-width: 13em;
-  /*默认换行white-space: normal;*/
-}
-
-.content-box:hover .cover {
-  transform: scale(1.07);
-}
-</style>

@@ -119,7 +119,7 @@ export default {
 
           getSpecialList(page, specialTagParam).then(data => {
             data.page && Object.assign(page, data.page);
-            specialList.splice(0, specialList.length, ...data.list);
+            specialList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);
         }

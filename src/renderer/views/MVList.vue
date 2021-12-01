@@ -141,7 +141,7 @@ export default {
 
             // 转换歌手为Array类型
             data.list.forEach(convertSinger);
-            mvList.splice(0, mvList.length, ...data.list);
+            mvList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);
         }

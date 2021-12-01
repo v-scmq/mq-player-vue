@@ -130,7 +130,7 @@ export default {
             // 重设分页信息
             data.page && Object.assign(page, data.page);
             // 添加歌手数据
-            singerList.splice(0, singerList.length, ...data.list);
+            singerList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);
         }
