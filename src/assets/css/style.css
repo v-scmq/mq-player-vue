@@ -901,7 +901,7 @@ html, body, #app {
 /* 设置间距,用以鼠标在窗口边沿操作(如缩放) 在Electron16开始不需要设置此样式,也可以在窗口边缘resize */
 /*.title-bar.un-maximized { margin: 2px 2px 0 2px;}*/
 
-.title-bar .user-icon.image {
+.title-bar .user-icon.cover {
     width: 3em;
     height: 3em;
     background: none;
@@ -1076,4 +1076,9 @@ html, body, #app {
 
 .v-row.has-margin > .button {
     margin: 0 4px;
+}
+
+/* 设置图片不可拖动 */
+.cover {
+    -webkit-user-drag: none;
 }

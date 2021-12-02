@@ -2,7 +2,7 @@
   <div class='title-bar v-row'>
     <div class='v-row fixed-left-bar' style='padding:4px;'>
       <!--  用户头像图片 -->
-      <img alt draggable='false' class='user-icon image' :src='user.headURI' v-if='user.uin'
+      <img alt class='user-icon cover' :src='user.headURI' v-if='user.uin'
            @click='loginModal = true'/>
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
@@ -41,7 +41,7 @@
           <div>昵称：{{ user.nickName }}</div>
           <template v-if='user.level'>
             <div class='v-row'>
-              VIP等级：<img alt style='margin:-0.5em 0 0 0;' :src='user.levelIconURI'/>
+              VIP等级：<img alt class='cover' style='margin:-0.5em 0 0 0;' :src='user.levelIconURI'/>
             </div>
             <span>会员开通时间：{{ user.startTime }}</span>
             <span>会员到期时间：{{ user.endTime }}</span>

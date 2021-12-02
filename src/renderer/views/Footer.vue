@@ -5,7 +5,7 @@
 
       <!-- 左侧部分 -->
       <div class='v-row' style='flex:1'>
-        <img class='album-icon' :src='media.cover' alt='专辑' draggable='false' @error='media.cover = DEFAULT_COVER'
+        <img class='cover album-icon' :src='media.cover' alt='专辑' draggable='false' @error='media.cover = DEFAULT_COVER'
              @click='viewerVisible=true'/>
 
         <div class='v-column media-info'>

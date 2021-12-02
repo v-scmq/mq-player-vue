@@ -5,7 +5,7 @@
       <icon class='icon-menu' name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
     </window-state-bar>
 
-    <img id='background-cover' alt :src='cover'/>
+    <img class='cover effect-cover' alt :src='cover'/>
     <canvas class='canvas-view' width='1600' height='400' ref='canvasRef'></canvas>
   </div>
 </template>
@@ -153,7 +153,7 @@ export default {
 
       // 柱状图颜色
       // 1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整
-      color = canvasContext.createLinearGradient(canvas.value.width * 0.5, 0, canvas.width * 0.5, 400);
+      color = canvasContext.createLinearGradient(canvas.width * 0.5, 0, canvas.width * 0.5, 400);
       color.addColorStop(0, '#0990ee');
       color.addColorStop(0.1, '#FF00FF');
       color.addColorStop(0.4, '#f30b7c');
@@ -189,7 +189,7 @@ export default {
   /*FAEBD7FF*/
 }
 
-#background-cover {
+.effect-cover {
   position: absolute;
   width: 100%;
   height: 100%;
