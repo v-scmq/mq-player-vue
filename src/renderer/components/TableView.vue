@@ -310,7 +310,7 @@ export default {
      */
     const onKeydown = event => {
       // 对于出现滚动条的元素的scrollTop值无需检查值范围的合法性,因为元素内部已做控制
-      switch (event.key) {
+      switch (event.key || '') {
         case 'PageUp':    // pageUp键滚动到上一页单元格
           return scrollWrapper.scrollTop -= props.cellHeight * visibleRowCount.value;
         case 'PageDown':  // pageDown键滚动到下一页单元格
@@ -320,11 +320,12 @@ export default {
         case 'ArrowDown': // 下方向键滚动到下一行单元格
           return scrollWrapper.scrollTop += props.cellHeight;
         case 'Home':      // home键滚动到第一行单元格
-          return scrollWrapper.scrollTo(0, 0);
+          return scrollWrapper.scrollTo(0, 0); // ({left:0, top:0, behavior:'smooth'})
         case 'End':       // end键滚动最后一行单元格
           return scrollWrapper.scrollTo(0, maxScrollHeight.value);
-        case 'A':         // Ctrl + A 组合键全选所有单元格
-          return event.ctrlKey ? selectAll() : null;
+        case 'a':
+        case 'A':         // Ctrl + A 组合键全选所有单元格 ; Ctrl + Shirt + A 组合键全不选
+          return event.ctrlKey && (event.shiftKey ? clearSelection() : selectAll());
       }
     };
 
@@ -337,9 +338,9 @@ export default {
 
 
     /** 清除所有选择 */
-    // const clearSelection = () => {
-    //   headerCheckChange(isSelectAll.value = false);
-    // };
+    const clearSelection = () => {
+      headerCheckChange(isSelectAll.value = false);
+    };
 
     onMounted(() => {
       scrollWrapper = el.value.querySelector('.scroll-wrapper');
