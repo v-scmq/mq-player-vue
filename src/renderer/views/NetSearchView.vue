@@ -99,10 +99,10 @@ export default {
     const albumList = reactive(/** @type {Album[]} */[]);
     const specialList = reactive(/** @type {Special[]} */[]);
 
-    const MV_TAB =/** @type {Tab} */  {title: 'MV', update: true, page: {current: 1, pageSize: 30}};
-    const SONG_TAB =/** @type {Tab} */  {title: '歌曲', update: true, page: {current: 1, pageSize: 30}};
-    const ALBUM_TAB =/** @type {Tab} */  {title: '专辑', update: true, page: {current: 1, pageSize: 30}};
-    const SPECIAL_TAB =/** @type {Tab} */  {title: '歌单', update: true, page: {current: 1, pageSize: 30}};
+    const MV_TAB =/** @type {Tab} */  {title: 'MV', update: true, page: {current: 1, size: 30}};
+    const SONG_TAB =/** @type {Tab} */  {title: '歌曲', update: true, page: {current: 1, size: 30}};
+    const ALBUM_TAB =/** @type {Tab} */  {title: '专辑', update: true, page: {current: 1, size: 30}};
+    const SPECIAL_TAB =/** @type {Tab} */  {title: '歌单', update: true, page: {current: 1, size: 30}};
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB});
 
