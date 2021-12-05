@@ -89,12 +89,12 @@ package-lock.json
 
 # 忽略主进程模块下的 api目录中除了default.js 和 net.js 之外的所有文件
 src/main/api
-!src/main/api/default.js
-!src/main/api/net.js
+!src/main/api/default.ts
+!src/main/api/net.ts
 
 # 忽略渲染进程模块下的 api目录中除了index.js之外的所有文件
 src/renderer/api
-!src/renderer/api/index.js
+!src/renderer/api/index.ts
 
 # 忽略文档目录中除了api.md之外的所有文件
 doc
