@@ -2,7 +2,7 @@
   下载管理
 </template>
 
-<script>
+<script lang='ts'>
 import axios from 'axios';
 
 export default {

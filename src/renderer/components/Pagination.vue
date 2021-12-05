@@ -21,15 +21,15 @@
   </div>
 </template>
 
-<script>
-import {computed} from 'vue';
+<script lang='ts'>
+import {computed, defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'Pagination',
 
   props: {
     // 总条目数量
-    total: Number,
+    total: {type: Number, default: 0},
     // 每页数据量
     pageSize: {type: Number, default: 30},
     // 当前页编号
@@ -106,10 +106,10 @@ export default {
       /**
        * 处理分页按钮点击事件
        *
-       * @param {MouseEvent} event 鼠标点击事件
+       * @param {PointerEvent} event 鼠标点击事件
        */
-      handleClick(event) {
-        const element = event.target, classList = element.classList;
+      handleClick(event: PointerEvent) {
+        const element = event.target as HTMLElement, classList = element.classList;
         if (classList.contains('pagination')) {
           return;
         }
@@ -128,7 +128,7 @@ export default {
         } else if (classList.contains('next-more-button')) {
           newPage = currentPage + offset;
         } else {
-          newPage = element.textContent - 0;
+          newPage = ((element.textContent || 1) as unknown as number) ^ 0;
         }
 
         newPage = Math.min(Math.max(1, newPage), pageCount.value);
@@ -139,5 +139,6 @@ export default {
       }
     };
   }
-}
+
+});
 </script>

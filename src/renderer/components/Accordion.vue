@@ -14,27 +14,18 @@
   </div>
 </template>
 
-<script>
-import {onBeforeUnmount, onMounted, ref} from 'vue';
+<script lang='ts'>
+import {ref, defineComponent, onBeforeUnmount, onMounted, PropType} from 'vue';
 
-/**
- * @typedef {Object} DataItem 手风琴子列表项信息
- *
- * @property {string | number | undefined} id 数据id
- * @property {string} name 名称
- */
+import {AccordionDataGroup} from './types';
 
-/**
- * @typedef {Object} DataItemGroup 手风琴主列表项信息
- *
- * @property {string | number | undefined} id 分组id
- * @property {string} title 分组标题
- * @property {DataItem[]} items 子列表项数据信息
- */
-
-export default {
+export default defineComponent({
   name: 'Accordion',
-  props: {list: {default: /** @type {DataItemGroup[]} */[]}},
+
+  props: {
+    list: {type: Array as PropType<AccordionDataGroup[]>, required: true}
+  },
+
   emits: ['change'],
 
   setup(props, {emit}) {
@@ -44,19 +35,18 @@ export default {
     const expandedIndex = ref(0);
     // 子列表项被选中的索引(分类组索引-子分类索引)
     const selectedId = ref('0-0');
-
-    /** @type {Ref<HTMLElement | null>} */
-    const el = ref(null);
-    /** @type {ResizeObserver} */
-    let resizeObserver;
+    // 组件根元素引用
+    const el = ref(null as unknown as HTMLElement);
+    // 组件根元素Resize观察者
+    let resizeObserver: ResizeObserver | null;
 
     onMounted(() => {
       // 当根元素宽高发生变化时,回调此方法以计算滚动盒子内部高度
       resizeObserver = new ResizeObserver(([entry]) => {
         // 获取组件根节点 和 组件根节点的高度
-        let node = entry.target, height = node.offsetHeight;
+        let node = entry.target as HTMLElement, height = node.offsetHeight;
         // 获取所有标题层子节点
-        let nodes = node.querySelectorAll('.list-view .titled-pane');
+        let nodes = node.querySelectorAll<HTMLElement>('.list-view .titled-pane');
         // 滚动高度 = 根节点高度 - 所有标题层子节点高度
         nodes.forEach(node => height -= node.offsetHeight);
         // 设置滚动高度
@@ -77,20 +67,24 @@ export default {
 
     return {
       el, scrollWrapperHeight, expandedIndex, selectedId,
+
       /**
        * ListView被点击时触发
-       * @param {PointerEvent} event 指针事件
-       * @param {DataItemGroup} data 所点击对应的数据项
-       * @param {number} index 所点击对应的数据项索引
+       *
+       * @param event 指针事件
+       * @param data 所点击对应的数据项
+       * @param index 所点击对应的数据项索引
        */
-      onClick: (event, data, index) => {
+      onClick: (event: PointerEvent, data: AccordionDataGroup, index: number) => {
         event.stopPropagation();
 
-        const node = event.target, classList = node.classList;
+        const node = event.target as HTMLElement;
+        const dataIndex = node.getAttribute('data-index');
 
-        if (classList.contains('item')) {
-          const itemIndex = node.getAttribute('data-index') ^ 0;
+        if (dataIndex) {
+          const itemIndex = (dataIndex as unknown as number) ^ 0;
           const newId = `${index}-${itemIndex}`;
+
           if (selectedId.value !== newId) {
             selectedId.value = newId;
             emit('change', data.items[itemIndex], data, index);
@@ -103,7 +97,6 @@ export default {
       }
 
     };
-
   }
-}
+});
 </script>

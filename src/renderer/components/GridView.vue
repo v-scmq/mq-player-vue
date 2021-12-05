@@ -14,26 +14,28 @@
   </div>
 </template>
 
-<script>
-import {computed, reactive, ref, watch, onBeforeUnmount, onMounted} from 'vue';
+<script lang='ts'>
+import {computed, reactive, ref, watch, defineComponent, onBeforeUnmount, onMounted, PropType} from 'vue';
 
-export default {
+import {GridDataItem} from './types';
+
+export default defineComponent({
   name: 'grid-view',
 
   props: {
     // 单元格宽度(作为grid布局的grid-template-columns样式属性使用)
-    cellWidths: String,
+    cellWidths: {type: String, required: true},
     // 单元格高度(用于虚拟滚动计算可视区域内容行数)
-    cellHeight: Number,
+    cellHeight: {type: Number, required: true},
     // 作为循环渲染的数据内容
-    data: {default: []},
+    data: {type: Array as PropType<GridDataItem[]>, required: true},
   },
 
   emits: [/* 单元格点击事件 */ 'cell-click', /* 无限滚动 */ 'infinite-scroll'],
 
   setup(props, {emit}) {
     // 可视区域数据
-    const visibleData = reactive([]);
+    const visibleData = reactive<GridDataItem[]>([]);
 
     // 可见的列数
     const visibleColumnCount = ref(1);
@@ -43,8 +45,8 @@ export default {
         props.data.length / visibleColumnCount.value * props.cellHeight));
 
     // (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
-    /** @type {Ref<HTMLElement | null>} 组件根元素引用 */
-    const el = ref(null);
+    // 组件根元素引用
+    const el = ref(null as unknown as HTMLElement);
 
     // 可见的行数 (无需作为响应式数据使用,因为没有参与数据响应式更新)
     let visibleRowCount = 1;
@@ -52,20 +54,20 @@ export default {
     // 可见数据起始索引
     let offsetIndex = 0;
 
-    /** @type {HTMLElement} 内容元素(grid布局部分) */
-    let contentWrapper;
+    // 内容元素(grid布局部分)
+    let contentWrapper: HTMLElement;
 
-    /** @type {ResizeObserver} 元素resize观察者对象(用于监听组件根元素大小变化) */
-    let resizeObserver;
+    // 元素resize观察者对象(用于监听组件根元素大小变化)
+    let resizeObserver: ResizeObserver;
 
-    /** @type {number | null} 组件根元素高度 */
-    let offsetHeight = 1;
+    // 组件根元素高度
+    let offsetHeight: number = 1;
 
-    /** @type {boolean | null} 标记是否滚到底部 */
-    let isAtBottom = false;
+    // 标记是否滚到底部
+    let isAtBottom: boolean = false;
 
-    /** @type {number | null} 无限滚动计时器 */
-    let infiniteScrollTimer = null;
+    // 无限滚动计时器
+    let infiniteScrollTimer: number | null = null;
 
     /**
      * 更新可视区域数据
@@ -128,10 +130,10 @@ export default {
     };
 
     onMounted(() => {
-      contentWrapper = el.value.querySelector('.content-wrapper');
+      contentWrapper = el.value.querySelector('.content-wrapper') as HTMLElement;
 
       // 缓存组件根元素之前的宽度和高度
-      let oldWidth, oldHeight;
+      let oldWidth: number, oldHeight: number;
 
       /**
        * 组件根元素宽高观察者对象,当宽高发生变化时,计算可视区域能显示的数据量
@@ -161,7 +163,7 @@ export default {
 
           if (gridRowGap.includes('px')) {
             // 计算所有行之间的间隙(注: number * string类型的number => number)
-            let gapHeight = --count * gridRowGap.substring(0, gridRowGap.length - 2);
+            let gapHeight = --count * (gridRowGap.substring(0, gridRowGap.length - 2) as unknown as number);
             // 可见行数 = (总高度 - 所有行间隙) / 每行的高度
             count = Math.ceil((height - gapHeight) / props.cellHeight);
 
@@ -206,8 +208,9 @@ export default {
         resizeObserver.unobserve(el.value);
         resizeObserver.disconnect();
       }
-      resizeObserver = contentWrapper = null;
-      isAtBottom = infiniteScrollTimer = offsetHeight = null;
+
+      resizeObserver = contentWrapper = null as any;
+      isAtBottom = infiniteScrollTimer = offsetHeight = null as any;
     });
 
     // 监听表格数据变化
@@ -219,23 +222,20 @@ export default {
       /**
        * 单元格被点击时的回调
        *
-       * @param {PointerEvent} event 指针设备点击事件
+       * @param event 指针设备点击事件
        */
-      onClick(event) {
-        /** @type {HTMLElement} */
-        let target = event.target;
+      onClick(event: PointerEvent) {
+        let target = event.target as HTMLElement;
         if (!target.classList.contains('item-cell')) {
-          if ((target = target.closest('.item-cell')) == null) {
-            return;
-          }
+          const parent = target.closest<HTMLElement>('.item-cell');
+          target = parent ? parent : target;
         }
 
-        let value = target.attributes.getNamedItem('data-index');
-        if (value && (value = value.value)) {
-          const index = offsetIndex + (value ^ 0);
+        const value = target.getAttribute('data-index');
+        if (value) {
+          const index = offsetIndex + ((value as unknown as number) ^ 0);
 
-          index >= 0 && index < props.data.length
-          && emit('cell-click', props.data[index]);
+          index >= 0 && index < props.data.length && emit('cell-click', props.data[index]);
         }
       },
 
@@ -245,9 +245,9 @@ export default {
        * 1.当视图可视区域已将数据滚动到最底部
        * 2.在触摸设备上通过从下向上拖动 或 在非触摸设备上使用滚轮向下滚动
        *
-       * @param {WheelEvent | TouchEvent} event
+       * @param event 鼠标滚轮事件 或 触摸设备拖动事件
        */
-      infiniteScrollEmitter(event) {
+      infiniteScrollEmitter(event: WheelEvent | TouchEvent) {
         /*
           TODO: 触摸设备上拖动方向检测, 可在touchstart 和 touchend 上 比较2次的clientY ;
                 即使滚动到底底部, 此时从上向下拖动似乎并不会引起isAtBottom的错误判断, 因为监听的时拖动结束
@@ -255,7 +255,7 @@ export default {
 
          */
         // 若没有滚动到底部, 则什么也不做
-        if (!isAtBottom || event.deltaY <= 0) {
+        if (!isAtBottom || (event as WheelEvent).deltaY <= 0) {
           return
         }
 
@@ -265,7 +265,7 @@ export default {
           infiniteScrollTimer = null;
         }
 
-        infiniteScrollTimer = setTimeout(() => {
+        infiniteScrollTimer = window.setTimeout(() => {
           infiniteScrollTimer = null;
           emit('infinite-scroll')
         }, 500);
@@ -273,5 +273,6 @@ export default {
 
     };
   }
-};
+
+});
 </script>

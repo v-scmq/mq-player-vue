@@ -54,11 +54,11 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import db from '../database';
 import Message from '../components/Message';
-import Spinner from '../components/Spinner';
-import WindowStateBar from './WindowStateBar';
+import element from '../components/Spinner';
+import WindowStateBar from './WindowStateBar.vue';
 
 import {nextTick, reactive, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
@@ -99,7 +99,7 @@ export default {
      * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
      */
     const login = async event => {
-      Spinner.open();
+      element.open();
 
       try {
         /** @type {Electron.Cookie[]} */
@@ -151,7 +151,7 @@ export default {
       } catch (e) {
         Message.error(`登录失败： ${e.message} !`);
       } finally {
-        Spinner.close();
+        element.close();
       }
     };
 

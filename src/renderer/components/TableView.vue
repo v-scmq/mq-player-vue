@@ -33,38 +33,21 @@
   </div>
 </template>
 
-<script>
-import {ref, reactive, computed, watch, onMounted, onBeforeUnmount} from 'vue';
+<script lang='ts'>
+import {ref, reactive, computed, watch, defineComponent, onMounted, onBeforeUnmount, PropType} from 'vue';
 
-/**
- * @typedef {Object} TableRowData 表格行单元格数据对象
- *
- * @property {any} [key:string] 数据取值属性
- */
+import {TableColumn, TableRow, CellValueGetter} from './types';
 
-/**
- * @typedef {(item:TableRowData, rowIndex:number, column:TableColumn) => string | number | boolean} CellValueGetter
- */
-
-/**
- * @typedef {Object} TableColumn 表格列信息
- *
- * @property {string | undefined} title 列标题
- * @property {'checkbox' | 'index' | undefined} type 列类型(若是 'checkbox', 则指定标题和单元格取值相关属性都无效)
- * @property {string | undefined} width 列宽,默认为 1fr; 取值参考{@link CSSStyleDeclaration.gridTemplateColumns}
- * @property {string | undefined} property 单元格取值属性名称
- * @property {CellValueGetter | undefined} valueGetter 自定义单元格取值方法
- */
-
-export default {
+export default defineComponent({
   name: 'TableView',
+
   props: {
-    /* 表格列信息 */
-    columns: {default:/** @type {TableColumn[]} */ []},
     /* 表格内容部分的行单元格高度 */
     cellHeight: {type: Number, default: 40},
+    /* 表格列信息 */
+    columns: {type: Array as PropType<TableColumn[]>, required: true},
     /* 表格数据 */
-    data: {default: /** @type {TableRowData[]} */ []}
+    data: {type: Array as PropType<TableRow[]>, required: true}
   },
 
   emits: [
@@ -81,69 +64,67 @@ export default {
     // 已滚动的行起始索引
     const offsetIndex = ref(0);
     // 维护可见数据
-    const visibleData = reactive([]);
+    const visibleData = reactive<TableRow[]>([]);
     // 已选择的数据记录
-    const selectedItems = reactive({});
+    const selectedItems = reactive<{ [key: string]: boolean }>({});
     // 正处于指针设备悬浮上的行索引
     const hoverRow = ref(-1);
     // 是否全选
     const isSelectAll = ref(false);
 
     // 计算虚拟滚动部分撑开表格内容而出现滚动条的最大高度
-    const maxScrollHeight = computed(() =>/** @type {number} */ props.data.length * props.cellHeight);
+    const maxScrollHeight = computed(() => props.data.length * props.cellHeight);
     // 检测是否是多选模式
-    const isMultipleSelect = computed(() => props.columns.find(column => column.type === 'checkbox'));
+    const isMultipleSelect = computed(() => props.columns.some(column => column.type === 'checkbox'));
     // 列宽 => grid-template-columns: minmax(100px, 1fr) 100px 1fr ;
     const columnWidths = computed(() => props.columns.map(column => column.width || '1fr').join(' '));
     // 是否有垂直滚动条
-    const hasScrollbar = computed(() =>/** @type {boolean} */ props.data.length > visibleRowCount.value);
+    const hasScrollbar = computed(() => props.data.length > visibleRowCount.value);
 
     // 获取单元格值的getter. 已废弃深度获取值, 如 column:{property: 'singer.name'},
     //                      推荐使用 column:{ valueGetter: item => item.singer?.name)
-    /** @type {ComputedRef<CellValueGetter[]>} */
-    const valueGetters = computed(() => props.columns.map(column =>
+    const valueGetters = computed<CellValueGetter[]>(() => props.columns.map(column =>
         column.valueGetter || (column.type === 'checkbox' ? null :
             column.type === 'index' ? getSequenceValue : getPropertyValue)
     ));
 
-    // (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
-    /** @type {Ref<HTMLElement | null>} 组件根元素引用 */
-    const el = ref(null);
+    // 组件根元素引用 (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
+    const el = ref(null as unknown as HTMLElement);
 
     // 表格内容滚动元素的高度
     let scrollWrapperHeight = 1;
 
-    /** @type {ResizeObserver | null} 组件根元素resize观察者 */
-    let resizeObserve;
-    /** @type {HTMLElement | null} 组件内部滚动元素 */
-    let scrollWrapper;
+    // 组件根元素resize观察者
+    let resizeObserve: ResizeObserver | null;
+    // 组件内部滚动元素
+    let scrollWrapper: HTMLElement;
 
-    /** @type {boolean | null} 标记是否滚到底部 */
+    // 标记是否滚到底部
     let isAtBottom = false;
 
     // 无限滚动计时器
-    let infiniteScrollTimer = null;
+    let infiniteScrollTimer: number | null = null;
 
     /**
      * 获取序号列单元格值
      *
-     * @param {TableRowData} item   当前行单元格数据对象
-     * @param {number} index  当前行单元格索引
-     * @return {string}       当前行单元格序号字符串
+     * @param item 当前行单元格数据对象
+     * @param index 当前行单元格索引
+     * @return {string} 当前行单元格序号字符串
      */
-    const getSequenceValue = (item, index) => {
+    const getSequenceValue = (item: TableRow, index: number) => {
       return (index = ++index + offsetIndex.value) < 10 ? `0${index}` : index;
     };
 
     /**
      * 获取单元格的普通属性值
      *
-     * @param {TableRowData} item 当前行单元格数据对象
-     * @param {number} index 当前行单元格索引
-     * @param {TableColumn} column 当前单元格所在列配置信息
+     * @param item 当前行单元格数据对象
+     * @param index 当前行单元格索引
+     * @param column 当前单元格所在列配置信息
      * @return {string | number | boolean} 当前单元格的值
      */
-    const getPropertyValue = (item, index, column) => {
+    const getPropertyValue = (item: TableRow, index: number, column: TableColumn) => {
       return item[column.property];
     };
 
@@ -210,33 +191,31 @@ export default {
     /**
      * 表格单元格被点击时的回调
      *
-     * @param {PointerEvent} event 指针设备点击事件
+     * @param event 指针设备点击事件
      */
-    const onTableCellClick = (event) => {
-      let {detail,/** @type {HTMLElement} */ target} = event;
+    const onTableCellClick = (event: PointerEvent) => {
+      let target = event.target as HTMLElement, count = event.detail;
       // 获取已有的class
       const classList = target.classList;
 
       // 若不是单元格 且不是 内容元素, 那么查找单元格
       if (!classList.contains('table-cell') && !classList.contains('content-wrapper')) {
-        // 若未找到, 则什么也不做
-        if ((target = target.closest('.table-cell')) == null) {
-          return;
-        }
+        const parent = target.closest<HTMLElement>('.table-cell');
+        target = parent || target;
       }
 
-      /** @type {Attr | string | null} */
-      let value = target.attributes.getNamedItem('data-row');
+      // 数据行索引(string)
+      const value = target.getAttribute('data-row');
 
-      if (!value || !(value = value.value)) {
+      if (!value) {
         return;
       }
 
       // 转换为实际的行单元格索引
-      const index = (value ^ 0) + offsetIndex.value;
+      const index = ((value as unknown as number) ^ 0) + offsetIndex.value;
 
       // 若是单击
-      if (detail === 1) {
+      if (count === 1) {
         emit('row-click', index);
         let map = selectedItems;
 
@@ -261,16 +240,17 @@ export default {
         // 将当前行数据设置为选中
         map[index] = true;
 
-      } else if (detail === 2) {
+      } else if (count === 2) {
         emit('row-dblclick', index);
       }
     };
 
     /**
      * 行单元格选中状态改变事件回调
-     * @param {number} index 行单元格索引(传入的只是在可视区域的索引)
+     *
+     * @param index 行单元格索引(传入的只是在可视区域的索引)
      */
-    const onItemCheckChanged = index => {
+    const onItemCheckChanged = (index: number) => {
       // 转换为实际行单元格索引
       index += offsetIndex.value;
 
@@ -285,17 +265,22 @@ export default {
 
     /**
      * 列标题上的复选框勾选改变事件
-     * @param {boolean} newValue 勾选状态
+     *
+     * @param newValue 勾选状态
      */
-    const headerCheckChange = newValue => {
-      let map = selectedItems, keys = Object.keys(map);
+    const headerCheckChange = (newValue: boolean) => {
+      const map = selectedItems;
+      // 获取所有的key(string)
+      const keys = Object.keys(map) as unknown as number[];
 
       if (!newValue) {
         keys.forEach(key => delete map[key]);
 
       } else {
+
         let max = props.data.length - 1;
-        keys.forEach(key => key > max ? delete map[key] : null);
+        // key:string ^ 0 => number
+        keys.forEach(key => (0 ^ key) > max && delete map[key]);
 
         for (; max >= 0; --max) {
           map[max] = true;
@@ -306,9 +291,10 @@ export default {
     /**
      * table组件键盘快捷键
      * table组件获得焦点时(必须有tabindex属性)
+     *
      * @param {KeyboardEvent} event 键盘按键事件
      */
-    const onKeydown = event => {
+    const onKeydown = (event: KeyboardEvent) => {
       // 对于出现滚动条的元素的scrollTop值无需检查值范围的合法性,因为元素内部已做控制
       switch (event.key || '') {
         case 'PageUp':    // pageUp键滚动到上一页单元格
@@ -343,7 +329,7 @@ export default {
     };
 
     onMounted(() => {
-      scrollWrapper = el.value.querySelector('.scroll-wrapper');
+      scrollWrapper = el.value.querySelector('.scroll-wrapper') as HTMLElement;
 
       // 计算滚动条宽度
       let overflowY = el.value.style.overflowY;
@@ -385,8 +371,8 @@ export default {
         resizeObserve.unobserve(el.value);
         resizeObserve.disconnect();
       }
-      resizeObserve = scrollWrapper = null;
-      isAtBottom = infiniteScrollTimer = scrollWrapperHeight = null;
+      resizeObserve = scrollWrapper = null as any;
+      isAtBottom = infiniteScrollTimer = scrollWrapperHeight = null as any;
     });
 
     // 监听表格数据变化, 更新可视区域数据
@@ -426,11 +412,9 @@ export default {
       headerCheckChange,
       valueGetters,
 
-      onHover(event) {
-        const attr = event.target.attributes
-            .getNamedItem('data-row');
-        const value = attr && attr.value;
-        hoverRow.value = value ? (value ^ 0) : -1;
+      onHover(event: Event) {
+        const value = (event.target as HTMLElement).getAttribute('data-row');
+        hoverRow.value = value ? ((value as unknown as number) ^ 0) : -1;
       },
 
       /**
@@ -439,9 +423,9 @@ export default {
        * 1.当视图可视区域已将数据滚动到最底部
        * 2.在触摸设备上通过从下向上拖动 或 在非触摸设备上使用滚轮向下滚动
        *
-       * @param {WheelEvent | TouchEvent} event
+       * @param {WheelEvent | TouchEvent} event 事件对象
        */
-      infiniteScrollEmitter(event) {
+      infiniteScrollEmitter(event: WheelEvent | TouchEvent) {
         /*
           TODO: 触摸设备上拖动方向检测, 可在touchstart 和 touchend 上 比较2次的clientY ;
                 即使滚动到底底部, 此时从上向下拖动似乎并不会引起isAtBottom的错误判断, 因为监听的时拖动结束
@@ -449,7 +433,7 @@ export default {
 
          */
         // 若没有滚动到底部, 则什么也不做
-        if (!isAtBottom || event.deltaY <= 0) {
+        if (!isAtBottom || (event as WheelEvent).deltaY <= 0) {
           return
         }
 
@@ -459,7 +443,7 @@ export default {
           infiniteScrollTimer = null;
         }
 
-        infiniteScrollTimer = setTimeout(() => {
+        infiniteScrollTimer = window.setTimeout(() => {
           infiniteScrollTimer = null;
           emit('infinite-scroll')
         }, 500);
@@ -467,5 +451,6 @@ export default {
 
     };
   }
-}
+
+});
 </script>

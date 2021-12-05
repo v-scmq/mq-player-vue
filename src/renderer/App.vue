@@ -31,7 +31,7 @@
   <Footer></Footer>
 </template>
 
-<script>
+<script lang='ts'>
 import {onBeforeUnmount} from 'vue';
 import {useRouter} from 'vue-router';
 import Header from './views/Header';

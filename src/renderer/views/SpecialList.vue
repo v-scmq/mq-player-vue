@@ -28,9 +28,9 @@
   </modal>
 </template>
 
-<script>
+<script lang='ts'>
 import {getSpecialList} from '../api';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 
 import {onMounted, reactive, ref} from 'vue';
 
@@ -53,7 +53,7 @@ export default {
     const tagModal = ref(false);
 
     onMounted(() => {
-      Spinner.open();
+      element.open();
 
       getSpecialList(page, null).then(data => {
         data.page && Object.assign(page, data.page);
@@ -72,7 +72,7 @@ export default {
         const [{items: [tag]}] = data.tags;
         tag && Object.assign(specialTagParam, tag);
 
-      }).finally(Spinner.close);
+      }).finally(element.close);
 
     });
 
@@ -97,14 +97,14 @@ export default {
           if (value && value !== specialTagParam.id) {
             specialTagParam.id = value;
 
-            Spinner.open();
+            element.open();
             page.current = 1;
 
             getSpecialList(page, specialTagParam).then(data => {
               data.page && Object.assign(page, data.page);
               specialList.splice(0, specialList.length, ...data.list);
 
-            }).finally(Spinner.close);
+            }).finally(element.close);
           }
         }
       },
@@ -113,7 +113,7 @@ export default {
       loadData() {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          Spinner.open();
+          element.open();
 
           ++page.current;
 
@@ -121,7 +121,7 @@ export default {
             data.page && Object.assign(page, data.page);
             specialList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       }
 

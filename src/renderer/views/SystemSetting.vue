@@ -35,7 +35,7 @@
   </modal>
 </template>
 
-<script>
+<script lang='ts'>
 import Message from '../components/Message';
 
 import {reactive, ref} from "vue";

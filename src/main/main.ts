@@ -1,6 +1,10 @@
 import {app, BrowserWindow, ipcMain, Menu, shell, Tray} from 'electron';
 import path from 'path';
-import {BASE_URL} from './server'
+import {BASE_URL} from './server';
+
+import {ModalOpenOption} from '../types';
+import NativeImage = Electron.NativeImage;
+import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
 if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     // 若未能获得单个应用实例的锁,那么退出应用程序
@@ -11,11 +15,11 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
      *  应用程序就绪之前,获取环境配置以及注册自定义协议和设置程序资源路径 *
      *  检查是否是 windows 平台                                      *
      ****************************************************************/
-    let isWindows = process.platform === 'win32';
+    const isWindows = process.platform === 'win32';
     // 检查是否是生产模式
-    let isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === 'production';
     // 获取图标路径
-    let iconPath = isProduction ? path.resolve(__dirname, 'icon') : 'public/icon';
+    const iconPath = isProduction ? path.resolve(__dirname, 'icon') : 'public/icon';
 
     // 方案必须在应用程序准备好之前注册
     // if (isProduction) {
@@ -32,7 +36,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     // 监听应用程序就绪事件,就绪后后创建浏览器窗口和注册自定义的协议等
     // 主进程浏览器窗口, 系统托盘, 模态框内容视图(BrowserView)
-    let mainWindow = null, modal = null, tray = null;
+    let mainWindow: BrowserWindow, modal: BrowserWindow, tray: Tray;
 
     // 监听第2个应用程序实例,当程序被再次打开,那么聚焦显示主窗口
     app.on('second-instance', () => mainWindow.focus());
@@ -67,7 +71,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
             mainWindow.loadURL(`${BASE_URL}/index.html`).then(readyToShow);
         }
 
-        // 当浏览器窗口关闭时,解除mainWindow引用指向
+        // @ts-ignore 当浏览器窗口关闭时,解除mainWindow引用指向
         mainWindow.once('closed', () => mainWindow = null);
         // 当浏览器窗口最大化时,发送窗口最大化消息到渲染进程
         mainWindow.on('maximize', async () =>
@@ -121,7 +125,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     /** 窗口已就绪,此时可以显示 */
     let readyToShow = async () => {
-        // 显示窗口(将readyToShow方法设置为null,以便释放方法对象)
+        // @ts-ignore 显示窗口(将readyToShow方法设置为null,以便释放方法对象)
         mainWindow.show(readyToShow = null);
         // 若不是windows平台,不创建系统托盘和设置任务栏缩略图
         if (!isWindows) {
@@ -133,7 +137,7 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
         // 注意tray需要声明为全局变量,否则会被自动回收对象,导致自动销毁系统托盘
         tray = new Tray(`${iconPath}/tray.ico`);
-        let contextMenu = Menu.buildFromTemplate([
+        const contextMenu = Menu.buildFromTemplate([
             {label: 'Item1', type: 'radio'},
             {label: 'Item2', type: 'radio', checked: true},
             {label: 'Item3', click: () => console.info("item3 clicked")},
@@ -148,12 +152,14 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         });
 
         // windows平台下,设置任务栏缩略图
-        let prevIcon = `${iconPath}/prev.png`, nextIcon = `${iconPath}/next.png`;
-        let playIcon = `${iconPath}/play.png`, pauseIcon = `${iconPath}/pause.png`;
-        let playing = false;
+        const prevIcon = `${iconPath}/prev.png` as unknown as NativeImage;
+        const nextIcon = `${iconPath}/next.png` as unknown as NativeImage;
+        const playIcon = `${iconPath}/play.png` as unknown as NativeImage;
+        const pauseIcon = `${iconPath}/pause.png` as unknown as NativeImage;
 
-        /** @type {[{tooltip: string, icon: string | Electron.NativeImage, click: (function(): void)}]} */
-        let buttons = [
+        const playing = false;
+
+        mainWindow.setThumbarButtons([
             {tooltip: '上一曲', icon: prevIcon, click: () => console.info("prev...")},
             {
                 tooltip: playing ? '暂停' : '播放',
@@ -161,33 +167,31 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
                 click: () => console.info("play...")
             },
             {tooltip: '下一曲', icon: nextIcon, click: () => console.info("next...")}
-        ];
-        mainWindow.setThumbarButtons(buttons);
+        ]);
         // mainWindow.setThumbnailClip({x: 0, y: 0, width: 1920, height: 1080});
     };
 
     /**
      * 处理来自渲染进程请求打开模态框,最后将页面的Cookie信息返回到渲染进程
-     * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
-     * @param {string | Object} options 从渲染进程传递过来的参数
+     * @param event 渲染进程 => 主进程被调用事件
+     * @param options 从渲染进程传递过来的参数
      * @return {Promise<string>} 异步Promise对象
      */
-    const handleOpenModal = (event, options) => new Promise(resolve => {
-        /** @type {{url:string, indexURL:string, width:number, height:number, preloadName:string}} */
-        options = (typeof options) === 'string' ? JSON.parse(options) : options;
+    const handleOpenModal = (event: IpcMainInvokeEvent, options: string | ModalOpenOption) => new Promise(resolve => {
+        const option: ModalOpenOption = (typeof options) === 'string' ? JSON.parse(<string>options) : options;
 
         // 若指定了预加载文件名(不包含扩展名),则获取需要执行预加载文件的全路径
-        const preload = options.preloadName && `${__dirname}${isProduction ? '' : '/../public'}/${options.preloadName}.js`;
+        const preload = option.preloadName && `${__dirname}${isProduction ? '' : '/../public'}/${option.preloadName}.js`;
 
         // 若模态框未初始化,则先初始化(窗口圆角效果, 需要设置窗口透明且不能打开开发者工具,否则无效果)
-        modal = modal || new BrowserWindow({
-            width: options.width, height: options.height, parent: mainWindow, modal: true,
+        modal = new BrowserWindow({
+            width: option.width, height: option.height, parent: mainWindow, modal: true,
             show: false, resizable: false, frame: false, transparent: true,
             webPreferences: {webSecurity: false, preload, nativeWindowOpen: true}
         });
 
         // 加载指定的URL
-        modal.loadURL(options.url).then();
+        modal.loadURL(option.url).then();
         // 设置页面缩放比例为80%
         modal.once('ready-to-show', () => {
             modal.show();
@@ -196,8 +200,11 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
         // 当页面开始导航(页面跳转)
         modal.webContents.on('will-navigate', (event, url) => {
-            if (options.indexURL === url) {
-                let _resolve = resolve, url = options.indexURL, cookies = modal.webContents.session.cookies;
+            if (option.indexURL === url) {
+                let _resolve: any = resolve;
+                const url = option.indexURL;
+                const cookies = modal.webContents.session.cookies;
+
                 cookies.get({url}).then(cookieArray => {
                     cookieArray.forEach(cookie => {
                         cookies.set({...cookie, url, sameSite: 'no_restriction', secure: true}).then();
@@ -205,8 +212,12 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
                     _resolve(JSON.stringify(cookieArray));
                     _resolve = null;
                 });
+
                 modal.webContents.closeDevTools();
-                modal.close(resolve = null);
+                modal.close();
+
+                // 将resolve方法对象设置为null, 以便在close事件中检测是否resolve过(虽然重复resolve不会有影响)
+                resolve = null as unknown as any;
             }
         });
 
@@ -215,9 +226,10 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
             if (modal) {
                 modal.webContents.closeDevTools();
                 // destroy()方法返回值是void, modal将断开引用
-                modal = modal.destroy();
+                modal.destroy();
+                modal = null as unknown as BrowserWindow;
             }
-            resolve ? resolve(null) : null;
+            resolve && resolve(null);
         });
 
         // 设置窗口打开处理器
@@ -231,12 +243,12 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
     /**
      * 处理来自渲染进程请求删除指定URL下的cookie信息
-     * @param {Electron.IpcMainInvokeEvent} event 渲染进程 => 主进程被调用事件
-     * @param {string} url cookie对应的URL
+     * @param event 渲染进程 => 主进程被调用事件
+     * @param url cookie对应的URL
      * @return {Promise<string>} 异步Promise对象
      */
-    const handleRemoveAllCookie = (event, url) => new Promise(resolve => {
-        let cookies = mainWindow.webContents.session.cookies;
+    const handleRemoveAllCookie = (event: IpcMainInvokeEvent, url: string) => new Promise(resolve => {
+        const cookies = mainWindow.webContents.session.cookies;
         cookies.get({url}).then(cookieArray => cookieArray.forEach(cookie => cookies.remove(url, cookie.name)));
         resolve(null);
     });
@@ -244,9 +256,10 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
     /**
      * 立即关闭本地计算机
      *
-     * @param {boolean} force 指定是否强制执行关机(仅适用于windows)
+     * @param event 渲染进程 => 主进程被调用事件
+     * @param force 指定是否强制执行关机(仅适用于windows)
      */
-    const shutdown = async force => {
+    const shutdown = async (event: IpcMainInvokeEvent, force: boolean) => {
         // shutdown 命令用法:
         // windows系统可在cmd  输入 "shutdown ?"      查看
         // linux  系统可在终端 输入 "shutdown --help" 查看
@@ -255,6 +268,6 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
             `shutdown -p${force ? ' -f' : ''}` : 'shutdown -h now';
 
         const childProcess = require('child_process');
-        childProcess.exec(command, error => app.exit(error ? -1 : 0));
+        childProcess.exec(command, (error: any) => app.exit(error ? -1 : 0));
     };
 }

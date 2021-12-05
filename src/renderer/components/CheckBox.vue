@@ -10,15 +10,19 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang='ts'>
+import {defineComponent} from 'vue';
+
+export default defineComponent({
   name: 'CheckBox',
 
   props: {
+    /** 双向绑定值 */
     modelValue: {type: Boolean, default: false},
 
-    /* 复选框勾选状态不确定是传入此参数 */
-    indeterminate: {type: Boolean, default: null}
+    /** 复选框勾选状态不确定是传入此参数 */
+    indeterminate: {type: Boolean, default: false}
   }
-}
+
+});
 </script>

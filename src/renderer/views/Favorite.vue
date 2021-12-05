@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import player from '../player';
 
 export default {

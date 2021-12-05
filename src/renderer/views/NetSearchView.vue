@@ -69,9 +69,9 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import player from '../player';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '../api';
 import {convertSinger} from '../../utils';
 
@@ -131,7 +131,7 @@ export default {
       // 若选定歌曲选项卡
       if (newTab === tabMap.SONG_TAB) {
         // 打开进度指示器
-        Spinner.open();
+        element.open();
 
         // 搜索歌手 => 处理并展示歌手基本数据 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
         searchSinger($query).then(data => {
@@ -147,10 +147,10 @@ export default {
           data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        }).catch(() => newTab.update = true).finally(element.close);
 
       } else if (newTab === tabMap.ALBUM_TAB) {
-        Spinner.open();
+        element.open();
 
         searchAlbum(newTab.page, $query).then(data => {
           // 修改分页信息
@@ -158,10 +158,10 @@ export default {
           // 添加专辑
           albumList.splice(0, albumList.length, ...data.list);
 
-        }).finally(Spinner.close);
+        }).finally(element.close);
 
       } else if (newTab === tabMap.MV_TAB) {
-        Spinner.open();
+        element.open();
         searchMv(newTab.page, $query).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
@@ -170,11 +170,11 @@ export default {
           data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        }).catch(() => newTab.update = true).finally(element.close);
 
       } else if (newTab === tabMap.SPECIAL_TAB) {
         // 打开进度指示器
-        Spinner.open();
+        element.open();
         searchSpecial(newTab.page, $query).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
@@ -182,7 +182,7 @@ export default {
           // 添加歌单
           specialList.splice(0, specialList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        }).catch(() => newTab.update = true).finally(element.close);
       }
     };
 
@@ -245,7 +245,7 @@ export default {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          Spinner.open();
+          element.open();
 
           searchSong(page, $query).then(data => {
             // 重设置分页信息
@@ -255,7 +255,7 @@ export default {
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       },
     };

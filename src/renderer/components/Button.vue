@@ -8,21 +8,23 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang='ts'>
+import {defineComponent} from 'vue';
+
+export default defineComponent({
   name: 'Button',
 
   props: {
-    /* 按钮文本 */
+    /** 按钮文本 */
     text: String,
-     /* 前缀图标 */
+    /** 前缀图标 */
     prefixIcon: String,
-    /* 前缀图标大小 */
+    /** 前缀图标大小 */
     prefixIconSize: String,
-    /* 后缀图标 */
+    /** 后缀图标 */
     suffixIcon: String,
-    /* 后缀图标大小 */
+    /** 后缀图标大小 */
     suffixIconSize: String,
   }
-}
+});
 </script>

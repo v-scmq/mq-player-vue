@@ -24,11 +24,11 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import {reactive} from 'vue';
 import player from '../player';
 import Message from '../components/Message';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 
 import {getRanksSongList} from '../api';
 import {convertSinger} from '../../utils';
@@ -52,7 +52,7 @@ export default {
       {title: '时长', property: 'duration', width: '100px'},
     ]);
 
-    Spinner.open();
+    element.open();
     getRanksSongList(page, currentRankItem).then(data => {
       // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
       Object.assign(page, data.page);
@@ -63,7 +63,7 @@ export default {
       data.list.forEach(convertSinger);
       songList.splice(0, songList.length, ...data.list);
 
-    }).finally(Spinner.close);
+    }).finally(element.close);
 
     return {
       rankList, songList, columns,
@@ -77,7 +77,7 @@ export default {
         currentRankItem = rankItem;
         Message(`榜单分类：${rankType.name} 对应的榜单项：${rankItem.name}`);
 
-        Spinner.open();
+        element.open();
         page.current = 1;
 
         getRanksSongList(page, rankItem).then(data => {
@@ -86,7 +86,7 @@ export default {
           data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data)
 
-        }).finally(Spinner.close);
+        }).finally(element.close);
       },
 
       /**
@@ -100,7 +100,7 @@ export default {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          Spinner.open();
+          element.open();
 
           getRanksSongList(page, currentRankItem).then(data => {
             // 重设置分页信息
@@ -110,7 +110,7 @@ export default {
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       }
     };

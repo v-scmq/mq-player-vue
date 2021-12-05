@@ -16,7 +16,7 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 /**
  * 滑动条组件, 用于双向绑定的value属性值永远在 [0,1] 区间.  它具有2个可供外部使用的事件:
  * 1.change事件,数据改变时,实时的回调方法.第一个参数是当前value属性值, 第二个参数若为true,
@@ -32,50 +32,50 @@
  * @update 2021-09-02
  */
 
-import {ref, watch, computed} from 'vue';
+import {ref, watch, computed, defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'Slider',
 
   props: {
     modelValue: {type: Number, default: 0},
-    vertical: {type: Boolean, default: null},
+    vertical: {type: Boolean, default: false},
     buffering: {type: Number, default: null}
   },
 
   emits: ['update:modelValue', 'change'],
 
   setup(props, {emit}) {
-    /** @type {Ref<HTMLElement | null>} 组件根元素引用 */
-    const el = ref(null);
+    //  组件根元素引用
+    const el = ref(null as unknown as HTMLElement);
 
-    /** @type {Ref<HTMLElement | null>} 滑块d元素 */
-    const thumb = ref(null);
+    // 滑块d元素
+    const thumb = ref(null as unknown as HTMLElement);
 
-    /** @type {number | null} 鼠标在滑块上按下时距离滑块的做左偏移量 */
-    let offsetX = null;
+    // 鼠标在滑块上按下时距离滑块的做左偏移量
+    let offsetX: number;
 
-    /** @type {number | null} 滑块距离父元素slider的左偏移量(单位px) */
-    let offsetLeft = null;
+    // 滑块距离父元素slider的左偏移量(单位px)
+    let offsetLeft: number;
 
-    /** @type {boolean | null} 滑块是否发生过拖动 */
-    let dragged = null;
+    // 滑块是否发生过拖动
+    let dragged: boolean;
 
     // 进度值
-    const value = computed(() => /** @type {number} */ props.modelValue * 100);
+    const value = computed(() => props.modelValue * 100);
 
     /**
      * 开始拖动(指针设备在滑块上按下)时触发, 此时并还未开始拖动,仅仅是准备好拖动.
      * 需要注意检测中断拖动不能依靠滑块(div)元素本身,需要借助document对象 或 window对象
      * 因为元素本身在鼠标移动后,所监听的鼠标释放事件并不会触发,但是document或window一定会触发
      *
-     * @param {PointerEvent} e 鼠标事件
+     * @param {PointerEvent} event 指针事件
      */
-    const onDragStart = e => {
-      e.preventDefault();
+    const onDragStart = (event: PointerEvent) => {
+      event.preventDefault();
 
-      let value = props.vertical;
-      offsetX = value ? e.clientY : e.clientX;
+      const value = props.vertical;
+      offsetX = value ? event.clientY : event.clientX;
       offsetLeft = value ? thumb.value.offsetTop : thumb.value.offsetLeft;
       document.onpointermove = onDragging;
       document.onpointerup = onDragEnd;
@@ -92,18 +92,15 @@ export default {
         emit('change', props.modelValue, true);
       }
 
-      dragged = null;
-      offsetX = null;
-      offsetLeft = null;
-      document.onpointermove = null;
-      document.onpointerup = null;
+      dragged = offsetX = offsetLeft = null as any;
+      document.onpointermove = document.onpointerup = null;
     };
 
     /**
      * 滑块被拖动时触发.在此过程中,只会提交input事件以修改value属性值
      * @param {PointerEvent} e 指针事件
      */
-    const onDragging = e => {
+    const onDragging = (e: PointerEvent) => {
       let total = props.vertical ? el.value.clientHeight : el.value.clientWidth;
 
       // 增量 = 现在的e.clientX|e.clientY - 鼠标按下时的e.clientX|e.clientY(即offsetX)
@@ -112,8 +109,8 @@ export default {
       value = value < 0 ? 0 : value > total ? total : value;
 
       // 计算新的值,此时保留3为有效数字,然后检测值是否变化,才提交值(虽然提交相同值不会触发value改变)
-      value = props.vertical ? 1 - (value / total).toFixed(3) :
-          (value / total).toFixed(3) - 0;
+      value = props.vertical ? 1 - ((value / total).toFixed(3) as unknown as number) :
+          ((value / total).toFixed(3) as unknown as number) ^ 0;
 
       if (props.modelValue !== value) {
         // 立刻置为true,这将用于表名滑块确实发生过拖动
@@ -129,10 +126,10 @@ export default {
      *
      * @param {PointerEvent} e 指针事件
      */
-    const onSliderClicked = e => {
+    const onSliderClicked = (e: PointerEvent) => {
       if (e.target === el.value) {
         let value = props.vertical ? e.offsetY / el.value.clientHeight : e.offsetX / el.value.clientWidth;
-        value = value.toFixed(3) - 0;
+        value = (value.toFixed(3) as unknown as number) ^ 0;
         value = props.vertical ? 1 - value : value;
 
         if (value !== props.modelValue) {
@@ -153,5 +150,6 @@ export default {
 
     return {el, thumb, value, onSliderClicked, onDragStart, isNotDragging};
   }
-}
+
+});
 </script>

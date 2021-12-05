@@ -17,11 +17,11 @@
   <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick"/>
 </template>
 
-<script>
+<script lang='ts'>
 import db from '../database';
 import player from '../player';
 import Message from '../components/Message';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 
 import {reactive, ref, getCurrentInstance, onBeforeUnmount} from 'vue';
 import {getFileURL, secondToString, resolveFileName, getMediaInfo, toFileSize} from '../../utils';
@@ -129,7 +129,7 @@ export default {
       if (!handleMusicFilter.$method) {
         handleMusicFilter.$method = () => {
           let limited = maxSize > 1024;
-          limited ? Spinner.open() : null;
+          limited ? element.open() : null;
 
           let table = db.tables.localMusic.name;
           // 若输入了搜索关键词,则调用过滤,否则查询所有
@@ -138,7 +138,7 @@ export default {
             inputKey.value ? (maxSize = data.length) : null;
             list.splice(0, list.length, ...data);
           });
-          promise.finally(limited ? Spinner.close : null);
+          promise.finally(limited ? element.close : null);
         }
       }
       // 开始计时,在指定时间后执行数据过滤
@@ -160,7 +160,7 @@ export default {
         return;
       }
 
-      Spinner.open();
+      element.open();
       let savedList = [];
 
       if (window.electron) {
@@ -196,7 +196,7 @@ export default {
         maxSize += savedList.length;
       }
 
-      Spinner.close();
+      element.close();
     };
 
     onBeforeUnmount(() => db.close());
@@ -205,11 +205,11 @@ export default {
         // 获取数据库表名称
     let tableNamed = db.tables.localMusic.name;
 
-    Spinner.open();
+    element.open();
     db.open()
         .then(() => db.queryAll(tableNamed))
         .then(data => maxSize = list.push(...data))
-        .finally(Spinner.close);
+        .finally(element.close);
     /************ 加载表格视图数据   END ************/
 
     return {

@@ -19,10 +19,10 @@
   </teleport>
 </template>
 
-<script>
-import {ref, watch} from 'vue';
+<script lang='ts'>
+import {ref, watch, defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'Modal',
 
   props: {
@@ -58,8 +58,8 @@ export default {
        *
        * @param {PointerEvent} event 点击事件
        */
-      close(event) {
-        const classList = event.target.classList;
+      close(event: PointerEvent) {
+        const classList = (event.target as HTMLElement).classList;
         // 若点击关闭图标 或 (不是模式对话框 且 点击的是遮罩层), 那么关闭对话框
         if (classList.contains('close-icon') || (!props.modality && classList.contains('modal'))) {
           // 开始动画,模态框将从当前位置开始移动直至不在可视区域内
@@ -68,5 +68,5 @@ export default {
       }
     };
   }
-}
+});
 </script>

@@ -1,4 +1,7 @@
-import {createVNode, render, ref} from 'vue';
+import {createVNode, render, ref, VNode} from 'vue';
+
+import {ComponentOptions} from '@vue/runtime-core';
+
 
 /**  Message 图标类型 */
 const TYPE_MAP = {
@@ -6,10 +9,10 @@ const TYPE_MAP = {
     success: 'M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z',
     warning: 'M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z',
     error: 'M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z'
-};
+} as const;
 
 /** Message组件构建模板 */
-const MessageComponent = {
+const MessageComponentOptions: ComponentOptions = {
     template: `
       <transition name='message-fade' @before-leave='onClose' @after-leave="$emit('destroy')">
       <div class='message' v-show='visible' :style="{top: topOffset + 'px'}" @mouseenter='onMouseEnter'
@@ -43,22 +46,30 @@ const MessageComponent = {
     setup(props) {
         // 初始不可见
         const visible = ref(false);
-        // 获取对应类型的图标
-        const icon = ref(TYPE_MAP[props.type]);
+
+        // @ts-ignore 获取对应类型的图标
+        const icon = ref(TYPE_MAP[props.type as keyof typeof TYPE_MAP]);
+
         // 数值计时器
-        let timer = null;
+        let timer: number | null = null;
 
         // 关闭,并调用传递过来的onClose方法
         const close = () => {
             visible.value = false;
+            // @ts-ignore
             props.onClose instanceof Function ? props.onClose() : null;
         }
 
         // 鼠标移入时,清除计时器
-        const onMouseEnter = () => clearTimeout(timer);
+        const onMouseEnter = () => window.clearTimeout(<number>timer);
         // 鼠标立刻时,重新开始计时
-        const onMouseLeave = () => props.duration > 0 ?
-            timer = setTimeout(close, props.duration) : null;
+        const onMouseLeave = () => {
+            // @ts-ignore
+            const {duration} = props;
+            if (duration > 0) {
+                timer = window.setTimeout(close, duration)
+            }
+        };
 
         // 开始计时
         onMouseLeave();
@@ -69,37 +80,62 @@ const MessageComponent = {
     }
 };
 
+/**
+ * 消息配置选项
+ */
+type MessageOptions = {
+    /** 消息文本 */
+    message: string;
+    /** 消息类型 */
+    type?: keyof typeof TYPE_MAP;
+    /** 是否显示关闭图标 */
+    showClose?: boolean;
+    /** 消息显示时间(单位: 毫秒) */
+    duration?: number;
+    /** (仅内部使用)消息在关闭时的回调 */
+    onClose?: () => void;
+    /** (仅内部使用)消息在可视区域的上边缘偏移量(单位:像素) */
+    topOffset?: number;
+}
+
+/** Message构造器 */
+type MessageConstructor = (options: string | MessageOptions) => void;
+
+/** Message的info、success、warring、error类型方法 */
+type MessageTypedFn = {
+    [key in keyof typeof TYPE_MAP]: MessageConstructor
+}
+
+/**
+ * Message组件
+ */
+type MessageComponent = {
+    /**
+     * 通过指定的message id,来关闭Message
+     *
+     * @param id message id
+     */
+    close(id: string): void;
+
+    /**
+     * 关闭所有Message
+     */
+    closeAll(): void;
+
+} & MessageConstructor & MessageTypedFn;
+
 /** 存放所有正在显示的Message的VNode(虚拟DOM节点)对象 */
-const instances = [];
+const instances: VNode[] = [];
 
-/**
- * @typedef {'info' | 'success' | 'warning' | 'error'} MessageType 消息类型
- */
-
-/**
- * @typedef {Object} MessageOptions 消息组件
- *
- * @property {string}                   message     消息文本
- * @property {MessageType | undefined}  type        消息类型
- * @property {boolean | undefined}      showClose   是否显示关闭图标
- * @property {number | undefined}       duration    消息显示时间(单位: 毫秒)
- * @property {undefined}                onClose     (仅内部使用)消息在关闭时的回调
- * @property {undefined}                topOffset   (仅内部使用)消息在可视区域的上边缘偏移量(单位:像素)
- */
-
-/**
- * 通过配置选项在页面上显示消息
- *
- * @param {MessageOptions | string} options 配置选项
- */
-const Message = options => {
-    options = options || {};
+// @ts-ignore
+const Message: MessageComponent = (options: string | MessageOptions) => {
+    options = options || {} as MessageOptions;
     if (typeof options === 'string') {
         options = {message: options};
     }
 
-    // 确保类型是在 ['success' , 'warning' , 'info' , 'error'] 中
-    if (!TYPE_MAP[options.type]) {
+    // 确保类型是在 TYPE_MAP对象中的key 中
+    if (!TYPE_MAP[options.type as keyof typeof TYPE_MAP]) {
         options.type = 'info';
     }
 
@@ -109,82 +145,46 @@ const Message = options => {
 
     // 计算当前message在竖直方向上的起始位置
     options.topOffset = options.topOffset || 20;
-    instances.forEach(item => options.topOffset += (item.el.offsetHeight || 0) + 16);
+    instances.forEach(item => (<MessageOptions>options).topOffset += (item.el?.offsetHeight || 0) + 16);
 
-    /** @type {Object} */
-    const vm = createVNode(MessageComponent, options);
-    let root = document.createElement('div');
+    const vm = createVNode(MessageComponentOptions, options);
+    let root: HTMLDivElement | null = document.createElement('div');
 
-    vm.props.onDestroy = () => root = render(null, root);
+    (<any>vm.props).onDestroy = () => {
+        render(null, <HTMLDivElement>root);
+        root = null;
+    };
 
     render(vm, root);
-    document.body.appendChild(root.firstElementChild);
+    document.body.appendChild(<HTMLDivElement>root.firstElementChild);
 
-    vm.$nodeId = id;
+    (<any>vm).$nodeId = id;
     instances.push(vm);
 };
 
 /**
- * 显示info级别的消息
- *
- * @param {MessageOptions | string} options 配置选项
+ * 初始化 'info' , 'success' , 'warning' , 'error' 类型的Message方法
  */
-Message.info = options => {
-    if (typeof options === 'string') {
-        options = {message: options};
-    }
-    options.type = 'info';
-    Message(options);
-};
+Object.keys(TYPE_MAP).forEach((key) => {
+    const type = key as keyof typeof TYPE_MAP;
 
-/**
- * 显示success级别的消息
- *
- * @param {MessageOptions | string} options 配置选项
- */
-Message.success = options => {
-    if (typeof options === 'string') {
-        options = {message: options};
-    }
-    options.type = 'success';
-    Message(options);
-};
+    (<any>Message)[type] = (options: MessageOptions | string) => {
+        if (typeof options === 'string') {
+            options = {message: options};
+        }
 
-/**
- * 显示warning级别的消息
- *
- * @param {MessageOptions | string} options 配置选项
- */
-Message.warning = options => {
-    if (typeof options === 'string') {
-        options = {message: options};
-    }
-    options.type = 'warning';
-    Message(options);
-};
-
-/**
- * 显示error级别的消息
- *
- * @memberOf {Message}
- * @param {MessageOptions | string} options 配置选项
- */
-Message.error = options => {
-    if (typeof options === 'string') {
-        options = {message: options};
-    }
-    options.type = 'error';
-    Message(options);
-};
+        options.type = type;
+        Message(options);
+    };
+});
 
 /**
  * 关闭指定id的message消息
  *
- * @memberOf {Message}
  * @param {string} id message ID
  */
-Message.close = id => {
-    let index = instances.findIndex(vm => vm.$nodeId === id);
+Message.close = (id: string) => {
+    let index = instances.findIndex(vm => (<any>vm).$nodeId === id);
     if (index === -1) {
         return;
     }
@@ -197,21 +197,19 @@ Message.close = id => {
     }
 
     // 当前被关闭的节点之后的所有可视消息节点的top位置都减少以下值
-    const reduce = vm.el.offsetHeight + 16;
+    const reduce = vm.el?.offsetHeight + 16;
     for (; index < len; ++index) {
-        instances[index].component.props.topOffset =
-            parseInt(instances[index].el.style.top) - reduce;
+        (<any>instances[index].component).props.topOffset =
+            parseInt(instances[index].el?.style.top) - reduce;
     }
 };
 
 /**
  * 关闭所有message的方法
- *
- * @memberOf {Message}
  */
 Message.closeAll = () => {
     for (let i = instances.length - 1; i >= 0; --i) {
-        instances[i].close();
+        (<any>instances[i]).close();
     }
 };
 

@@ -14,8 +14,8 @@
   </grid-view>
 </template>
 
-<script>
-import Spinner from '../components/Spinner';
+<script lang='ts'>
+import element from '../components/Spinner';
 
 import {reactive, onMounted} from 'vue';
 import {useRouter} from 'vue-router';
@@ -44,7 +44,7 @@ export default {
     const router = useRouter();
 
     onMounted(() => {
-      Spinner.open();
+      element.open();
 
       getSingerList(page, null).then(data => {
         // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
@@ -69,7 +69,7 @@ export default {
         // 添加歌手列表数据
         singerList.splice(0, singerList.length, ...data.list);
 
-      }).finally(Spinner.close);
+      }).finally(element.close);
     });
 
     return {
@@ -99,14 +99,14 @@ export default {
         // 重设为第一页
         page.current = 1;
 
-        Spinner.open();
+        element.open();
         getSingerList(page, singerTagParam).then(data => {
           // 重设分页信息
           data.page && Object.assign(page, data.page);
           // 添加歌手数据
           singerList.splice(0, singerList.length, ...data.list);
 
-        }).catch(() => --page.current).finally(Spinner.close);
+        }).catch(() => --page.current).finally(element.close);
       },
 
       /**
@@ -122,7 +122,7 @@ export default {
       loadData() {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          Spinner.open();
+          element.open();
 
           ++page.current;
 
@@ -132,7 +132,7 @@ export default {
             // 添加歌手数据
             singerList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       }
 

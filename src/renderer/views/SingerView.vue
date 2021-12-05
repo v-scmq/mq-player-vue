@@ -75,9 +75,9 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import player from '../player';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
 import {convertSinger} from '../../utils';
 
@@ -132,7 +132,7 @@ export default {
       newTab.update = false;
 
       if (newTab === tabMap.SONG_TAB) {
-        Spinner.open();
+        element.open();
         return getSingerSongList(newTab.page, singer).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
@@ -142,22 +142,22 @@ export default {
           data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        }).catch(() => newTab.update = true).finally(element.close);
       }
 
       if (newTab === tabMap.ALBUM_TAB) {
-        Spinner.open();
+        element.open();
         return getSingerAlbumList(newTab.page, singer).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
           // 添加专辑
           albumList.splice(0, albumList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        }).catch(() => newTab.update = true).finally(element.close);
       }
 
       if (newTab === tabMap.MV_TAB) {
-        Spinner.open();
+        element.open();
         getSingerMvList(newTab.page, singer).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
@@ -165,7 +165,7 @@ export default {
           data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        }).catch(() => newTab.update = true).finally(element.close);
       }
     };
 
@@ -228,7 +228,7 @@ export default {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          Spinner.open();
+          element.open();
 
           getSingerSongList(page, singer).then(data => {
             // 重设置分页信息
@@ -238,7 +238,7 @@ export default {
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       },
 
@@ -247,7 +247,7 @@ export default {
         const page = tabMap.MV_TAB.page;
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          Spinner.open();
+          element.open();
 
           ++page.current;
 
@@ -257,7 +257,7 @@ export default {
             // 添加专辑
             albumList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       },
 
@@ -266,7 +266,7 @@ export default {
         const page = tabMap.MV_TAB.page;
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          Spinner.open();
+          element.open();
 
           ++page.current;
 
@@ -277,7 +277,7 @@ export default {
             data.list.forEach(convertSinger);
             mvList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       }
 

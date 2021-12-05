@@ -7,7 +7,8 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 <div>
     <img src="https://img.shields.io/badge/Electron-16-success.svg" alt>
     <img src="https://img.shields.io/badge/Vue-3-success.svg" alt>
-    <img src="https://img.shields.io/badge/NodeJS-14.17-blue.svg" alt>
+    <img src="https://img.shields.io/badge/NodeJS-16-blue.svg" alt>
+    <img src="https://img.shields.io/badge/TypeScript-4.5-blue.svg" alt>
     <img src="https://img.shields.io/badge/MusicMetadata-7.9-blue.svg" alt>
 </div>
 

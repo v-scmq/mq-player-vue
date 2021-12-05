@@ -43,11 +43,11 @@
         </div>
 
         <!-- 上一首 -->
-        <icon width='2em' height='2em' name='previous' @click='play(getIndex(false))'/>
+        <icon width='2em' height='2em' name='previous' @click='play(getIndex(false),false)'/>
         <!-- 播放或暂停 -->
         <icon width='3em' height='3em' :name="isPlaying ? 'pause' : 'play' " @click='playOrPause'/>
         <!-- 下一首 -->
-        <icon width='2em' height='2em' name='next' @click='play(getIndex(true))'/>
+        <icon width='2em' height='2em' name='next' @click='play(getIndex(true),false)'/>
 
         <!-- 音量 -->
         <div class='popup-container'>
@@ -84,12 +84,14 @@
   </div>
 </template>
 
-<script>
-import player from '../player';
+<script lang='ts'>
+import player, {Status} from '../player';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
+
 import {ref, reactive, onBeforeUnmount} from 'vue';
-import MusicViewer from './MusicViewer';
+
+import MusicViewer from './MusicViewer.vue';
 
 export default {
   name: 'Footer',
@@ -114,16 +116,15 @@ export default {
 
     const viewerVisible = ref(false);   // 音乐详情页面可见性
 
-    /** @type {Ref<Object | null>} */
-    const progressSlider = ref(null);   // 进度Slider
+    const progressSlider = ref(null as any);   // 进度Slider
 
     /**
      * 获取播放器媒体播放索引
      *
-     * @param {boolean} next true:生成下一个索引,false:生成上一个索引
+     * @param next true:生成下一个索引,false:生成上一个索引
      * @return {number} 新的播放索引. 若返回{@code -1},则表示没有播放数据源,若返回{@code -2},则表示顺序播放结束
      */
-    const getIndex = next => {
+    const getIndex = (next: boolean) => {
       let index = player.index, size = player.playList.length;
       // 列表循环
       if (modeIcon.value === 'list-loop') {
@@ -147,15 +148,16 @@ export default {
     /**
      * 播放指定索引的歌曲列表
      *
-     * @param {number} index 媒体资源索引
-     * @param {boolean | null} playNext 指定遇到错误时是否继续播放下一首
+     * @param index 媒体资源索引
+     * @param playNext 指定遇到错误时是否继续播放下一首
      */
-    const play = (index, playNext = null) => {
+    const play = (index: number, playNext: boolean) => {
       let list = player.playList;
       // 暂停当前播放的媒体
       player.pause();
       if (!list || list.length === 0 || index === -1 || index >= list.length) {
-        return Message.warning('没有播放数据源，请选择一个播放源！');
+        Message.warning('没有播放数据源，请选择一个播放源！');
+        return;
       }
 
       player.index = index;
@@ -164,9 +166,10 @@ export default {
       // 若播放索引在正常范围内,则准备播放媒体
       if (index >= 0 && index < list.length) {
         let media = list[index];
-        if (!(media instanceof Object)) {
+        if (!media) {
           Message.info('媒体信息不存在，即将播放下一首');
-          return playNext ? play(++index, true) : null;
+          playNext && play(++index, true);
+          return;
         }
 
         // 准备加载媒体资源
@@ -185,23 +188,22 @@ export default {
      * 播放或暂停
      */
     const playOrPause = () => {
-      let type = player.$statusType;
       if (player.isPlayable()) {
-        player.status !== type.PLAYING ? player.play() : player.pause();
+        !player.isPlaying() ? player.play() : player.pause();
       } else {
-        play(player.index);
+        play(player.index, false);
       }
     };
 
     /**
      * 滑动条值改变事件回调方法
      *
-     * @param {number} newValue 滑动条新的值
-     * @param {boolean} seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
+     * @param newValue 滑动条新的值
+     * @param seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
      */
-    const valueChanged = (newValue, seek) => {
+    const valueChanged = (newValue: number, seek: boolean) => {
       media.time = secondToString(newValue * player.getDuration());
-      if (seek && player.status !== player.$statusType.UNKNOWN) {
+      if (seek && player.status !== Status.UNKNOWN) {
         player.seek(newValue * player.getDuration());
       }
     };
@@ -211,7 +213,7 @@ export default {
      *
      * @param {number} newValue 新的播放器音量值
      */
-    const handleVolumeChange = newValue => player.setVolume(newValue);
+    const handleVolumeChange = (newValue: number) => player.setVolume(newValue);
 
     /**
      * 当播放速率值改变时,给播放器设置这个速率值
@@ -219,14 +221,14 @@ export default {
      *
      * @param {number} newValue 播放速率
      */
-    const handleSpeedChange = newValue => player.setSpeed(1.5 * newValue + 0.5);
+    const handleSpeedChange = (newValue: number) => player.setSpeed(1.5 * newValue + 0.5);
 
     /**
      * 鼠标滚轮在音量面板上滚动时,重新设置播放器音量
      *
      * @param {WheelEvent} event 鼠标滚轮滚动事件
      */
-    const onVolumeScroll = event => {
+    const onVolumeScroll = (event: WheelEvent) => {
       let value = volume.value + (event.deltaY > 0 ? -0.05 : 0.05);
       volume.value = value < 0 ? 0 : value > 1 ? 1 : value;
     };
@@ -235,7 +237,7 @@ export default {
      * 鼠标滚轮在播放速率面板上滚动时,重新设置播放速率
      * @param {WheelEvent} event 鼠标事件
      */
-    const onSpeedPaneScroll = event => {
+    const onSpeedPaneScroll = (event: WheelEvent) => {
       // 由 y = 1.5x + 0.5 得 x = (y - b) / a , 增量 = x2 -x1()
       // y = 0.5时,x = 0; 当 y = 0.6时 x = (0.6 - 0.5) / 1.5 = 1 / 15 = -0.066
       let value = speed.value + (event.deltaY > 0 ? -0.066 : 0.066);
@@ -243,21 +245,13 @@ export default {
     };
 
     player.setVolume(volume.value);
+
     player.setEventListener({
-      /**
-       * 播放器状态回调
-       * @param {MediaPlayer.Status} status 播放器状态
-       */
       statusChanged(status) {
         console.info('status=>', status)
-        isPlaying.value = status === player.$statusType.PLAYING;
+        isPlaying.value = status === Status.PLAYING;
       },
 
-      /**
-       * 播放器当前时间改变回调
-       *
-       * @param {number} time 播放进度时间(单位秒)
-       */
       timeChanged(time) {
         // 当滑动条没有再拖动时,才同步播放进度到滑动条视图
         let slider = progressSlider.value;
@@ -266,44 +260,28 @@ export default {
         }
       },
 
-      /**
-       * 播放器时长改变回调
-       *
-       * @param {number} duration 播放器时长(单位秒)
-       */
       durationChanged(duration) {
         media.duration = secondToString(duration);
       },
 
-      /**
-       * 媒体改变回调
-       *
-       * @param {Object} $media 媒体信息
-       */
-      mediaChanged($media) {
-        media.title = $media.title;
+      mediaChanged(mediaSource) {
+        media.title = mediaSource.title;
 
-        let singer = $media.singer, album = $media.album;
+        let singer = mediaSource.singer, album = mediaSource.album;
 
         media.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
             ((singer instanceof Object ? singer.name : singer) || '未知');
 
-        media.cover = (album instanceof Object) ? album.cover : $media.cover || DEFAULT_COVER;
+        media.cover = (album instanceof Object) ? album.cover : mediaSource.cover || DEFAULT_COVER;
 
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
       },
 
-      /**
-       * 播放器由于缓冲而回调此方法
-       *
-       * @param {number} value 缓存进度值
-       */
       bufferChanged(value) {
         media.buffered = value;
       },
 
-      /** 媒体已播放完成 */
       finished() {
         play(getIndex(true), true);
       },

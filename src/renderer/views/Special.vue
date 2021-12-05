@@ -12,7 +12,7 @@
   <table-view :columns="columns" :data="dataList" style="flex:1;overflow: hidden"/>
 </template>
 
-<script>
+<script lang='ts'>
 import {reactive, ref} from "vue";
 
 export default {

@@ -15,7 +15,7 @@ module.exports = {
 
     // webpack的相关配置
     configureWebpack: {
-        entry: './src/renderer/main.js',
+        entry: './src/renderer/main.ts',
         resolve: {
             extensions: ['.js', '.vue', '.json', '.ts', '.less'],
             alias: {'@': path.join(__dirname, 'src/renderer')}
@@ -85,9 +85,9 @@ module.exports = {
     pluginOptions: {
         // vue-cli-plugin-electron-builder配置
         electronBuilder: {
-            preload: 'src/main/preload.js',         // 渲染页面预加载文件
+            preload: 'src/main/preload.ts',         // 渲染页面预加载文件
             outputDir: 'dist_electron',             // 输出目录
-            mainProcessFile: 'src/main/main.js',    // 主进程文件
+            mainProcessFile: 'src/main/main.ts',    // 主进程文件
             mainProcessWatch: ['src/main'],         // 监听此目录下所有文件的变化
             customFileProtocol: '/',                // 自定义文件协议(使用/表示在服务器上的根路径), 默认是 'app://./'
             builderOptions: {

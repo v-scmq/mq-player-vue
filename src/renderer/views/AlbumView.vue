@@ -45,11 +45,11 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import {reactive, watch} from 'vue';
 
 import player from '../player';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 import {getAlbumSongList} from '../api';
 import {convertSinger} from '../../utils';
 
@@ -73,7 +73,7 @@ export default {
 
     watch(() => props.query, /** @param {Album} newQuery */newQuery => {
       if (album.mid !== newQuery.mid) {
-        Spinner.open();
+        element.open();
 
         getAlbumSongList(page, newQuery).then(data => {
           // 重设分页信息
@@ -84,7 +84,7 @@ export default {
           data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list);
 
-        }).finally(Spinner.close);
+        }).finally(element.close);
       }
 
     }, {immediate: true});
@@ -104,7 +104,7 @@ export default {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          Spinner.open();
+          element.open();
 
           getAlbumSongList(page, album).then(data => {
             // 重设置分页信息
@@ -114,7 +114,7 @@ export default {
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       }
     };

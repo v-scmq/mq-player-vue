@@ -10,36 +10,32 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
 import player from '../player';
-import WindowStateBar from './WindowStateBar';
-import {onBeforeUnmount, onMounted, ref} from 'vue';
+import WindowStateBar from './WindowStateBar.vue';
+import {ref, onBeforeUnmount, onMounted, defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'PlayDetailView',
   components: {WindowStateBar},
 
   props: {
-    cover: null
+    cover: String
   },
 
   emits: ['close'],
 
   setup() {
-
-    /** @type {Ref<HTMLCanvasElement | null>} */
-    const canvasRef = ref(null);
-    /** @type {CanvasRenderingContext2D | null} */
-    let canvasContext = null;
-    /** @type {CanvasGradient | null} */
-    let color = null;
+    const canvasRef = ref(null as unknown as HTMLCanvasElement);
+    let canvasContext: CanvasRenderingContext2D;
+    let color: CanvasGradient;
 
     /**
      * 矩形频谱渲染方法
      *
-     * @param {Uint8Array} dataArray 音频频谱数据
+     * @param dataArray 音频频谱数据
      */
-    const rectRenderFrame = (dataArray) => {
+    const rectRenderFrame = (dataArray: Uint8Array) => {
       let width = canvasRef.value.width, height = canvasRef.value.height - 1;
       let step = Math.round(dataArray.length / 60);
       canvasContext.clearRect(0, 0, width, height);
@@ -149,7 +145,7 @@ export default {
 
     onMounted(() => {
       const canvas = canvasRef.value;
-      canvasContext = canvas.getContext('2d');
+      canvasContext = canvas.getContext('2d') as CanvasRenderingContext2D;
 
       // 柱状图颜色
       // 1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整
@@ -166,11 +162,12 @@ export default {
       setTimeout(() => player.setAudioSpectrumListener(rectRenderFrame));
     });
 
-    onBeforeUnmount(() => player.setAudioSpectrumListener(color = canvasContext = null));
+    onBeforeUnmount(() => player.setAudioSpectrumListener(color = canvasContext = null as any));
 
     return {canvasRef};
   }
-}
+
+});
 </script>
 
 <style scoped>

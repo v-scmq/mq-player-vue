@@ -20,10 +20,10 @@
   </div>
 </template>
 
-<script>
-import {onBeforeUnmount, ref} from 'vue';
+<script lang='ts'>
+import {ref, onBeforeUnmount, defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'WindowStateBar',
 
   props: {
@@ -36,29 +36,31 @@ export default {
     // 初始检测是否进入全屏状态
     const isFullScreen = ref(!!document.fullscreenElement);
 
+    const {electron: electronApi} = window as any;
+
     // 若是electron环境
-    if (window.electron) {
+    if (electronApi) {
       /**
        * 监听窗口状态变化
        *
        * @param {Electron.IpcRendererEvent | null} event IPC渲染器事件
        * @param {boolean} isMaximize true:窗口已最大化, false:窗口已被还原
        */
-      const onWindowStateChange = (event, isMaximize) => {
+      const onWindowStateChange = (event: any, isMaximize: boolean) => {
         // 当窗口最大化时,显示为已经最大化的图标
         isMaximized.value = isMaximize;
       };
 
       // 获取窗口状态
-      window.electron.getWindowState().then(isMaximize => onWindowStateChange(null, isMaximize));
+      electronApi.getWindowState().then((isMaximize: boolean) => onWindowStateChange(null, isMaximize));
 
       // 生成随机的id, 用于关联回调方法
       const callbackId = `${Math.random()}-${new Date().getTime()}`;
 
       // 添加窗口状态监听
-      window.electron.onWindowStateChange(onWindowStateChange, callbackId);
+      electronApi.onWindowStateChange(onWindowStateChange, callbackId);
       // 当组件将被解除卸载前, 移除窗口状态监听
-      onBeforeUnmount(() => window.electron.onWindowStateChange(null, callbackId));
+      onBeforeUnmount(() => electronApi.onWindowStateChange(null, callbackId));
 
     } else {
       // 当窗口最大化时,显示为已经最大化的图标
@@ -70,13 +72,13 @@ export default {
 
       /** 最小化窗口 */
       minimize() {
-        window.electron && window.electron.setWindowMinimize();
+        electronApi && electronApi.setWindowMinimize();
       },
 
       /** 最大化或还原窗口 */
       maximizeOrRestore() {
-        if (window.electron) {
-          window.electron.setWindowMaximizeOrRestore();
+        if (electronApi) {
+          electronApi.setWindowMaximizeOrRestore();
         } else {
           if (document.fullscreenElement) {
             document.exitFullscreen();
@@ -102,5 +104,6 @@ export default {
       },
     };
   }
-}
+
+});
 </script>

@@ -13,7 +13,7 @@
  *
  * @return {string} 文件在本地服务器上的API接口地址
  */
-export const getFileURL = path => `/api/file?path=${encodeURIComponent(path.replaceAll('\\', '/'))}`;
+export const getFileURL = (path: string) => `/api/file?path=${encodeURIComponent(path.replaceAll('\\', '/'))}`;
 
 /**
  * 获取流式响应API接口地址
@@ -21,7 +21,7 @@ export const getFileURL = path => `/api/file?path=${encodeURIComponent(path.repl
  * @param {string} url URL地址字符串
  * @return {string} 流式响应API接口地址
  */
-export const getStreamURI = url => `/api/stream?uri=${url ? encodeURIComponent(url) : ''}`;
+export const getStreamURI = (url: string) => `/api/stream?uri=${url ? encodeURIComponent(url) : ''}`;
 
 /**
  * 获取歌曲在本地服务器上的URI地址
@@ -32,7 +32,7 @@ export const getStreamURI = url => `/api/stream?uri=${url ? encodeURIComponent(u
  * @param {number} quality      歌曲音质等级
  * @return {string}             歌曲资源在本地服务器上的URI
  */
-export const getSongURI = (platform, id, mid, quality) =>
+export const getSongURI = (platform: number, id: string | number, mid: string, quality: number) =>
     `/api/url/song?platform=${platform}&mid=${mid}&id=${id}&quality=${quality}`;
 
 /**
@@ -43,7 +43,7 @@ export const getSongURI = (platform, id, mid, quality) =>
  * @param {number} quality      Mv 画质等级
  * @return {string}             Mv 资源在本地服务器上的URI
  */
-export const getMvURI = (platform, vid, quality) =>
+export const getMvURI = (platform: number, vid: string, quality: number) =>
     `/api/url/song?platform=${platform}&mid=${vid}&quality=${quality}`;
 
 
@@ -57,7 +57,7 @@ export const getMvURI = (platform, vid, quality) =>
  * @param {number} millis 毫秒时间值
  * @return {string} 毫秒表示的时间字符串
  */
-export const millisToString = (millis) => {
+export const millisToString = (millis: number) => {
     // 先将总毫秒数转换为总秒数,然后交给总秒数转换为标准时间值的方法处理
     return secondToString(millis / 1000);
 }
@@ -68,7 +68,7 @@ export const millisToString = (millis) => {
  * @param {number} value 总秒数
  * @return {string} 秒数表示的标准时间字符串
  */
-export const secondToString = (value) => {
+export const secondToString = (value: number) => {
     // 浮点数转换为整数可以使用 0 ^ 1.23232 = 1
     value = 0 ^ value;
     let v = '', number;
@@ -100,12 +100,13 @@ export const secondToString = (value) => {
  * @param {string | Array | Object} name 文件或文件夹名称
  * @return {string} 标准的文件或文件夹名称
  */
-export const resolveFileName = (name) => {
+export const resolveFileName = (name: string) => {
     if (!name) return name;
 
-    let replace, values = [...name];
+    const values = [...name];
+    let replace;
     for (let index = values.length - 1; index >= 0; --index) {
-        let c = values[index] = name.charAt(index);
+        const c = values[index] = name.charAt(index);
         if (c === '/' || c === '\\' || c === '*' || c === '?' || c === '"'
             || c === ':' || c === '|' || c === '<' || c === '>') {
             values[index] = '~';
@@ -123,17 +124,17 @@ export const resolveFileName = (name) => {
  * @param {number} size  文件字节大小
  * @return {string}      返回格式化后的文件大小的字符串表示
  */
-export const toFileSize = (scale = 2, size) => {
-    let B = 1024;
+export const toFileSize = (scale = 2, size: number) => {
+    const B = 1024;
     if (size < B) {
         return `${size}B`;
     }
 
-    let KB = 1048576;
+    const KB = 1048576;
     if (size < KB) {
         return `${(size / B).toFixed(scale)}KB`;
     }
-    let MB = 1073741824;
+    const MB = 1073741824;
     if (size < MB) {
         return `${(size / KB).toFixed(scale)}MB`;
     }
@@ -151,16 +152,16 @@ export const toFileSize = (scale = 2, size) => {
  * @param {boolean} isElectron 是否在Electron进程中
  * @return {{path: String, singer: String, size: String, album: String, title: String}} 媒体基本信息
  */
-export const getMediaInfo = (file, isElectron) => {
+export const getMediaInfo = (file: File, isElectron: boolean) => {
     let title = file.name;
     title = title.substring(0, title.lastIndexOf('.'))
-    let index = title.indexOf('-');
-    let singer = title.substring(0, index);
+    const index = title.indexOf('-');
+    const singer = title.substring(0, index);
     title = title.substring(index + 1);
 
     // 若是electron 不再获取 文件大小和路径
-    let size = isElectron ? null : toFileSize(2, file.size);
-    let path = isElectron ? null : URL.createObjectURL(file);
+    const size = isElectron ? null : toFileSize(2, file.size);
+    const path = isElectron ? null : URL.createObjectURL(file);
 
     return {title, album: title, singer, size, path};
 };
@@ -171,7 +172,7 @@ export const getMediaInfo = (file, isElectron) => {
  * @param {Song | Mv | Album} value 歌手信息
  * @return {Singer[]} 歌手信息列表
  */
-export const convertSinger = value =>
+export const convertSinger = (value: any) =>
     value.singer instanceof Array ? value.singer :
         value.singer instanceof Object ? [value.singer] :
             value.singer ? [{name: value.singer}] : [];
@@ -185,10 +186,10 @@ export const convertSinger = value =>
  * 睡眠指定的时间
  *
  * @param {number} timeout 睡眠超时(单位:毫秒)
- * @return {Promise} 异步Promise对象
+ * @return {Promise<null>} 异步Promise对象
  */
 export const sleep = (timeout = 3000) => new Promise(resolve =>
-    setTimeout(() => resolve(), Math.max(timeout, 3000)));
+    setTimeout(() => resolve(null), Math.max(timeout, 3000)));
 
 
 /*****************************************************************
@@ -201,12 +202,12 @@ export const sleep = (timeout = 3000) => new Promise(resolve =>
  * @param {string} sequence {String} 需要转换的字符串
  * @returns {string} 原字符序列对应的MD5字符序列
  */
-export const md5 = (sequence) => {
-    const md5RotateLeft = (value, shiftBits) => {
+export const md5 = (sequence: string) => {
+    const md5RotateLeft = (value: number, shiftBits: number) => {
         return (value << shiftBits) | (value >>> (32 - shiftBits));
     };
 
-    const md5AddUnsigned = (x, y) => {
+    const md5AddUnsigned = (x: number, y: number) => {
         const lx8 = (x & 0x80000000);
         const ly8 = (y & 0x80000000);
         const lx4 = (x & 0x40000000);
@@ -226,47 +227,47 @@ export const md5 = (sequence) => {
         }
     }
 
-    const md5F = (x, y, z) => {
+    const md5F = (x: number, y: number, z: number) => {
         return (x & y) | ((~x) & z);
     }
 
-    const md5G = (x, y, z) => {
+    const md5G = (x: number, y: number, z: number) => {
         return (x & z) | (y & (~z));
     }
 
-    const md5H = (x, y, z) => {
+    const md5H = (x: number, y: number, z: number) => {
         return (x ^ y ^ z);
     }
 
-    const md5I = (x, y, z) => {
+    const md5I = (x: number, y: number, z: number) => {
         return (y ^ (x | (~z)));
     }
 
-    const md5FF = (a, b, c, d, e, f, g) => {
+    const md5FF = (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => {
         a = md5AddUnsigned(a, md5AddUnsigned(md5AddUnsigned(md5F(b, c, d), e), g));
         return md5AddUnsigned(md5RotateLeft(a, f), b);
     }
 
-    const md5GG = (a, b, c, d, e, f, g) => {
+    const md5GG = (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => {
         a = md5AddUnsigned(a, md5AddUnsigned(md5AddUnsigned(md5G(b, c, d), e), g));
         return md5AddUnsigned(md5RotateLeft(a, f), b);
     }
 
-    const md5HH = (a, b, c, d, e, f, g) => {
+    const md5HH = (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => {
         a = md5AddUnsigned(a, md5AddUnsigned(md5AddUnsigned(md5H(b, c, d), e), g));
         return md5AddUnsigned(md5RotateLeft(a, f), b);
     }
 
-    const md5II = (a, b, c, d, e, f, g) => {
+    const md5II = (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => {
         a = md5AddUnsigned(a, md5AddUnsigned(md5AddUnsigned(md5I(b, c, d), e), g));
         return md5AddUnsigned(md5RotateLeft(a, f), b);
     }
 
-    const md5ConvertToWordArray = sequence => {
-        let numberOfWordsTemp1 = sequence.length + 8;
-        let numberOfWordsTemp2 = (numberOfWordsTemp1 - (numberOfWordsTemp1 % 64)) / 64;
-        let numberOfWords = (numberOfWordsTemp2 + 1) * 16;
-        let wordArray = Array(numberOfWords - 1);
+    const md5ConvertToWordArray = (sequence: string) => {
+        const numberOfWordsTemp1 = sequence.length + 8;
+        const numberOfWordsTemp2 = (numberOfWordsTemp1 - (numberOfWordsTemp1 % 64)) / 64;
+        const numberOfWords = (numberOfWordsTemp2 + 1) * 16;
+        const wordArray = Array(numberOfWords - 1);
         let wordCount, bytePosition = 0, byteCount = 0;
         while (byteCount < sequence.length) {
             wordCount = (byteCount - (byteCount % 4)) / 4;
@@ -282,21 +283,21 @@ export const md5 = (sequence) => {
         return wordArray;
     }
 
-    const md5WordToHex = value => {
-        let hexValue = "", hexValueTemp = "", byte, count;
+    const md5WordToHex = (value: number) => {
+        let hexValue = '', hexValueTemp = '', byte: number, count;
         for (count = 0; count <= 3; count++) {
             byte = (value >>> (count * 8)) & 255;
-            hexValueTemp = "0" + byte.toString(16);
-            hexValue = hexValue + hexValueTemp.substr(hexValueTemp.length - 2, 2);
+            hexValueTemp = '0' + byte.toString(16);
+            hexValue = hexValue + hexValueTemp.substring(hexValueTemp.length - 2);
         }
         return hexValue;
     }
 
-    const md5Utf8Encode = sequence => {
-        sequence = sequence.replace(/\r\n/g, "\n");
-        let value = "";
+    const md5Utf8Encode = (sequence: string) => {
+        sequence = sequence.replace(/\r\n/g, '\n');
+        let value = '';
         for (let n = 0; n < sequence.length; n++) {
-            let c = sequence.charCodeAt(n);
+            const c = sequence.charCodeAt(n);
             if (c < 128) {
                 value += String.fromCharCode(c);
             } else if ((c > 127) && (c < 2048)) {
@@ -320,7 +321,7 @@ export const md5 = (sequence) => {
     let a = 0x67452301, b = 0xEFCDAB89, c = 0x98BADCFE, d = 0x10325476;
 
     for (let k = 0; k < x.length; k += 16) {
-        let AA = a, BB = b, CC = c, DD = d;
+        const AA = a, BB = b, CC = c, DD = d;
 
         a = md5FF(a, b, c, d, x[k], S11, 0xD76AA478);
         d = md5FF(d, a, b, c, x[k + 1], S12, 0xE8C7B756);

@@ -5,18 +5,6 @@
     </div>
   </div>
 
-  <!--  <div class='image-container arc-rect' style='flex:1;'>-->
-  <!--    <div class='cover-item' v-for='(item, index) in mvList' :key='index'>-->
-  <!--      <img class='cover' alt loading='lazy' :src='item.cover'/>-->
-  <!--      <div class='name'>-->
-  <!--       <span class='link' v-for='(singer, _index) in item.singer' :key='_index' :data-mid='singer.mid'>-->
-  <!--            {{ singer.name }}-->
-  <!--       </span>-->
-  <!--        -<span>{{ item.title }}</span>-->
-  <!--      </div>-->
-  <!--    </div>-->
-  <!--  </div>-->
-
   <grid-view class='arc-rect' style='margin-top:1em' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
              :cell-height='206' @infinite-scroll='loadData'>
     <template v-slot='{item}'>
@@ -30,13 +18,12 @@
     </template>
   </grid-view>
 
-
 </template>
 
-<script>
+<script lang='ts'>
 import {getMvList} from '../api';
 import {convertSinger} from '../../utils';
-import Spinner from '../components/Spinner';
+import element from '../components/Spinner';
 
 import {reactive, onMounted} from 'vue';
 
@@ -59,7 +46,7 @@ export default {
     const page =  /** @type {Page} */{current: 1, size: 30};
 
     onMounted(() => {
-      Spinner.open();
+      element.open();
 
       getMvList(page, null).then(data => {
         // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
@@ -86,7 +73,7 @@ export default {
         data.list.forEach(convertSinger);
         mvList.splice(0, mvList.length, ...data.list);
 
-      }).finally(Spinner.close);
+      }).finally(element.close);
     });
 
     return {
@@ -116,7 +103,7 @@ export default {
         // 重设为第一页
         page.current = 1;
 
-        Spinner.open();
+        element.open();
 
         getMvList(page, mvTagParam).then(data => {
           Object.assign(page, data.page);
@@ -125,14 +112,14 @@ export default {
           data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
-        }).finally(Spinner.close);
+        }).finally(element.close);
       },
 
       /** 加载数据到视图上(无限滚动触发点) */
       loadData() {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          Spinner.open();
+          element.open();
 
           ++page.current;
 
@@ -143,7 +130,7 @@ export default {
             data.list.forEach(convertSinger);
             mvList.push(...data.list);
 
-          }).catch(() => --page.current).finally(Spinner.close);
+          }).catch(() => --page.current).finally(element.close);
         }
       }
 
