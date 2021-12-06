@@ -8,7 +8,7 @@ import {HttpBaseResponse} from '../types';
 // import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
 
-const protocol = 'http', host = 'localhost', port = 9082;
+const protocol = 'http', host = 'localhost', port = 9081;
 
 // 本地服务器根路径
 export const BASE_URL = `${protocol}://${host}:${port}`;
@@ -456,7 +456,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 
         } catch (e: any) {
             // 捕捉异常,在此处做出错误消息
-            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e?.message);
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e.message);
         }
     },
 
@@ -490,7 +490,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 
         } catch (e: any) {
             // 捕捉异常,在此处做出错误消息
-            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e?.message);
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e.message);
         }
     },
 
@@ -513,7 +513,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 
         } catch (e: any) {
             // 捕捉异常,在此处做出错误消息
-            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e?.message);
+            response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end(e.message);
         }
     }
 };
@@ -534,7 +534,7 @@ createServer((request: IncomingMessage, response: ServerResponse) => {
 
     } catch (e: any) {
         response.writeHead(500, {'content-type': 'text/html'}).end(
-            `<html lang="zh"><head><title>500 Server Error</title></head><body>服务器发生了错误: ${e?.message}</body></html>`);
+            `<html lang="zh"><head><title>500 Server Error</title></head><body>服务器发生了错误: ${e.message}</body></html>`);
     }
 
 }).listen(port, host);
