@@ -5,7 +5,7 @@ import {createServer, request as httpRequest, IncomingMessage, ServerResponse, I
 
 import {HttpBaseResponse} from '../types';
 
-import {QQMusicSource} from './api/tencent';
+// import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
 
 const protocol = 'http', host = 'localhost', port = 9082;
@@ -25,7 +25,7 @@ const MIME_TYPE: { [key: string]: string } = {
 // 数据源
 const DATA_SOURCE_IMPL = {
     [DefaultSource.id]: DefaultSource,
-    [QQMusicSource.id]: QQMusicSource
+    // [QQMusicSource.id]: QQMusicSource
 };
 
 /**

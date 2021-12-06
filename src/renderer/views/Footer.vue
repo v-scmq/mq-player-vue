@@ -89,11 +89,11 @@ import player, {Status} from '../player';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
 
-import {ref, reactive, onBeforeUnmount} from 'vue';
+import {ref, reactive, onBeforeUnmount, defineComponent} from 'vue';
 
 import MusicViewer from './MusicViewer.vue';
 
-export default {
+export default defineComponent({
   name: 'Footer',
 
   components: {MusicViewer},
@@ -302,7 +302,8 @@ export default {
       onVolumeScroll, onSpeedPaneScroll
     }
   }
-}
+
+});
 </script>
 
 <style scoped>

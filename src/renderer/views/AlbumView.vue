@@ -46,24 +46,26 @@
 </template>
 
 <script lang='ts'>
-import {reactive, watch} from 'vue';
-
 import player from '../player';
 import element from '../components/Spinner';
 import {getAlbumSongList} from '../api';
 import {convertSinger} from '../../utils';
+import {Album, ComputedPage, Song} from '../../types';
 
-export default {
+import {reactive, watch, defineComponent, PropType} from 'vue';
+import { TableColumn } from '../components/types';
+
+export default defineComponent({
   name: 'AlbumView',
 
-  props: {query: Object},
+  props: {query: Object as PropType<Album>},
 
   setup(props) {
-    const songList = reactive(/** @type {Song[]} */[]);
-    const album = reactive(/** @type {Album} */ {mid: '', name: '', cover: '', company: ''});
-    const page = /** @type {Page} */ {current: 1, size: 30, total: 1};
+    const songList = reactive<Song[]>([]);
+    const album = reactive<Album>({mid: '', name: '', cover: '', company: ''});
+    const page = {current: 1, size: 30, total: 1} as ComputedPage;
 
-    const columns = reactive(/** @type {TableColumn} */[
+    const columns = reactive<TableColumn[]>([
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
@@ -71,8 +73,8 @@ export default {
       {title: '大小', property: 'size', width: '100px'}
     ]);
 
-    watch(() => props.query, /** @param {Album} newQuery */newQuery => {
-      if (album.mid !== newQuery.mid) {
+    watch(() => props.query, newQuery => {
+      if (newQuery && album.mid !== newQuery.mid) {
         element.open();
 
         getAlbumSongList(page, newQuery).then(data => {
@@ -97,7 +99,7 @@ export default {
        *
        * @param {number} row 行单元格索引
        */
-      onCellClick: row => player.playMediaList(songList, row),
+      onCellClick: (row: number) => player.playMediaList(songList, row),
 
       /** 加载歌曲数据到表格视图中 */
       loadDataList() {
@@ -120,5 +122,6 @@ export default {
     };
 
   }
-}
+
+});
 </script>

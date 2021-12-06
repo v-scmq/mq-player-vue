@@ -38,8 +38,8 @@
   </div>
 </template>
 
-<script>
-import {ICON_MAP} from "../../components/Icon";
+<script lang='ts'>
+import {ICON_MAP} from "../../components/Icon.vue";
 import {reactive} from "vue";
 
 export default {

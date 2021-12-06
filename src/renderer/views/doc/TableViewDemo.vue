@@ -2,14 +2,15 @@
   <table-view :data='data' :columns='columns' style='flex:1;' @infinite-scroll='addData'/>
 </template>
 
-<script>
-import {reactive} from 'vue';
+<script lang='ts'>
+import {TableColumn} from '../../components/types';
+import {reactive, defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'TableViewDemo',
 
   setup() {
-    const columns = reactive(/** @type {TableColumn[]} */[
+    const columns = reactive<TableColumn[]>([
       {type: 'index', width: '100px'},
       {title: '日期', property: 'date'},
       {title: '名称', property: 'name'},
@@ -58,7 +59,6 @@ export default {
 
     return {columns, data, addData};
   }
-};
-</script>
 
-<style scoped></style>
+});
+</script>

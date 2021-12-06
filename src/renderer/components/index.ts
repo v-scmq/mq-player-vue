@@ -1,30 +1,32 @@
-import Accordion from './Accordion';
-import Button from './Button';
-import CheckBox from './CheckBox';
-import TableView from './TableView';
-import TextField from './TextField';
-import Slider from './Slider';
-import Modal from './Modal';
-import Pagination from './Pagination';
-import Icon from './Icon';
-import GridView from './GridView'
+import {App} from 'vue';
+
+import Accordion from './Accordion.vue';
+import Button from './Button.vue';
+import CheckBox from './CheckBox.vue';
+import TableView from './TableView.vue';
+import TextField from './TextField.vue';
+import Slider from './Slider.vue';
+import Modal from './Modal.vue';
+import Pagination from './Pagination.vue';
+import Icon from './Icon.vue';
+import GridView from './GridView.vue'
 
 export default {
     /**
      * 安装组件
      * @param {App<HostElement = any>} Vue Vue应用实例
      */
-    install(Vue) {
+    install(app: App) {
         // 注册组件
-        Vue.component(Button.name, Button);
-        Vue.component(CheckBox.name, CheckBox);
-        Vue.component(TableView.name, TableView);
-        Vue.component(TextField.name, TextField);
-        Vue.component(Slider.name, Slider);
-        Vue.component(Accordion.name, Accordion);
-        Vue.component(Modal.name, Modal);
-        Vue.component(Pagination.name, Pagination);
-        Vue.component(Icon.name, Icon);
-        Vue.component(GridView.name, GridView);
+        app.component(Button.name, Button);
+        app.component(CheckBox.name, CheckBox);
+        app.component(TableView.name, TableView);
+        app.component(TextField.name, TextField);
+        app.component(Slider.name, Slider);
+        app.component(Accordion.name, Accordion);
+        app.component(Modal.name, Modal);
+        app.component(Pagination.name, Pagination);
+        app.component(Icon.name, Icon);
+        app.component(GridView.name, GridView);
     }
 }

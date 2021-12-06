@@ -12,7 +12,7 @@ type DataTable = {
 /**
  * indexDB 数据行类型
  */
-type RowData = { id: number, [key: string]: any };
+type RowData = { id?: number, [key: string]: any };
 
 /** 数据库表 */
 const tables: DataTable = {
@@ -199,9 +199,9 @@ const db = {
      *
      * @param table 数据库表名
      * @param filter 数据记录过滤方法,方法需要返回一个boolean值,true:表示保留,false:废弃
-     * @return {Promise} 只有resolve状态的Promise对象
+     * @return {Promise<T>} 只有resolve状态的Promise对象
      */
-    queryOfFilter<T extends RowData>(table: string, filter: (date: T) => boolean): Promise<T[]> {
+    queryOfFilter<T extends RowData>(table: string, filter: (data: T) => boolean): Promise<T[]> {
         return new Promise(resolve => {
             const transaction = dataBase && dataBase.transaction([table], 'readonly');
             const objectStore = transaction && transaction.objectStore(table);

@@ -57,14 +57,15 @@
 <script lang='ts'>
 import db from '../database';
 import Message from '../components/Message';
-import element from '../components/Spinner';
+import Spinner from '../components/Spinner';
 import WindowStateBar from './WindowStateBar.vue';
 
-import {nextTick, reactive, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import {nextTick, reactive, ref, defineComponent} from 'vue';
 import {login as loginApi, logout as logoutApi} from '../api';
+import { User } from 'src/types';
 
-export default {
+export default defineComponent({
   name: 'Header',
   components: {WindowStateBar},
 
@@ -75,10 +76,10 @@ export default {
     const loginModal = ref(false);
 
     // 用户基本信息
-    const user = reactive(/**  @type {User} */{});
+    const user = reactive<User>({} as User);
     const router = useRouter(), route = useRoute();
 
-    let navigation = null;
+    let navigation: boolean | null = null;
 
     router.afterEach((to, from) => {
       if (from.path === '/' || !navigation) {
@@ -88,7 +89,8 @@ export default {
 
       if (backLength.value === 0) {
         forwardLength.value = 0;
-        // window.electron ? window.electron.clearHistory() : null;
+        // const {electron: electronApi} = window as any;
+        // electronApi ? electronApi.clearHistory() : null;
       }
       ++backLength.value;
     });
@@ -96,10 +98,10 @@ export default {
     /**
      * 开始登录
      *
-     * @param event {MouseEvent | null} 鼠标事件,若没有鼠标事件,则认为主动调用
+     * @param event 点击事件,若事件为不存在,则认为主动调用
      */
-    const login = async event => {
-      element.open();
+    const login = async (event: PointerEvent | void) => {
+      Spinner.open();
 
       try {
         /** @type {Electron.Cookie[]} */
@@ -107,14 +109,14 @@ export default {
 
         if (event) {
           const data = await loginApi(null);
-          /** @type {ModalOpenOption} */
           const {option} = data || {};
 
           if (!option || !option.url) {
             return Message.error('登录失败！');
           }
 
-          cookies = window.electron && JSON.parse(await window.electron.openModal(option));
+          const {electron: electronApi} = window as any;
+          cookies = electronApi && JSON.parse(await electronApi.openModal(option));
 
           if (!cookies || cookies.length < 1) {
             return Message.info('已取消登录！');
@@ -124,7 +126,7 @@ export default {
           // 从数据库获取用户信息
           await db.open();
           const usersInfo = await db.queryAll(db.tables.user.name);
-          const [{uin, cookies: cookieArray} = {}] = usersInfo || [];
+          const [{uin = '', cookies: cookieArray = []} = {}] = usersInfo || [];
 
           cookies = uin && cookieArray;
 
@@ -138,7 +140,7 @@ export default {
         const {user: userInfo, reason} = data;
 
         if (!userInfo || !userInfo.uin) {
-          return Message.error(reason);
+          return Message.error(reason || '未知错误！');
         }
 
         // 删除indexDB中存储的用户信息
@@ -148,10 +150,10 @@ export default {
         // 将新的用户信息复制到视图展示的user对象上
         Object.assign(user, userInfo);
 
-      } catch (e) {
+      } catch (e: any) {
         Message.error(`登录失败： ${e.message} !`);
       } finally {
-        element.close();
+        Spinner.close();
       }
     };
 
@@ -193,7 +195,8 @@ export default {
           // 删除indexDB中存储的用户信息
           db.delete(db.tables.user.name, user.uin).then(logoutApi).then(data => {
             if (data && data.cookieURL) {
-              window.electron.removeAllCookie(data.cookieURL);
+              const {electron: electronApi} = window as any;
+              electronApi.removeAllCookie(data.cookieURL);
             }
           });
         }
@@ -221,5 +224,6 @@ export default {
       }
     };
   }
-}
+
+});
 </script>

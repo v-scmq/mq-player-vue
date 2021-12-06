@@ -38,9 +38,9 @@
 <script lang='ts'>
 import Message from '../components/Message';
 
-import {reactive, ref} from "vue";
+import {reactive, ref, defineComponent} from "vue";
 
-export default {
+export default defineComponent({
   name: "SystemSetting",
 
   setup() {
@@ -49,11 +49,12 @@ export default {
     // 标记关闭计算机
     const dataOfShutdown = reactive({checked: false, hour: 0, minute: 0, force: true});
     // 已选择的标记数据
-    const data = reactive({option: -1, hour: 0, minute: 0, second: 0});
+    const data = reactive({option: -1, hour: 0, minute: 0, second: 0,});
 
     const timerModal = ref(false);
 
-    let timer = null;
+    // 计时器
+    let timer: number | null = null;
 
     return {
       timerModal, dataOfExit, dataOfShutdown, data,
@@ -76,7 +77,7 @@ export default {
           return timerModal.value = false;
         }
 
-        const {hour, minute, force} = option === 0 ? dataOfExit : dataOfShutdown;
+        const {hour, minute, force} = (option === 0 ? dataOfExit : dataOfShutdown) as any;
         if ((hour * 60 + minute) < 1) {
           return Message.warning('时间必须在1分钟以上');
         }
@@ -84,10 +85,9 @@ export default {
         data.hour = hour;
         data.minute = minute;
         data.second = 0;
-        data.force = force;
         data.option = option;
 
-        timer = setInterval(() => {
+        timer = window.setInterval(() => {
           --data.second;
           if (data.second < 0) {
             --data.minute;
@@ -100,18 +100,18 @@ export default {
           }
 
           if (data.hour < 1 && data.minute < 1 && data.second < 1) {
-            clearInterval(timer);
+            timer && clearInterval(timer);
             if (data.option === 0) {
               window.close()
             } else {
-              window.electron.shutdown(data.force);
+              (window as any).electron.shutdown(force);
             }
           }
         }, 1000);
 
       },
 
-      checkChanged(option) {
+      checkChanged(option: number) {
         if ((option ? dataOfShutdown : dataOfExit).checked) {
           const data = option ? dataOfExit : dataOfShutdown;
           data.checked = !!(data.hour = data.minute = 0); // 0 -> !!0 => false;
@@ -119,5 +119,6 @@ export default {
       }
     };
   }
-}
+
+});
 </script>

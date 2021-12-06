@@ -3,25 +3,13 @@
 </template>
 
 <script lang='ts'>
-import axios from 'axios';
+import {defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: "Download",
 
   mounted() {
-    axios.request({
-      url: '/api/singers',
-      method: 'post',
-      data: {
-        name: '张三',
-        age: 18
-      }
-    }).then(res => {
-      console.info(res);
-    })
   }
-}
-</script>
 
-<style scoped>
-</style>
+});
+</script>

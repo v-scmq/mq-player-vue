@@ -33,7 +33,7 @@ type MediaEventListener = {
      *
      * @param media 媒体资源信息
      */
-    mediaChanged<T extends { path: string, [key: string]: any }>(media: T): void;
+    mediaChanged<T extends { path?: string, [key: string]: any}>(media: T): void;
 
     /**
      * 播放时长发生变化
@@ -101,7 +101,7 @@ const player = {
     /** 播放器当前状态 */
     status: Status.UNKNOWN,
     /** 播放列表 */
-    playList: [] as { path: string }[],
+    playList: [] as { path?: string }[],
     /** 播放索引 */
     index: 0,
 
@@ -118,7 +118,7 @@ const player = {
      * @param list 媒体资源信息列表
      * @param index 指定开始播放的索引
      */
-    playMediaList<T extends { path: string }>(list: T[], index: number) {
+    playMediaList<T extends { path?: string }>(list: T[], index: number) {
         if (!list || list.length < 1)
             throw new Error('指定的媒体资源列表必须包含媒体信息!')
         if (index < 0 || index > list.length)
@@ -184,7 +184,7 @@ const player = {
      * @param media 媒体资源信息
      * @return {Promise<boolean>} 异步Promise对象
      */
-    async prepare(media: { path: string, [key: string]: any }) {
+    async prepare(media: { path?: string, [key: string]: any }) {
         const path = media && media.path;
         // 路径至少包含2个字符
         if (!path || path.length < 2) {

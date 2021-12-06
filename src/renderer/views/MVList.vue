@@ -23,47 +23,54 @@
 <script lang='ts'>
 import {getMvList} from '../api';
 import {convertSinger} from '../../utils';
-import element from '../components/Spinner';
+import Spinner from '../components/Spinner';
 
-import {reactive, onMounted} from 'vue';
+import {reactive, onMounted, defineComponent} from 'vue';
+import {ComputedPage, Mv, MvTagsParam} from 'src/types';
 
-export default {
+/**
+ * tag标签节点信息
+ */
+type TagItemNode = {
+  /** 分类标签名称  */
+  name: string;
+  /** 分类标签id  */
+  id: string | number;
+  /** 所属分类组  */
+  group: string;
+  /** `${分类标签分类组}-${分类标签id}`  */
+  value: string;
+};
+
+export default defineComponent({
   name: 'MVList',
 
   setup() {
-    /**
-     * @typedef {Object} TagItemNode tag标签节点信息
-     *
-     * @property {string} name 分类标签名称
-     * @property {string | number} id 分类标签id
-     * @property {string} group 所属分类组
-     * @property {string} value `${分类标签分类组}-${分类标签id}`
-     */
-
-    const tags = reactive(/** @type {TagItemNode[][]} */[]);
-    const mvList = reactive(/** @type {Mv[]} */[]);
-    const mvTagParam = reactive(/** @type {MvTagsParam} */ {});
-    const page =  /** @type {Page} */{current: 1, size: 30};
+    const tags = reactive<TagItemNode[][]>([]);
+    const mvList = reactive<Mv[]>([]);
+    const mvTagParam = reactive<MvTagsParam>({} as MvTagsParam);
+    const page = {current: 1, size: 30} as ComputedPage;
 
     onMounted(() => {
-      element.open();
+      Spinner.open();
 
       getMvList(page, null).then(data => {
         // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
-        Object.assign(page, data.page);
+        data.page && Object.assign(page, data.page);
 
-        const tagList = [];
+        const tagList:TagItemNode[][] = [];
 
         // 转换结构 => {a:[{id, name}], b:[{id, name}]} => [[{id, name, group:a, value:'a;${id}'}] , ...]
         Object.keys(data.tags).forEach(key => {
-          const children = data.tags[key];
+          const property = key as keyof typeof mvTagParam;
+          const children = data.tags[property];
           //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
-          mvTagParam[key] = children[0] && children[0].id; // 1 && 0 => 0
+          mvTagParam[property] = (children[0] && children[0].id) as string; // 1 && 0 => 0
 
           // {id, name} => {id, name, group:key, value:`${key};${id}`}
           children.forEach(item => item.value = `${item.group = key};${item.id}`);
 
-          tagList.push(children);
+          tagList.push(children as TagItemNode[]);
         });
 
         // 添加Mv分类标签信息
@@ -73,7 +80,7 @@ export default {
         data.list.forEach(convertSinger);
         mvList.splice(0, mvList.length, ...data.list);
 
-      }).finally(element.close);
+      }).finally(Spinner.close);
     });
 
     return {
@@ -82,10 +89,10 @@ export default {
       /**
        * Mv分类标签被点击时, 加载最新的Mv数据列表
        *
-       * @param {NamedNodeMap} attributes HTML节点属性(原参数{@link PointerEvent})
+       * @param event 点击事件
        */
-      onListViewClicked({target: {attributes}}) {
-        const {value} = attributes.getNamedItem('data-tag') || {};
+      onListViewClicked(event: PointerEvent) {
+        const value = (event.target as HTMLElement).getAttribute('data-tag');
         if (!value) {
           return;
         }
@@ -93,17 +100,17 @@ export default {
         // 获取分类标签所属组 和 分类标签id
         const [group, id] = value.split(';');
 
-        // 若未改变, 则什么也不做
+        // @ts-ignore 若未改变, 则什么也不做
         if (mvTagParam[group] === id) {
           return;
         }
 
-        // 设定当前分类组对应的分类标签id
+        // @ts-ignore 设定当前分类组对应的分类标签id
         mvTagParam[group] = id;
         // 重设为第一页
         page.current = 1;
 
-        element.open();
+        Spinner.open();
 
         getMvList(page, mvTagParam).then(data => {
           Object.assign(page, data.page);
@@ -112,14 +119,14 @@ export default {
           data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
-        }).finally(element.close);
+        }).finally(Spinner.close);
       },
 
       /** 加载数据到视图上(无限滚动触发点) */
       loadData() {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          element.open();
+          Spinner.open();
 
           ++page.current;
 
@@ -130,13 +137,14 @@ export default {
             data.list.forEach(convertSinger);
             mvList.push(...data.list);
 
-          }).catch(() => --page.current).finally(element.close);
+          }).catch(() => --page.current).finally(Spinner.close);
         }
       }
 
     };
   }
-}
+
+});
 </script>
 
 <style scoped>

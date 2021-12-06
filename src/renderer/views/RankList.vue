@@ -25,26 +25,27 @@
 </template>
 
 <script lang='ts'>
-import {reactive} from 'vue';
+import {defineComponent, reactive} from 'vue';
 import player from '../player';
 import Message from '../components/Message';
-import element from '../components/Spinner';
+import Spinner from '../components/Spinner';
 
 import {getRanksSongList} from '../api';
 import {convertSinger} from '../../utils';
+import {ComputedPage, Rank, RankItem, Song} from 'src/types';
+import { TableColumn } from '../components/types';
 
-export default {
+export default defineComponent({
   name: 'RankList',
 
   setup() {
-    /** @type {RankItem | null} */
-    let currentRankItem = null;
+    let currentRankItem: RankItem = null as any;
 
-    const rankList = reactive(/** @type {Rank[]} */ []);
-    const songList = reactive(/** @type {Song[]} */ []);
-    const page =  /** @type {Page} */ {current: 1, size: 30};
+    const rankList = reactive<Rank[]>([]);
+    const songList = reactive<Song[]>([]);
+    const page = {current: 1, size: 30} as ComputedPage;
 
-    const columns = reactive(/** @type {TableColumn[]} */[
+    const columns = reactive<TableColumn[]>([
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
@@ -52,55 +53,57 @@ export default {
       {title: '时长', property: 'duration', width: '100px'},
     ]);
 
-    element.open();
+    Spinner.open();
     getRanksSongList(page, currentRankItem).then(data => {
       // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
-      Object.assign(page, data.page);
+      data.page && Object.assign(page, data.page);
 
-      rankList.splice(0, rankList.length, ...data.rankList);
+      data.rankList && rankList.splice(0, rankList.length, ...data.rankList);
 
       // 转换歌手为Array类型
       data.list.forEach(convertSinger);
       songList.splice(0, songList.length, ...data.list);
 
-    }).finally(element.close);
+    }).finally(Spinner.close);
 
     return {
       rankList, songList, columns,
 
       /**
        * 所选榜单发生改变时,获取最新的歌曲列表数据
-       * @param {RankItem} rankItem 榜单项信息
-       * @param {Object} rankType 榜单项所属分类
+       *
+       * @param rankItem 榜单项信息
+       * @param rankType 榜单项所属分类
        */
-      onRankChanged(rankItem, rankType) {
+      onRankChanged(rankItem: RankItem, rankType: Rank) {
         currentRankItem = rankItem;
-        Message(`榜单分类：${rankType.name} 对应的榜单项：${rankItem.name}`);
+        Message(`榜单分类：${rankType.title} 对应的榜单项：${rankItem.name}`);
 
-        element.open();
+        Spinner.open();
         page.current = 1;
 
         getRanksSongList(page, rankItem).then(data => {
           data.page && Object.assign(page, data.page);
           // 转换歌手为Array类型
           data.list.forEach(convertSinger);
-          songList.splice(0, songList.length, ...data)
+          songList.splice(0, songList.length, ...data.list)
 
-        }).finally(element.close);
+        }).finally(Spinner.close);
       },
 
       /**
        * 表格行单元格双击时的回调方法
+       *
        * @param {number} row 行单元格索引
        */
-      onCellClick: row => player.playMediaList(songList, row),
+      onCellClick: (row: number) => player.playMediaList(songList, row),
 
       /** 加载歌曲数据到表格视图中 */
       loadDataList() {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          element.open();
+          Spinner.open();
 
           getRanksSongList(page, currentRankItem).then(data => {
             // 重设置分页信息
@@ -110,10 +113,11 @@ export default {
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(element.close);
+          }).catch(() => --page.current).finally(Spinner.close);
         }
       }
     };
   }
-}
+
+});
 </script>

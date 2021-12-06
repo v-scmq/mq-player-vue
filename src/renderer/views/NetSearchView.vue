@@ -72,37 +72,44 @@
 <script lang='ts'>
 import player from '../player';
 import element from '../components/Spinner';
-import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '../api';
 import {convertSinger} from '../../utils';
+import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '../api';
 
-import {reactive, watch} from 'vue';
+import {Album, Mv, Singer, Song, ComputedPage, Special} from '../../types';
+
+import {PropType, reactive, watch, defineComponent} from 'vue';
 import {useRouter} from 'vue-router';
 
 /**
- *
- * @typedef {Object} Tab              选项卡
- *
- * @property {string} title           选项卡标题
- * @property {boolean} update         数据是否需要更新
- * @property {Page | undefined} page  选项卡对应的视图是分页信息
+ * 选项卡信息
  */
+type Tab = {
+  /** 选项卡标题 */
+  title: string;
+  /** 数据是否需要更新 */
+  update: boolean;
+  /** 选项卡对应的视图是分页信息 */
+  page: ComputedPage;
+};
 
-export default {
+export default defineComponent({
   name: 'NetSearchView',
 
-  props: {query: Object},
+  props: {
+    query: {type: Object as PropType<{value: string}>, required: true}
+  },
 
   setup(props) {
-    const singer = reactive(/** @type {Singer} */{});
-    const songList = reactive(/** @type {Song[]} */[]);
-    const mvList = reactive(/** @type {Mv[]} */[]);
-    const albumList = reactive(/** @type {Album[]} */[]);
-    const specialList = reactive(/** @type {Special[]} */[]);
+    const singer = reactive<Singer>({});
+    const songList = reactive<Song[]>([]);
+    const mvList = reactive<Mv[]>([]);
+    const albumList = reactive<Album[]>([]);
+    const specialList = reactive<Special[]>([]);
 
-    const MV_TAB =/** @type {Tab} */  {title: 'MV', update: true, page: {current: 1, size: 30}};
-    const SONG_TAB =/** @type {Tab} */  {title: '歌曲', update: true, page: {current: 1, size: 30}};
-    const ALBUM_TAB =/** @type {Tab} */  {title: '专辑', update: true, page: {current: 1, size: 30}};
-    const SPECIAL_TAB =/** @type {Tab} */  {title: '歌单', update: true, page: {current: 1, size: 30}};
+    const MV_TAB: Tab = {title: 'MV', update: true, page: {current: 1, size: 30} as ComputedPage};
+    const SONG_TAB: Tab = {title: '歌曲', update: true, page: {current: 1, size: 30} as ComputedPage};
+    const ALBUM_TAB: Tab = {title: '专辑', update: true, page: {current: 1, size: 30} as ComputedPage};
+    const SPECIAL_TAB: Tab = {title: '歌单', update: true, page: {current: 1, size: 30} as ComputedPage};
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB});
 
@@ -115,14 +122,15 @@ export default {
     ]);
 
     const router = useRouter();
-    let $query = null;
+
+    let $query: string = '';
 
     /**
      * 处理选项卡改变事件
      *
-     * @param {Tab} newTab 新选定的选项卡
+     * @param newTab 新选定的选项卡
      */
-    const handleTabChanged = newTab => {
+    const handleTabChanged = (newTab: Tab) => {
       // 若未选定任何一个选项卡 或 当前选项卡无需更新数据, 则什么也不做
       if (!newTab || !newTab.update) return;
       // 立刻重置为无需更新状态
@@ -186,11 +194,11 @@ export default {
       }
     };
 
-    watch(() => tabMap.value, /** @type {WatchCallback<UnwrapRef<Tab>, UnwrapRef<Tab>>} */ handleTabChanged);
+    watch(() => tabMap.value, handleTabChanged);
 
     watch(() => props.query, newQuery => {
       // 若不相等 且 新的查询参数是有效的(不能null或undefined)
-      if ($query !== newQuery.value && newQuery.value) {
+      if (newQuery.value && $query !== newQuery.value) {
         $query = newQuery.value;
         tabMap.tabList.forEach(tab => {
           tab.update = true;
@@ -216,24 +224,25 @@ export default {
       /**
        * 表格行单元格双击时的回调方法
        *
-       * @param {number} row 行单元格索引
+       * @param {number} rowIndex 行单元格索引
        */
-      onCellClick: row => player.playMediaList(songList, row),
+      onCellClick: (rowIndex: number) => player.playMediaList(songList, rowIndex),
 
       print: () => print(),
 
       /**
        * 当专辑列表项点击时,跳转到专辑视图
        *
-       * @param {MouseEvent} event 鼠标点击事件
+       * @param event 点击事件
        */
-      onAlbumItemClicked(event) {
-        const node = event.target, classList = node.classList;
+      onAlbumItemClicked(event: PointerEvent) {
+        const node = event.target as HTMLElement, classList = node.classList;
         if (classList.contains('cover') || classList.contains('name')) {
           // 获取数据索引
-          let {value} = node.parentNode.attributes.getNamedItem('data-index') || {};
+          const value = (node.parentNode as HTMLElement).getAttribute('data-index');
+          const index = value ? (value as unknown as number) ^ 0 : -1;
           // 提取专辑信息
-          const album = albumList[value = (value - 0)] && {...albumList[value], singer: null};
+          const album = albumList[index] && {...albumList[index], singer: null};
           // 若存在专辑信息, 则跳转到专辑视图
           album && router.push({path: '/album-view', query: album});
         }
@@ -260,7 +269,8 @@ export default {
       },
     };
   }
-}
+
+});
 </script>
 
 <style scoped>

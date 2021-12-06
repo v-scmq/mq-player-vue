@@ -12,8 +12,9 @@
 </template>
 
 <script lang='ts'>
+import {defineComponent} from 'vue';
 
-export default {
+export default defineComponent({
   name: 'TextField',
 
   props: {
@@ -44,7 +45,7 @@ export default {
      * @param {string} value 输入框已键入的值
      * @return {number | string} 转换后输入框的值
      */
-    const getValue = value => props.type === 'number' ? Number(value) : value;
+    const getValue = (value: string) => props.type === 'number' ? Number(value) : value;
 
     return {
 
@@ -53,9 +54,9 @@ export default {
        *
        * @param {InputEvent} event 输入框输入事件
        */
-      handleInput: event => {
+      handleInput: (event: InputEvent) => {
         const oldValue = props.modelValue;
-        const newValue = getValue(event.target.value);
+        const newValue = getValue((event.target as HTMLInputElement).value);
         if (oldValue !== newValue) {
           emit('update:modelValue', newValue);
         }
@@ -66,15 +67,16 @@ export default {
        *
        * @param {Event} event 输入框值改变事件
        */
-      handleChange: event => {
+      handleChange: (event: Event) => {
         // 若指定了onChange事件
         if (attrs.onChange) {
           // 那么提交值到这个回调方法
-          emit('change', getValue(event.target.value));
+          emit('change', getValue((event.target as HTMLInputElement).value));
         }
       }
 
     }
   }
-}
+
+});
 </script>

@@ -32,13 +32,13 @@
 </template>
 
 <script lang='ts'>
-import {onBeforeUnmount} from 'vue';
+import {onBeforeUnmount, defineComponent} from 'vue';
 import {useRouter} from 'vue-router';
-import Header from './views/Header';
-import Footer from './views/Footer';
+import Header from './views/Header.vue';
+import Footer from './views/Footer.vue';
 import Message from './components/Message';
 
-export default {
+export default defineComponent({
   name: 'App',
   components: {Header, Footer},
 
@@ -56,5 +56,6 @@ export default {
     const routes = useRouter().options.routes;//.filter(item => item.meta);
     return {routes};
   }
-}
+
+});
 </script>

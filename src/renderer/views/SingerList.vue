@@ -15,53 +15,61 @@
 </template>
 
 <script lang='ts'>
-import element from '../components/Spinner';
+import {getSingerList} from '../api';
+import Spinner from '../components/Spinner';
 
-import {reactive, onMounted} from 'vue';
+import {reactive, onMounted, defineComponent} from 'vue';
 import {useRouter} from 'vue-router';
 
-import {getSingerList} from '../api';
+import {ComputedPage, Singer, SingerTags, SingerTagsParam} from 'src/types';
 
-export default {
+/**
+ * tag标签节点信息
+ */
+type TagItemNode = {
+  /** 分类标签名称  */
+  name: string;
+  /** 分类标签id  */
+  id: string | number;
+  /** 所属分类组  */
+  group: string;
+  /** `${分类标签分类组}-${分类标签id}`  */
+  value: string;
+};
+
+export default defineComponent({
   name: 'SingerListView',
 
   setup() {
-    /**
-     * @typedef {Object} TagItemNode tag标签节点信息
-     *
-     * @property {string} name 分类标签名称
-     * @property {string | number} id 分类标签id
-     * @property {string} group 所属分类组
-     * @property {string} value `${分类标签分类组}-${分类标签id}`
-     */
-
-    const tags = reactive(/** @type {TagItemNode[][]} */[]);
-    const singerList = reactive(/** @type {Singer[]} */[]);
-    const singerTagParam = reactive( /** @type {SingerTagsParam} */{});
+    const tags = reactive<TagItemNode[][]>([]);
+    const singerList = reactive<Singer[]>([]);
+    const singerTagParam = reactive<SingerTagsParam>({} as SingerTagsParam);
     // 无限滚动 + 列表虚拟滚动
-    const page =  /** @type {Page}*/{current: 1, size: 30, total: 0};
+    const page = {current: 1, size: 30, total: 0} as ComputedPage;
 
     const router = useRouter();
 
     onMounted(() => {
-      element.open();
+      Spinner.open();
 
       getSingerList(page, null).then(data => {
         // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
         data.page && Object.assign(page, data.page);
 
-        const tagList = [];
+        const tagList:TagItemNode[][] = [];
+        const singerTags = data.tags as SingerTags;
 
         // 转换结构 => {a:[{id, name}], b:[{id, name}]} => [[{id, name, group:a, value:'a;${id}'}] , ...]
-        Object.keys(data.tags).forEach(key => {
-          const children = data.tags[key];
+        Object.keys(singerTags).forEach(key => {
+          const property = key as keyof typeof singerTags;
+          const children = singerTags[property];
           //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
-          singerTagParam[key] = children[0] && children[0].id; // 1 && 0 => 0
+          singerTagParam[property] = (children[0] && children[0].id) as string; // 1 && 0 => 0
 
           // {id, name} => {id, name, group:key, value:`${key};${id}`}
           children.forEach(item => item.value = `${item.group = key};${item.id}`);
 
-          tagList.push(children);
+          tagList.push(children as TagItemNode[]);
         });
 
         // 添加歌手分类标签列表数据
@@ -69,7 +77,7 @@ export default {
         // 添加歌手列表数据
         singerList.splice(0, singerList.length, ...data.list);
 
-      }).finally(element.close);
+      }).finally(Spinner.close);
     });
 
     return {
@@ -78,10 +86,10 @@ export default {
       /**
        * 歌手分类标签被点击时, 加载最新的歌手数据列表
        *
-       * @param {NamedNodeMap} attributes HTML节点属性(原参数{@link PointerEvent})
+       * @param event 点击事件
        */
-      onListViewClicked({target: {attributes}}) {
-        const {value} = attributes.getNamedItem('data-tag') || {};
+      onListViewClicked(event: PointerEvent) {
+        const value = (event.target as HTMLElement).getAttribute('data-tag');
         if (!value) {
           return;
         }
@@ -89,32 +97,32 @@ export default {
         // 获取分类标签所属组 和 分类标签id
         const [group, id] = value.split(';');
 
-        // 若未改变, 则什么也不做
+        // @ts-ignore 若未改变, 则什么也不做
         if (singerTagParam[group] === id || !group) {
           return;
         }
 
-        // 设定当前分类组对应的分类标签id
+        // @ts-ignore 设定当前分类组对应的分类标签id
         singerTagParam[group] = id;
         // 重设为第一页
         page.current = 1;
 
-        element.open();
+        Spinner.open();
         getSingerList(page, singerTagParam).then(data => {
           // 重设分页信息
           data.page && Object.assign(page, data.page);
           // 添加歌手数据
           singerList.splice(0, singerList.length, ...data.list);
 
-        }).catch(() => --page.current).finally(element.close);
+        }).catch(() => --page.current).finally(Spinner.close);
       },
 
       /**
        * 跳转到歌手视图
        *
-       * @param {Singer | any} singer 歌手信息
+       * @param singer 歌手信息
        */
-      navigateTo(singer) {
+      navigateTo(singer: Singer) {
         router.push({path: '/singer-view', query: singer});
       },
 
@@ -122,7 +130,7 @@ export default {
       loadData() {
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
-          element.open();
+          Spinner.open();
 
           ++page.current;
 
@@ -132,13 +140,14 @@ export default {
             // 添加歌手数据
             singerList.push(...data.list);
 
-          }).catch(() => --page.current).finally(element.close);
+          }).catch(() => --page.current).finally(Spinner.close);
         }
       }
 
     };
-  },
-}
+  }
+
+});
 </script>
 
 <style scoped>
@@ -164,5 +173,4 @@ export default {
   pointer-events: none;
   cursor: none;
 }
-
 </style>

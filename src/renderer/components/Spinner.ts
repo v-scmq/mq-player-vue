@@ -8,7 +8,7 @@ type SpinnerComponent = {
      *
      * @param parent {HTMLElement} 进度旋转器的父元素
      */
-    open(parent: HTMLElement): void
+    open(parent?: HTMLElement): void
 
     /**
      * 关闭进度旋转器

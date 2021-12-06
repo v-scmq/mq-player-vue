@@ -84,7 +84,7 @@ export default defineComponent({
     // 获取单元格值的getter. 已废弃深度获取值, 如 column:{property: 'singer.name'},
     //                      推荐使用 column:{ valueGetter: item => item.singer?.name)
     const valueGetters = computed<CellValueGetter[]>(() => props.columns.map(column =>
-        column.valueGetter || (column.type === 'checkbox' ? null :
+        column.valueGetter || (column.type === 'checkbox' ? null as unknown as CellValueGetter:
             column.type === 'index' ? getSequenceValue : getPropertyValue)
     ));
 
@@ -125,7 +125,7 @@ export default defineComponent({
      * @return {string | number | boolean} 当前单元格的值
      */
     const getPropertyValue = (item: TableRow, index: number, column: TableColumn) => {
-      return item[column.property];
+      return item[column.property as string];
     };
 
     /**

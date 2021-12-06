@@ -19,18 +19,20 @@
   </div>
 </template>
 
-<script>
+<script lang='ts'>
+import {defineComponent} from 'vue';
 import {useRoute} from "vue-router";
 
-export default {
+export default defineComponent({
   name: "ComponentList",
 
   setup() {
     /** @type {RouteRecordRaw[{}]} */
     const routes = useRoute().matched[0].children;
-    return {routes: routes.map(route => ({path: route.path, title: route.meta.title}))};
+    return {routes: routes.map(({path, meta}) => ({path, title: meta && meta.title}))};
   }
-}
+
+});
 </script>
 
 <style scoped>

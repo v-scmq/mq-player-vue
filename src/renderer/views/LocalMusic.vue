@@ -21,16 +21,22 @@
 import db from '../database';
 import player from '../player';
 import Message from '../components/Message';
-import element from '../components/Spinner';
+import Spinner from '../components/Spinner';
 
-import {reactive, ref, getCurrentInstance, onBeforeUnmount} from 'vue';
+import {reactive, ref, onBeforeUnmount, defineComponent} from 'vue';
 import {getFileURL, secondToString, resolveFileName, getMediaInfo, toFileSize} from '../../utils';
+import { TableColumn } from '../components/types';
+import { Song } from 'src/types';
 
-export default {
-  name: "LocalMusic",
+export default defineComponent({
+  name: 'LocalMusic',
 
   setup() {
-    const columns = reactive(/** @type {TableColumn[]} */[
+    const inputKey = ref('');
+    const multiple = ref(false);
+    const list = reactive<Song[]>([]);
+
+    const columns = reactive<TableColumn[]>([
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
@@ -39,12 +45,7 @@ export default {
       {title: '大小', property: 'size', width: '100px'}
     ]);
 
-    /** @type {[{path, title, singer, album, duration, size , [property:string]}]} */
-    const list = reactive([]);
-    const multiple = ref(false);
-    const inputKey = ref('');
-
-    const vc = getCurrentInstance();
+    const fileChooser = ref(null as unknown as HTMLInputElement);
 
     // 用于在indexDB中存储本地音乐信息的数据量(非响应式)
     let maxSize = 0;
@@ -52,20 +53,20 @@ export default {
     /**
      * 通过文件对象生成音乐信息
      *
-     * @param {string} basePath 存储音频专辑封面图的根路径
-     * @param {File} file 文件对象
-     * @param {Object} meta 音频元数据信息
-     * @returns {Object} 音乐信息对象
+     * @param basePath 存储音频专辑封面图的根路径
+     * @param file 文件对象
+     * @param meta 音频元数据信息
+     * @returns {Song} 音乐信息对象
      */
-    const parse = (basePath, file, meta) => {
-      let data = {
+    const parse = (basePath: string, file: File, meta: any) => {
+      let data: Song = {
         path: getFileURL(file.path),
         title: meta.common.title,
         singer: meta.common.artist,
-        singerList: meta.common.artists,
+        // singerList: meta.common.artists,
         year: meta.common.year,
         album: meta.common.album,
-        cover: null,
+        cover: '',
         duration: secondToString(meta.format.duration),
         size: toFileSize(2, file.size),
         bitrate: meta.format.bitrate,
@@ -75,7 +76,7 @@ export default {
         // container: meta.format.container,
         // lossless: false,
         // numberOfChannels: meta.format.numberOfChannels,
-      };
+      } as any;
 
       if (!data.title || !data.singer) {
         let info = getMediaInfo(file, true);
@@ -83,62 +84,63 @@ export default {
         data.singer = info.singer || '未知';
       }
 
-      let fs = window.electron, name = data.album || file.name;
-      let path = `${basePath}/${resolveFileName(name)}`;
+      const {electron: electronApi} = window as any;
+
+      const name = data.album as string || file.name;
+      const path = `${basePath}/${resolveFileName(name)}`;
       // 注意必须先检测存在才能判断是文件还是目录,否则抛出异常
-      let exists = fs.exists(path), isDirectory;
+      let exists = electronApi.exists(path), isDirectory;
 
       // 若文件路径不存在,或者是目录
-      if (!exists || (isDirectory = fs.isDirectory(path))) {
+      if (!exists || (isDirectory = electronApi.isDirectory(path))) {
         // 是目录则强制删除目录
-        isDirectory ? fs.rmDir(path) : null;
+        isDirectory && electronApi.rmDir(path);
 
         let buffer = meta.common.picture;
         if ((buffer = buffer && buffer.length ? buffer[0].data : null)) {
-          fs.writeFile(path, buffer);
-          data.cover = getFileURL(path);
+          electronApi.writeFile(path, buffer);
+          (data as any).cover = getFileURL(path);
         }
 
       } else {
         // 替换路径为本地服务器地址
-        data.cover = getFileURL(path);
+        (data as any).cover = getFileURL(path);
       }
-      meta = meta.common = meta.format = fs = null;
+      meta = meta.common = meta.format = null;
       return data;
     };
 
     /**
-     * @param item {Object} 数据库表单条记录
-     * @return true:保留或false:放弃
+     * @param item 数据库表单条记录
+     * @return {boolean} true:保留或false:放弃
      */
-    const filter = item => {
-      let value = inputKey.value;
-      return (item.title && item.title.indexOf(value) >= 0) ||
-          (item.album && item.album.indexOf(value) >= 0) ||
-          (item.singer && item.singer.indexOf(value) >= 0);
+    const filter = (item: {[key: string]: any}) => {
+      const value = inputKey.value, {title = '', album = '', singer = ''} = item;
+      return title.includes(value) || album.includes(value) || singer.includes(value) ;
     };
 
     const playSelect = () => Message({message: "播放所选音乐", showClose: true, type: 'success'});
 
     /** 开始执行本地歌曲模糊搜索(使用事件防抖原理,避免频繁调用过滤逻辑) */
-    const handleMusicFilter = () => {
+    const handleMusicFilter: any = () => {
       // 若计时器存在,清除计时器,取消上次行的任务
       clearTimeout(handleMusicFilter.$timer);
 
       // 若还未初始化过处理方法,则先初始化
       if (!handleMusicFilter.$method) {
         handleMusicFilter.$method = () => {
-          let limited = maxSize > 1024;
-          limited ? element.open() : null;
+          const limited = maxSize > 1024;
+          limited && Spinner.open();
 
-          let table = db.tables.localMusic.name;
+          const table = db.tables.localMusic.name;
           // 若输入了搜索关键词,则调用过滤,否则查询所有
-          let promise = inputKey.value ? db.queryOfFilter(table, filter) : db.queryAll(table);
+          const promise = inputKey.value ? db.queryOfFilter(table, filter) : db.queryAll(table);
+
           promise.then(data => {
-            inputKey.value ? (maxSize = data.length) : null;
+            inputKey.value && (maxSize = data.length);
             list.splice(0, list.length, ...data);
           });
-          promise.finally(limited ? element.close : null);
+          promise.finally(limited ? Spinner.close : null);
         }
       }
       // 开始计时,在指定时间后执行数据过滤
@@ -147,29 +149,32 @@ export default {
 
     /**
      * 表格行单元格双击时的回调方法
-     * @param row {Number} 行单元格索引
+     *
+     * @param rowIndex 行单元格索引
      */
-    const onCellClick = row => {
-      player.playMediaList(list, row);
+    const onCellClick = (rowIndex: number) => {
+      player.playMediaList(list, rowIndex);
     };
 
     /** 导入音乐信息 */
-    const addMusic = async e => {
-      let files = e.target.files;
+    const addMusic = async (event: Event) => {
+      let files = (event.target as HTMLInputElement).files;
       if (!files || files.length === 0) {
         return;
       }
 
-      element.open();
-      let savedList = [];
+      Spinner.open();
+      let savedList: Song[] = [];
 
-      if (window.electron) {
+      const {electron: electronApi} = window as any;
+
+      if (electronApi) {
         // 获取应用程序运行时进程所在的根路径
-        let path = await window.electron.getAppPath();
+        let path = await electronApi.getAppPath();
 
         path = `${path}/picture/album`;
-        if (!window.electron.exists(path)) {
-          window.electron.mkDirs(path);
+        if (!electronApi.exists(path)) {
+          electronApi.mkDirs(path);
         }
 
         out: for (let file of files) {
@@ -179,14 +184,14 @@ export default {
             }
           }
 
-          let meta = await window.electron.parseFile(file.path);
+          let meta = await electronApi.parseFile(file.path);
           savedList.push(parse(path, file, meta));
         }
 
       } else {
         for (let file of files) {
           // 若是外部环境,只能使用URL类创建临时的文件访问地址
-          savedList.push(getMediaInfo(file, false));
+          savedList.push(getMediaInfo(file, false) as Song);
         }
       }
 
@@ -196,7 +201,7 @@ export default {
         maxSize += savedList.length;
       }
 
-      element.close();
+      Spinner.close();
     };
 
     onBeforeUnmount(() => db.close());
@@ -205,15 +210,15 @@ export default {
         // 获取数据库表名称
     let tableNamed = db.tables.localMusic.name;
 
-    element.open();
+    Spinner.open();
     db.open()
         .then(() => db.queryAll(tableNamed))
         .then(data => maxSize = list.push(...data))
-        .finally(element.close);
+        .finally(Spinner.close);
     /************ 加载表格视图数据   END ************/
 
     return {
-      columns, list, multiple, inputKey,
+      columns, list, multiple, inputKey, fileChooser,
       playSelect, handleMusicFilter, onCellClick, addMusic,
 
       /** 开始或结束批量操作 */
@@ -225,9 +230,10 @@ export default {
 
       /** 导入歌曲按钮被点击时,弹出文件选择框 */
       onImportButtonClicked: () => {
+        const inputElement = fileChooser.value;
         // 清除文件选择器(input元素)的值,解决重新选择不能回调change事件的问题
-        vc.refs.fileChooser.value = null;
-        vc.refs.fileChooser.click();
+        inputElement.value = null as any;
+        inputElement.click();
       },
 
       /********* 后期会删除的3个方法 **********/
@@ -237,5 +243,6 @@ export default {
     };
 
   }
-}
+
+});
 </script>

@@ -35,13 +35,13 @@ export type CellValueGetter = (item: TableRow, rowIndex: number, column: TableCo
  */
 export type TableColumn = {
     /** 列标题 */
-    title: string;
+    title?: string;
     /** 列类型(若是 'checkbox', 则指定标题和单元格取值相关属性都无效) */
-    type: 'checkbox' | 'index';
+    type?: 'checkbox' | 'index';
     /** 列宽,默认为 1fr; 取值参考{@link CSSStyleDeclaration.gridTemplateColumns} */
-    width: string;
+    width?: string;
     /** 单元格取值属性名称 */
-    property: string;
+    property?: string;
 
     /**
      * 自定义单元格取值方法
@@ -51,7 +51,7 @@ export type TableColumn = {
      * @param column 表格列信息
      * @return {string | number | boolean} 单元格值
      */
-    valueGetter: CellValueGetter;
+    valueGetter?: CellValueGetter;
 }
 
 /**

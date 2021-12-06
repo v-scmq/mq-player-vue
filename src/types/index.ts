@@ -162,6 +162,16 @@ export type Page = {
 }
 
 /**
+ * 已计算的分页信息
+ */
+export type ComputedPage = {
+    /** 数据总量 */
+    total: number;
+    /** 总页数 */
+    pageCount: number;
+} & Page;
+
+/**
  * 标签信息
  */
 export type Tag = {

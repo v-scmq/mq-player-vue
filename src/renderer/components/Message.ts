@@ -145,7 +145,8 @@ const Message: MessageComponent = (options: string | MessageOptions) => {
 
     // 计算当前message在竖直方向上的起始位置
     options.topOffset = options.topOffset || 20;
-    instances.forEach(item => (<MessageOptions>options).topOffset += (item.el?.offsetHeight || 0) + 16);
+    // @ts-ignore
+    instances.forEach(item => options.topOffset += (item.el.offsetHeight || 0) + 16);
 
     const vm = createVNode(MessageComponentOptions, options);
     let root: HTMLDivElement | null = document.createElement('div');
@@ -197,10 +198,10 @@ Message.close = (id: string) => {
     }
 
     // 当前被关闭的节点之后的所有可视消息节点的top位置都减少以下值
-    const reduce = vm.el?.offsetHeight + 16;
+    const reduce = (vm.el as HTMLElement).offsetHeight + 16;
     for (; index < len; ++index) {
         (<any>instances[index].component).props.topOffset =
-            parseInt(instances[index].el?.style.top) - reduce;
+            parseInt((instances[index].el as HTMLElement).style.top) - reduce;
     }
 };
 

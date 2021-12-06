@@ -22,9 +22,10 @@ import {
     RankModuleData,
     SingerSearchModuleData,
     SongSearchModuleData,
+    AlbumSearchModuleData,
     SpecialSearchModuleData,
     MvSearchModuleData,
-    LoginModuleData
+    LoginModuleData,
 } from '../../types';
 
 // 音乐平台id
@@ -95,7 +96,7 @@ export const getSingerMvList = (page: Page, singer: Singer) =>
  * @param tag 歌单分类标签信息
  * @return {Promise<SpecialListModuleData>} 异步Promise对象
  */
-export const getSpecialList = (page: Page, tag: Tag) =>
+export const getSpecialList = (page: Page, tag: Tag | null) =>
     axios.post('/api/specials', {platform, page, tag})
         .then<SpecialListModuleData>(DataReducer);
 
@@ -158,10 +159,11 @@ export const searchSong = (page: Page, keyword: string) =>
  *
  * @param page 分页信息
  * @param keyword 搜索关键词
- * @return {Promise<{page:page: Page , list:Album[]}>} 异步Promise对象
+ * @return {Promise<AlbumSearchModuleData>} 异步Promise对象
  */
 export const searchAlbum = (page: Page, keyword: string) =>
-    axios.post('/api/search/albums', {platform, page, keyword}).then(DataReducer);
+    axios.post('/api/search/albums', {platform, page, keyword})
+        .then<AlbumSearchModuleData>(DataReducer);
 
 /**
  * 获取歌单搜索列表
