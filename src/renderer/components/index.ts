@@ -14,19 +14,20 @@ import GridView from './GridView.vue'
 export default {
     /**
      * 安装组件
-     * @param {App<HostElement = any>} Vue Vue应用实例
+     * @param app Vue应用实例
      */
     install(app: App) {
+        const Vue = app;
         // 注册组件
-        app.component(Button.name, Button);
-        app.component(CheckBox.name, CheckBox);
-        app.component(TableView.name, TableView);
-        app.component(TextField.name, TextField);
-        app.component(Slider.name, Slider);
-        app.component(Accordion.name, Accordion);
-        app.component(Modal.name, Modal);
-        app.component(Pagination.name, Pagination);
-        app.component(Icon.name, Icon);
-        app.component(GridView.name, GridView);
+        Vue.component(Button.name, Button);
+        Vue.component(CheckBox.name, CheckBox);
+        Vue.component(TableView.name, TableView);
+        Vue.component(TextField.name, TextField);
+        Vue.component(Slider.name, Slider);
+        Vue.component(Accordion.name, Accordion);
+        Vue.component(Modal.name, Modal);
+        Vue.component(Pagination.name, Pagination);
+        Vue.component(Icon.name, Icon);
+        Vue.component(GridView.name, GridView);
     }
 }
