@@ -12,28 +12,28 @@ type DataTable = {
 /**
  * indexDB 数据行类型
  */
-type RowData = { id?: number, [key: string]: any };
+type RowData = { id?: number | string, [key: string]: any };
 
 /** 数据库表 */
 const tables: DataTable = {
     user: {name: 'user', keyPath: 'uin', autoIncrement: false},
     localMusic: {name: 'local_music', keyPath: 'id', autoIncrement: true},
     playList: {name: 'play_list', keyPath: 'id', autoIncrement: true}
-}
+} as const;
 
 /** 数据库连接实例 */
-let dataBase: any = null;
+let database: IDBDatabase | null = null;
 /** 打开数据库连接的队列 */
 let openQueue: (<T>(value: T | PromiseLike<T>) => void)[] | null = null;
 
 const db = {
-    tables: tables,
+    tables,
 
     /** 异步打开indexedDB */
     open() {
         return new Promise(resolve => {
             // 若数据库已经打卡成功
-            if (dataBase) {
+            if (database) {
                 // 使用局部引用变量
                 const queue = openQueue;
                 // 将全局变量移除
@@ -42,45 +42,54 @@ const db = {
                 // 立刻resolve第一次打开数据库请求
                 resolve(null);
                 // 循环resolve其他请求
-                return queue && queue.forEach(resolveItem => resolveItem(null));
+                return queue && queue.forEach(resolve => resolve(null));
             }
 
             // 检测是否不是第一次调用
             const isNotFirst = !!openQueue;
             openQueue = openQueue || [];
+
             // 若不是第一次调用,则追加到请求队列中,并立刻结束当前方法执行
             if (isNotFirst) {
                 return openQueue.push(resolve);
             }
 
-            const dbFactory: IDBFactory = window.indexedDB;// || window.webkitIndexedDB;
+            const dbFactory: IDBFactory = window.indexedDB;
             const request: IDBOpenDBRequest = dbFactory.open('data.db', 1);
 
             // 数据库打开成功
-            request.onsuccess = event => {
+            request.onsuccess = () => {
+                // 初始化indexDB数据库实例
+                database = request.result;
                 // 使用局部引用变量
                 const queue = openQueue;
-                // 将全局变量移除
+                // 将全局变量置为null
                 openQueue = null;
 
                 // 立刻resolve第一次打开数据库请求
-                resolve(dataBase = (event.target as any).result);
+                resolve(null);
+
                 // 循环resolve其他请求
                 if (queue && queue.length > 0) {
-                    queue.forEach(resolveItem => resolveItem(null));
+                    queue.forEach(resolve => resolve(null));
                 }
             };
 
             // 数据库打开失败
             request.onerror = () => resolve(null);
+
             // 数据库打开被阻塞
             request.onblocked = () => resolve(null);
+
             // 数据库版本更新回调
-            request.onupgradeneeded = event => {
-                const db = (event.target as any).result;
+            request.onupgradeneeded = () => {
+                const db: IDBDatabase = request.result;
                 const tableList = db.objectStoreNames;
-                for (const table of Object.keys(this.tables)) {
-                    const option = this.tables[table];
+
+                for (const table of Object.keys(tables)) {
+                    const option = tables[table];
+
+                    // 不考虑升级后,前后数据库表结构存在差异的情况(若真是那样,手动删除数据库即可)
                     if (!tableList.contains(option.name)) {
                         db.createObjectStore(option.name, option);
                     }
@@ -91,9 +100,9 @@ const db = {
 
     /** 关闭数据库 */
     close() {
-        if (dataBase) {
-            dataBase.close();
-            dataBase = null;
+        if (database) {
+            database.close();
+            database = null;
         }
     },
 
@@ -109,27 +118,27 @@ const db = {
      */
     insert<T extends RowData>(table: string, data: T | T[]): Promise<boolean> {
         return new Promise(resolve => {
-            const transaction = dataBase.transaction([table], 'readwrite');
-            const objectStore = transaction ? transaction.objectStore(table) : null;
-            if (!objectStore) return resolve(false);
+            if (!database) {
+                return resolve(false);
+            }
+
+            const transaction = database.transaction([table], 'readwrite');
+            const objectStore = transaction.objectStore(table);
 
             if (data instanceof Array) {
-                transaction.oncomplete = (event: any) => resolve(event.target.returnValue);
+                transaction.oncomplete = () => resolve(true);
                 transaction.onerror = () => resolve(false);
 
                 for (const item of data) {
                     const request = objectStore.add(item);
-                    request.onsuccess = (event: any) => item.id = event.target.result;
+                    request.onsuccess = () => item.id = request.result as number | string;
                 }
 
             } else {
                 const request = objectStore.add(data);
 
-                request.onsuccess = (event: any) => {
-                    resolve(data.id = event.target.result);
-                };
+                request.onsuccess = () => resolve(!!(data.id = request.result as number | string))
                 request.onerror = () => resolve(false);
-
             }
         });
     },
@@ -139,15 +148,16 @@ const db = {
      *
      * @param table 数据库表名
      * @param id 主键值
-     * @returns {Promise<boolean>} 只有resolve状态的Promise对象
+     * @returns {Promise<boolean>} Promise对象(true:成功 或 false:失败)
      */
     delete(table: string, id: number | string) {
         return new Promise(resolve => {
-            const transaction = dataBase && dataBase.transaction([table], 'readwrite');
-            const objectStore = transaction && transaction.objectStore(table);
-            const request = objectStore && objectStore.delete(id);
+            if (!database) {
+                return resolve(false);
+            }
 
-            if (!request) return resolve(false);
+            const request = database.transaction([table], 'readwrite')
+                .objectStore(table).delete(id);
 
             request.onsuccess = () => resolve(true);
             request.onerror = () => resolve(false);
@@ -163,11 +173,12 @@ const db = {
      */
     update<T extends RowData>(table: string, data: T): Promise<boolean> {
         return new Promise(resolve => {
-            const transaction = dataBase && dataBase.transaction([table], 'readwrite');
-            const objectStore = transaction && transaction.objectStore(table);
-            const request = objectStore && objectStore.put(data);
+            if (!database) {
+                return resolve(false);
+            }
 
-            if (!request) return resolve(false);
+            const request = database.transaction([table], 'readwrite')
+                .objectStore(table).put(data);
 
             request.onsuccess = () => resolve(true);
             request.onerror = () => resolve(false);
@@ -179,17 +190,19 @@ const db = {
      *
      * @param table 数据库表名
      * @param id 更新的数据
-     * @return {Promise<T[]>} 只有resolve状态的Promise对象
+     * @return {Promise<T[]>} 异步Promise对象
      */
     query<T extends RowData>(table: string, id: string | number): Promise<T[]> {
         return new Promise(resolve => {
-            const transaction = dataBase && dataBase.transaction([table], 'readonly');
-            const objectStore = transaction && transaction.objectStore(table);
-            const request = objectStore && objectStore.get(id);
+            if (!database) {
+                return resolve([]);
+            }
 
-            if (!request) return resolve([]);
+            const request: IDBRequest<T[]> =
+                database.transaction([table], 'readonly')
+                    .objectStore(table).get(id);
 
-            request.onsuccess = (event: any) => resolve(event.target.result);
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => resolve([]);
         });
     },
@@ -199,21 +212,24 @@ const db = {
      *
      * @param table 数据库表名
      * @param filter 数据记录过滤方法,方法需要返回一个boolean值,true:表示保留,false:废弃
-     * @return {Promise<T>} 只有resolve状态的Promise对象
+     * @return {Promise<T[]>} 异步Promise对象
      */
     queryOfFilter<T extends RowData>(table: string, filter: (data: T) => boolean): Promise<T[]> {
         return new Promise(resolve => {
-            const transaction = dataBase && dataBase.transaction([table], 'readonly');
-            const objectStore = transaction && transaction.objectStore(table);
-            const request = objectStore && objectStore.openCursor();
+            if (!database) {
+                return resolve([]);
+            }
 
-            if (!request) return resolve([]);
+            const transaction = database.transaction([table], 'readonly');
+            const objectStore = transaction.objectStore(table);
+            const request = objectStore.openCursor();
 
             const data: T[] = [];
 
-            request.onsuccess = (cursor: any) => {
-                if ((cursor = cursor.target.result)) {
-                    if (filter(cursor.value)) data.push(cursor.value);
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (cursor) {
+                    filter(cursor.value) && data.push(cursor.value);
                     cursor.continue();
                 }
             }
@@ -232,13 +248,15 @@ const db = {
      */
     queryAll<T extends RowData>(table: string): Promise<T[]> {
         return new Promise(resolve => {
-            const transaction = dataBase && dataBase.transaction([table], 'readonly');
-            const objectStore = transaction && transaction.objectStore(table);
+            if (!database) {
+                return resolve([]);
+            }
 
-            if (!objectStore) return resolve([]);
+            const request: IDBRequest<T[]> =
+                database.transaction([table], 'readonly')
+                    .objectStore(table).getAll();
 
-            const request = objectStore.getAll();
-            request.onsuccess = (event: any) => resolve(event.target.result);
+            request.onsuccess = () => resolve(request.result);
             request.onerror = () => resolve([]);
         });
     }
