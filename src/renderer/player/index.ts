@@ -227,7 +227,7 @@ const player = {
      * @param {number} value 播放速率值, [0.5,2]
      */
     setSpeed(value: number) {
-        nativePlayer.playbackRate = Math.max(Math.min(value, 0.5), 2);
+        nativePlayer.playbackRate = Math.min(Math.max(value, 0.5), 2);
     },
 
     /**
