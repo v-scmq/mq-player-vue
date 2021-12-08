@@ -202,6 +202,9 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
         modal.webContents.on('will-navigate', (event, url) => {
             if (option.indexURL === url) {
                 let _resolve: any = resolve;
+                // 将resolve方法对象设置为null, 以便在close事件中检测是否resolve过(虽然重复resolve不会有影响)
+                resolve = null as unknown as any;
+
                 const url = option.indexURL;
                 const cookies = modal.webContents.session.cookies;
 
@@ -215,9 +218,6 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
 
                 modal.webContents.closeDevTools();
                 modal.close();
-
-                // 将resolve方法对象设置为null, 以便在close事件中检测是否resolve过(虽然重复resolve不会有影响)
-                resolve = null as unknown as any;
             }
         });
 
