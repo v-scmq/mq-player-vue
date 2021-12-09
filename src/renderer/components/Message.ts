@@ -14,7 +14,7 @@ type MessageType = keyof typeof TYPE_MAP;
 /**
  * 消息配置选项
  */
- type MessageOptions = {
+type MessageOptions = {
     /** 消息文本 */
     message: string;
     /** 消息类型 */
@@ -92,7 +92,7 @@ const MessageComponentOptions = defineComponent({
         const visible = ref(false);
 
         // 获取对应类型的图标
-        const icon = ref(TYPE_MAP[props.type]);
+        const icon = ref(TYPE_MAP[props.type] || TYPE_MAP['info']);
 
         // 数值计时器
         let timer: number | null;
@@ -105,7 +105,7 @@ const MessageComponentOptions = defineComponent({
 
         // 清除计时器
         const clearTimer = () => {
-            if(timer != null) {
+            if (timer != null) {
                 window.clearTimeout(timer);
                 timer = null;
             }
@@ -174,7 +174,7 @@ const Message: MessageComponent = (options: string | MessageOptions) => {
  * 初始化 'info' , 'success' , 'warning' , 'error' 类型的Message方法
  */
 (Object.keys(TYPE_MAP) as MessageType[]).forEach(key => {
-    (<any>Message)[key] = (options: MessageOptions | string) => {
+    Message[key] = (options: MessageOptions | string) => {
         if (typeof options === 'string') {
             options = {message: options};
         }
