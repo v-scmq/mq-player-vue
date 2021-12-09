@@ -1,7 +1,4 @@
-import {createVNode, render, ref, VNode} from 'vue';
-
-import {ComponentOptions} from '@vue/runtime-core';
-
+import {createVNode, render, ref, VNode, defineComponent, PropType} from 'vue';
 
 /**  Message 图标类型 */
 const TYPE_MAP = {
@@ -11,83 +8,17 @@ const TYPE_MAP = {
     error: 'M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z'
 } as const;
 
-/** Message组件构建模板 */
-const MessageComponentOptions: ComponentOptions = {
-    template: `
-      <transition name='message-fade' @before-leave='onClose' @after-leave="$emit('destroy')">
-      <div class='message' v-show='visible' :style="{top: topOffset + 'px'}" @mouseenter='onMouseEnter'
-           @mouseleave='onMouseLeave' :class="[type, showClose ? 'closeable' : null]">
-
-        <svg width='1em' height='1em' viewBox='0 0 16 16' class='message-icon'>
-          <path :d='icon'></path>
-        </svg>
-
-        <div class='content'>{{ message }}</div>
-
-        <svg width='1em' height='1em' viewBox='0 0 16 16' v-if='showClose' class='close-icon' @click='close'>
-          <path
-              d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/>
-        </svg>
-      </div>
-      </transition>
-    `,
-
-    props: {
-        message: String,
-        type: String,
-        showClose: {type: Boolean, default: false},
-        topOffset: {type: Number, default: 0},
-        duration: {type: Number, default: 5000},
-        onClose: {type: Function, default: null}
-    },
-
-    emits: ['destroy'],
-
-    setup(props) {
-        // 初始不可见
-        const visible = ref(false);
-
-        // @ts-ignore 获取对应类型的图标
-        const icon = ref(TYPE_MAP[props.type as keyof typeof TYPE_MAP]);
-
-        // 数值计时器
-        let timer: number | null = null;
-
-        // 关闭,并调用传递过来的onClose方法
-        const close = () => {
-            visible.value = false;
-            // @ts-ignore
-            props.onClose instanceof Function ? props.onClose() : null;
-        }
-
-        // 鼠标移入时,清除计时器
-        const onMouseEnter = () => window.clearTimeout(<number>timer);
-        // 鼠标立刻时,重新开始计时
-        const onMouseLeave = () => {
-            // @ts-ignore
-            const {duration} = props;
-            if (duration > 0) {
-                timer = window.setTimeout(close, duration)
-            }
-        };
-
-        // 开始计时
-        onMouseLeave();
-        // 以动画帧开始显示
-        requestAnimationFrame(() => visible.value = true);
-
-        return {visible, icon, close, onMouseEnter, onMouseLeave};
-    }
-};
+/** Message类型 */
+type MessageType = keyof typeof TYPE_MAP;
 
 /**
  * 消息配置选项
  */
-type MessageOptions = {
+ type MessageOptions = {
     /** 消息文本 */
     message: string;
     /** 消息类型 */
-    type?: keyof typeof TYPE_MAP;
+    type?: MessageType;
     /** 是否显示关闭图标 */
     showClose?: boolean;
     /** 消息显示时间(单位: 毫秒) */
@@ -103,7 +34,7 @@ type MessageConstructor = (options: string | MessageOptions) => void;
 
 /** Message的info、success、warring、error类型方法 */
 type MessageTypedFn = {
-    [key in keyof typeof TYPE_MAP]: MessageConstructor
+    [key in MessageType]: MessageConstructor
 }
 
 /**
@@ -124,6 +55,84 @@ type MessageComponent = {
 
 } & MessageConstructor & MessageTypedFn;
 
+/** Message组件构建模板 */
+const MessageComponentOptions = defineComponent({
+    template: `
+      <transition name='message-fade' :duration='duration' @before-leave='close' @after-leave="$emit('destroy')">
+      <div class='message' v-show='visible' :style="{top: topOffset + 'px'}" @mouseenter='clearTimer'
+           @mouseleave='startTimer' :class="[type, showClose ? 'closeable' : null]">
+
+        <svg width='1em' height='1em' viewBox='0 0 16 16' class='message-icon'>
+          <path :d='icon'></path>
+        </svg>
+
+        <div class='content'>{{ message }}</div>
+
+        <svg width='1em' height='1em' viewBox='0 0 16 16' v-if='showClose' class='close-icon' @click='close'>
+          <path
+              d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/>
+        </svg>
+      </div>
+      </transition>
+    `,
+
+    props: {
+        message: String,
+        type: {type: String as PropType<MessageType>, required: true},
+        showClose: {type: Boolean, default: false},
+        topOffset: {type: Number, default: 0},
+        duration: {type: Number, default: 5000},
+        onClose: {type: Function, default: null}
+    },
+
+    emits: ['destroy'],
+
+    setup(props) {
+        // 初始不可见
+        const visible = ref(false);
+
+        // 获取对应类型的图标
+        const icon = ref(TYPE_MAP[props.type]);
+
+        // 数值计时器
+        let timer: number | null;
+
+        // 关闭,并调用传递过来的onClose方法
+        const close = () => {
+            visible.value = false;
+            props.onClose && props.onClose();
+        };
+
+        // 清除计时器
+        const clearTimer = () => {
+            if(timer != null) {
+                window.clearTimeout(timer);
+                timer = null;
+            }
+        };
+
+        // 启动计时器
+        const startTimer = () => {
+            // 清除之前的计时器
+            clearTimer();
+            // 重新开始计时
+            if (props.duration > 0) {
+                timer = window.setTimeout(close, props.duration)
+            }
+        };
+
+        // 以动画帧开始显示
+        requestAnimationFrame(() => {
+            visible.value = true;
+            // 开始计时
+            startTimer();
+        });
+
+        return {visible, icon, close, clearTimer, startTimer};
+    }
+});
+
+
 /** 存放所有正在显示的Message的VNode(虚拟DOM节点)对象 */
 const instances: VNode[] = [];
 
@@ -135,9 +144,7 @@ const Message: MessageComponent = (options: string | MessageOptions) => {
     }
 
     // 确保类型是在 TYPE_MAP对象中的key 中
-    if (!TYPE_MAP[options.type as keyof typeof TYPE_MAP]) {
-        options.type = 'info';
-    }
+    options.type = options.type || 'info';
 
     const id = `${Math.random()}-${new Date().getTime()}`;
     // 将onClose方法传入到Message.vue
@@ -166,15 +173,13 @@ const Message: MessageComponent = (options: string | MessageOptions) => {
 /**
  * 初始化 'info' , 'success' , 'warning' , 'error' 类型的Message方法
  */
-Object.keys(TYPE_MAP).forEach((key) => {
-    const type = key as keyof typeof TYPE_MAP;
-
-    (<any>Message)[type] = (options: MessageOptions | string) => {
+(Object.keys(TYPE_MAP) as MessageType[]).forEach(key => {
+    (<any>Message)[key] = (options: MessageOptions | string) => {
         if (typeof options === 'string') {
             options = {message: options};
         }
 
-        options.type = type;
+        options.type = key;
         Message(options);
     };
 });
@@ -190,18 +195,20 @@ Message.close = (id: string) => {
         return;
     }
 
+    // 获取需要删除的Message
     const vm = instances[index];
+    // 删除指定的Message
     instances.splice(index, 1);
-    const len = instances.length;
-    if (!len) {
-        return;
-    }
+    // Message个数
+    const length = instances.length;
 
-    // 当前被关闭的节点之后的所有可视消息节点的top位置都减少以下值
-    const reduce = (vm.el as HTMLElement).offsetHeight + 16;
-    for (; index < len; ++index) {
-        (<any>instances[index].component).props.topOffset =
-            parseInt((instances[index].el as HTMLElement).style.top) - reduce;
+    if (length > 0) {
+        // 当前被关闭的节点之后的所有可视消息节点的top位置都减少以下值
+        const reduce = (vm.el as HTMLElement).offsetHeight + 16;
+        for (; index < length; ++index) {
+            (<any>instances[index].component).props.topOffset =
+                parseInt((instances[index].el as HTMLElement).style.top) - reduce;
+        }
     }
 };
 
