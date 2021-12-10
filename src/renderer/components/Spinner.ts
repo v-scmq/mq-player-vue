@@ -16,11 +16,7 @@ type SpinnerComponent = {
     close(): void;
 }
 
-/**
- * 进度旋转器
- *
- * @type {HTMLDivElement | Object}
- */
+/** 进度旋转器 HTML元素节点 */
 const element = document.createElement('div');
 
 element.classList.add('spinner');
@@ -37,6 +33,6 @@ const Spinner: SpinnerComponent = {
     close() {
         element.remove();
     }
-}
+};
 
 export default Spinner;
