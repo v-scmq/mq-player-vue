@@ -321,20 +321,6 @@ export type HttpBaseResponse = {
 }
 
 /**
- * 登录基础信息
- */
-export type LoginInfo = {
-    /** 账号 */
-    uin: string | number
-    /** 随机id */
-    randomId: string | number
-    /** cookie值 */
-    value: string
-    /** 默认cookie值 */
-    default: string
-}
-
-/**
  * 歌手列表模块数据
  */
 export type SingerListModuleData = {
@@ -709,9 +695,7 @@ export interface DataSource {
      * @param cookies cookie信息
      * @return {Promise<LoginModuleData>} 异步Promise对象
      */
-    login
-
-    (cookies: Electron.Cookie[] | null): Promise<LoginModuleData>;
+    login(cookies: Electron.Cookie[] | null): Promise<LoginModuleData>;
 
     /**
      * 退出登录
