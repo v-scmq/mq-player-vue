@@ -3,12 +3,12 @@ import {createReadStream, existsSync, statSync} from 'fs';
 import {request as httpsRequest} from 'https';
 import {createServer, request as httpRequest, IncomingMessage, ServerResponse, IncomingHttpHeaders} from 'http';
 
-import {HttpBaseResponse} from '../types';
+import {HttpBaseResponse, DataSource} from '../types';
 
-// import {QQMusicSource} from './api/tencent';
+import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
 
-const protocol = 'http', host = 'localhost', port = 9081;
+const protocol = 'http', host = 'localhost', port = process.env.NODE_ENV === 'production' ? 8888 : 9081;
 
 // 本地服务器根路径
 export const BASE_URL = `${protocol}://${host}:${port}`;
@@ -25,7 +25,7 @@ const MIME_TYPE: { [key: string]: string } = {
 // 数据源
 const DATA_SOURCE_IMPL = {
     [DefaultSource.id]: DefaultSource,
-    // [QQMusicSource.id]: QQMusicSource
+    [QQMusicSource.id]: QQMusicSource
 };
 
 /**
@@ -97,7 +97,7 @@ const handleFileRequest = (request: IncomingMessage, response: ServerResponse, p
     }
 };
 
-type RequestCallback = <T>(dataSource: any, param: any) => Promise<T>;
+type RequestCallback = (dataSource: DataSource, param: any) => Promise<HttpBaseResponse>;
 
 /**
  * 处理post请求,并调用传入的callback方法获取数据
@@ -126,7 +126,7 @@ const handlePostRequest = (request: IncomingMessage, response: ServerResponse, c
             }
 
             // 睡眠一段时间后才开始发出HTTP请求
-            sleep().then(() => callback<HttpBaseResponse>(dataSource, param)).then(data => {
+            sleep().then(() => callback(dataSource, param)).then(data => {
                 debugger;
                 data = data || {};
 
