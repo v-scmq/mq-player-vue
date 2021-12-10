@@ -6,7 +6,10 @@ import {ModalOpenOption} from '../types';
 import NativeImage = Electron.NativeImage;
 import IpcMainInvokeEvent = Electron.IpcMainInvokeEvent;
 
-if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
+// 检查是否是生产模式
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction && !app.requestSingleInstanceLock()) {
     // 若未能获得单个应用实例的锁,那么退出应用程序
     app.quit();
 
@@ -16,8 +19,6 @@ if (process.env.NODE_ENV === 'production' && !app.requestSingleInstanceLock()) {
      *  检查是否是 windows 平台                                      *
      ****************************************************************/
     const isWindows = process.platform === 'win32';
-    // 检查是否是生产模式
-    const isProduction = process.env.NODE_ENV === 'production';
     // 获取图标路径
     const iconPath = isProduction ? path.resolve(__dirname, 'icon') : 'public/icon';
 
