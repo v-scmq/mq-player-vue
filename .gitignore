@@ -97,8 +97,8 @@ src/renderer/api
 !src/renderer/api/index.ts
 
 # 忽略文档目录中除了api.md之外的所有文件
-doc
-!doc/api.md
+/doc
+!/doc/api.md
 
 # 忽略public目录中的js文件
 public/*.js
