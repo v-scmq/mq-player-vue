@@ -1,6 +1,5 @@
-import {app, BrowserWindow, ipcMain, Menu, shell, Tray} from 'electron';
 import path from 'path';
-import {BASE_URL} from './server';
+import {app, BrowserWindow, ipcMain, Menu, shell, Tray} from 'electron';
 
 import {ModalOpenOption} from '../types';
 import NativeImage = Electron.NativeImage;
@@ -19,8 +18,12 @@ if (isProduction && !app.requestSingleInstanceLock()) {
      *  检查是否是 windows 平台                                      *
      ****************************************************************/
     const isWindows = process.platform === 'win32';
+
     // 获取图标路径
     const iconPath = isProduction ? path.resolve(__dirname, 'icon') : 'public/icon';
+
+    // 创建本地服务器, 并获取本地服务器URL
+    const {BASE_URL} = require('./server');
 
     // 方案必须在应用程序准备好之前注册
     // if (isProduction) {
@@ -65,15 +68,15 @@ if (isProduction && !app.requestSingleInstanceLock()) {
         // 若在生产环境
         if (process.env.WEBPACK_DEV_SERVER_URL) {
             // 加载开发模式服务器的URL
-            mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL).then(readyToShow);
+            mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL).then(onReady);
             mainWindow.webContents.openDevTools();
         } else {
             // 从自定义协议加载首页html文件
-            mainWindow.loadURL(`${BASE_URL}/index.html`).then(readyToShow);
+            mainWindow.loadURL(`${BASE_URL}/index.html`).then(onReady);
         }
 
-        // @ts-ignore 当浏览器窗口关闭时,解除mainWindow引用指向
-        mainWindow.once('closed', () => mainWindow = null);
+        // 当浏览器窗口关闭时,解除mainWindow引用指向
+        mainWindow.once('closed', () => mainWindow = null as any);
         // 当浏览器窗口最大化时,发送窗口最大化消息到渲染进程
         mainWindow.on('maximize', async () =>
             mainWindow.webContents.send('maximize', true));
@@ -125,9 +128,10 @@ if (isProduction && !app.requestSingleInstanceLock()) {
     }
 
     /** 窗口已就绪,此时可以显示 */
-    let readyToShow = async () => {
-        // @ts-ignore 显示窗口(将readyToShow方法设置为null,以便释放方法对象)
-        mainWindow.show(readyToShow = null);
+    let onReady = () => {
+        // 显示窗口(将onReady方法设置为null,以便释放方法对象)
+        onReady = null as any;
+        mainWindow.show();
         // 若不是windows平台,不创建系统托盘和设置任务栏缩略图
         if (!isWindows) {
             return
