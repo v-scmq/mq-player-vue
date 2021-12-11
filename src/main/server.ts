@@ -36,9 +36,11 @@ const DATA_SOURCE_IMPL = {
  * @param path 文件资源绝对路径
  */
 const handleFileRequest = (request: IncomingMessage, response: ServerResponse, path: string) => {
-    if (path && existsSync(path)) {
+    let stats;
+
+    if (path && existsSync(path) && (stats = statSync(path)).isFile()) {
         // 文件大小(字节)
-        const size = statSync(path).size;
+        const size = stats.size;
         // 分段传输时的数据字节范围请求头信息
         const range = <string>request.headers.range;
         // 待响应状态码(若是分段传输,则状态码是206; 否则200)
@@ -521,6 +523,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 // 创建HTTP服务
 createServer((request: IncomingMessage, response: ServerResponse) => {
     try {
+        debugger;
         // 获取解析后的URL对象
         const url = new URL(`${BASE_URL}${request.url}`);
         // 获取URL路径字符串 和 请求处理器
