@@ -89,7 +89,7 @@ import player, {Status} from '../player';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
 
-import {ref, reactive, onBeforeUnmount, defineComponent} from 'vue';
+import {defineComponent, onBeforeUnmount, reactive, ref} from 'vue';
 
 import MusicViewer from './MusicViewer.vue';
 
@@ -248,8 +248,13 @@ export default defineComponent({
 
     player.setEventListener({
       statusChanged(status) {
-        console.info('status=>', status)
         isPlaying.value = status === Status.PLAYING;
+
+        if (isPlaying.value) {
+          Message.info('已开始播放');
+        } else if (status === Status.PAUSED) {
+          Message.info('已暂停播放');
+        }
       },
 
       timeChanged(time) {
