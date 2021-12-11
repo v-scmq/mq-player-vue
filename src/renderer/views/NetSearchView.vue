@@ -48,21 +48,26 @@
         </template>
       </table-view>
 
-      <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show='tabMap.value===tabMap.ALBUM_TAB' @click='onAlbumItemClicked'>
-        <div class='v-column content-box' v-for='(item,index) in albumList' :key='index' :data-index='index'>
-          <img class=cover :src='item.cover' loading='lazy' alt/>
+      <grid-view cell-widths='repeat(auto-fit, 13em)' v-show='tabMap.value===tabMap.ALBUM_TAB' :data='albumList'
+                 @infinite-scroll='loadAlbumData' :cell-height='234' @cell-click='onAlbumItemClicked'>
+        <template v-slot='{item}'>
+          <img alt class=cover :src='item.cover' loading='lazy'/>
           <div class='name'>{{ item.name }}</div>
-        </div>
-      </div>
+        </template>
+      </grid-view>
 
-      <div class='v-row image-container' style='flex-wrap:wrap;overflow:auto;justify-content:space-around;'
-           v-show='tabMap.value===tabMap.MV_TAB'>
-        <div class='v-column content-box' v-for='(item,index) in mvList' :key='index'>
-          <img class=cover :src='item.cover' loading='lazy' alt/>
-          <div class='name'>{{ item.singer ? item.singer.name : null }} - {{ item.title }}</div>
-        </div>
-      </div>
+      <grid-view class='arc-rect' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
+                 :cell-height='206' @infinite-scroll='loadMvData' v-show='tabMap.value===tabMap.MV_TAB'>
+        <template v-slot='{item}'>
+          <img alt class=cover :src='item.cover' loading='lazy'/>
+          <div>
+            <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
+              {{ singer.name }}
+            </span>
+            -<span>{{ item.title }}</span>
+          </div>
+        </template>
+      </grid-view>
 
       <div v-show='tabMap.value===tabMap.SPECIAL_TAB' class='label'>歌单list</div>
     </div>
@@ -71,11 +76,12 @@
 
 <script lang='ts'>
 import player from '../player';
-import element from '../components/Spinner';
+import Spinner from '../components/Spinner';
 import {convertSinger} from '../../utils';
-import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '../api';
 
+import {TableColumn} from '../components/types';
 import {Album, Mv, Singer, Song, ComputedPage, Special} from '../../types';
+import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '../api';
 
 import {PropType, reactive, watch, defineComponent} from 'vue';
 import {useRouter} from 'vue-router';
@@ -96,7 +102,7 @@ export default defineComponent({
   name: 'NetSearchView',
 
   props: {
-    query: {type: Object as PropType<{value: string}>, required: true}
+    query: {type: Object as PropType<{ value: string }>, required: true}
   },
 
   setup(props) {
@@ -113,7 +119,7 @@ export default defineComponent({
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
     const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB});
 
-    const columns = reactive(/** @type {TableColumn[]} */[
+    const columns = reactive<TableColumn[]>([
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
@@ -139,7 +145,7 @@ export default defineComponent({
       // 若选定歌曲选项卡
       if (newTab === tabMap.SONG_TAB) {
         // 打开进度指示器
-        element.open();
+        Spinner.open();
 
         // 搜索歌手 => 处理并展示歌手基本数据 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
         searchSinger($query).then(data => {
@@ -155,10 +161,10 @@ export default defineComponent({
           data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(element.close);
+        }).catch(() => newTab.update = true).finally(Spinner.close);
 
       } else if (newTab === tabMap.ALBUM_TAB) {
-        element.open();
+        Spinner.open();
 
         searchAlbum(newTab.page, $query).then(data => {
           // 修改分页信息
@@ -166,10 +172,10 @@ export default defineComponent({
           // 添加专辑
           albumList.splice(0, albumList.length, ...data.list);
 
-        }).finally(element.close);
+        }).finally(Spinner.close);
 
       } else if (newTab === tabMap.MV_TAB) {
-        element.open();
+        Spinner.open();
         searchMv(newTab.page, $query).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
@@ -178,11 +184,11 @@ export default defineComponent({
           data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(element.close);
+        }).catch(() => newTab.update = true).finally(Spinner.close);
 
       } else if (newTab === tabMap.SPECIAL_TAB) {
         // 打开进度指示器
-        element.open();
+        Spinner.open();
         searchSpecial(newTab.page, $query).then(data => {
           // 修改分页信息
           data.page && Object.assign(newTab.page, data.page);
@@ -190,7 +196,7 @@ export default defineComponent({
           // 添加歌单
           specialList.splice(0, specialList.length, ...data.list);
 
-        }).catch(() => newTab.update = true).finally(element.close);
+        }).catch(() => newTab.update = true).finally(Spinner.close);
       }
     };
 
@@ -254,7 +260,7 @@ export default defineComponent({
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          element.open();
+          Spinner.open();
 
           searchSong(page, $query).then(data => {
             // 重设置分页信息
@@ -264,40 +270,52 @@ export default defineComponent({
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(element.close);
+          }).catch(() => --page.current).finally(Spinner.close);
         }
       },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadAlbumData() {
+        const page = tabMap.MV_TAB.page;
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          searchAlbum(page, $query).then(data => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+            // 添加专辑
+            albumList.splice(0, albumList.length, ...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
+      },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadMvData() {
+        const page = tabMap.MV_TAB.page;
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          searchMv(page, $query).then(data => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+
+            // 添加Mv
+            data.list.forEach(convertSinger);
+            mvList.splice(0, mvList.length, ...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
+      }
+
     };
   }
 
 });
 </script>
-
-<style scoped>
-.image-container {
-  padding: 1em 0 0 0;
-  margin: 0.5em 0 0 0;
-}
-
-.image-container > .content-box {
-  align-items: center;
-  margin: 0 3em 3em 0;
-}
-
-.cover, .content-box .cover {
-  width: 13em;
-  height: 13em;
-  cursor: pointer;
-  border-radius: 8em;
-  transition: transform .75s cubic-bezier(0, 1, .75, 1);
-}
-
-.content-box .name {
-  max-width: 13em;
-  /*默认换行white-space: normal;*/
-}
-
-.content-box:hover .cover {
-  transform: scale(1.07);
-}
-</style>
