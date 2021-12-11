@@ -23,24 +23,24 @@ type MessageOptions = {
     showClose?: boolean;
     /** 消息显示时间(单位: 毫秒) */
     duration?: number;
-    /** (仅内部使用)消息在关闭时的回调 */
+    /** 消息在关闭时的回调 */
     onClose?: () => void;
-    /** (仅内部使用)消息在可视区域的上边缘偏移量(单位:像素) */
+    /** 消息在可视区域的上边缘偏移量(单位:像素) */
     topOffset?: number;
 }
 
 /** Message构造器 */
-type MessageConstructor = (options: string | MessageOptions) => void;
+type MessageFn = (options: string | MessageOptions) => void;
 
 /** Message的info、success、warring、error类型方法 */
 type MessageTypedFn = {
-    [key in MessageType]: MessageConstructor
+    [key in MessageType]: (options: string | Omit<MessageOptions, 'type'>) => void
 }
 
 /**
  * Message组件
  */
-type MessageComponent = {
+type MessageComponent = MessageFn & MessageTypedFn & {
     /**
      * 通过指定的message id,来关闭Message
      *
@@ -52,8 +52,7 @@ type MessageComponent = {
      * 关闭所有Message
      */
     closeAll(): void;
-
-} & MessageConstructor & MessageTypedFn;
+}
 
 /** Message组件构建模板 */
 const MessageComponentOptions = defineComponent({
@@ -82,7 +81,7 @@ const MessageComponentOptions = defineComponent({
         showClose: {type: Boolean, default: false},
         topOffset: {type: Number, default: 0},
         duration: {type: Number, default: 5000},
-        onClose: {type: Function, default: null}
+        onClose: {type: Function, required: true}
     },
 
     emits: ['destroy'],
@@ -100,7 +99,7 @@ const MessageComponentOptions = defineComponent({
         // 关闭,并调用传递过来的onClose方法
         const close = () => {
             visible.value = false;
-            props.onClose && props.onClose();
+            props.onClose();
         };
 
         // 清除计时器
@@ -147,13 +146,22 @@ const Message: MessageComponent = (options: string | MessageOptions) => {
     options.type = options.type || 'info';
 
     const id = `${Math.random()}-${new Date().getTime()}`;
-    // 将onClose方法传入到Message.vue
-    options.onClose = () => Message.close(id);
+
+    const onClose = options.onClose;
+    // 覆盖传入的onClose方法
+    options.onClose = () => {
+        // 关闭Message
+        Message.close(id);
+        // 若指定了关闭时的回调,则调用它
+        onClose && onClose();
+    };
 
     // 计算当前message在竖直方向上的起始位置
     options.topOffset = options.topOffset || 20;
-    // @ts-ignore
-    instances.forEach(item => options.topOffset += (item.el.offsetHeight || 0) + 16);
+
+    for (const vm of instances) {
+        options.topOffset += ((<HTMLElement>vm.el).offsetHeight || 0) + 16;
+    }
 
     const vm = createVNode(MessageComponentOptions, options);
     let root: HTMLDivElement | null = document.createElement('div');
@@ -174,12 +182,12 @@ const Message: MessageComponent = (options: string | MessageOptions) => {
  * 初始化 'info' , 'success' , 'warning' , 'error' 类型的Message方法
  */
 (Object.keys(TYPE_MAP) as MessageType[]).forEach(key => {
-    Message[key] = (options: MessageOptions | string) => {
+    Message[key] = options => {
         if (typeof options === 'string') {
             options = {message: options};
         }
 
-        options.type = key;
+        (<MessageOptions>options).type = key;
         Message(options);
     };
 });
