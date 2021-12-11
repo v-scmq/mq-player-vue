@@ -81,7 +81,7 @@ import Spinner from '../components/Spinner';
 import {convertSinger} from '../../utils';
 import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
 
-import {Album, Mv, Singer, Song, ComputedPage} from '../../types/index';
+import {Album, Mv, Singer, Song, ComputedPage} from '../../types';
 import {TableColumn} from '../components/types';
 
 import {reactive, watch, PropType, defineComponent} from 'vue';
@@ -113,7 +113,7 @@ export default defineComponent({
     const mvList = reactive<Mv[]>([]);
 
     const SONG_TAB: Tab = {title: '歌曲', update: true, page: {current: 1, size: 30} as ComputedPage};
-    const ALBUM_TAB: Tab ={title: '专辑', update: true, page: {current: 1, size: 30} as ComputedPage};
+    const ALBUM_TAB: Tab = {title: '专辑', update: true, page: {current: 1, size: 30} as ComputedPage};
     const MV_TAB: Tab = {title: 'MV', update: true, page: {current: 1, size: 30} as ComputedPage};
     const DETAIL_TAB: Tab = {title: '详情', update: true};
     const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB];
@@ -218,7 +218,7 @@ export default defineComponent({
        * @param {number} index 行单元格索引
        */
       onCellClick(index: number) {
-        player.playMediaList(songList as Array<{path: string}>, index);
+        player.playMediaList(songList, index);
       },
 
       print: () => print(),
