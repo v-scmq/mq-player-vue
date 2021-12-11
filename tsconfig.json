@@ -12,7 +12,6 @@
     "baseUrl": ".",
     "types": [
       "webpack-env",
-      "resize-observer-browser"
     ],
     "lib": [
       "esnext",
