@@ -25,8 +25,8 @@ import Spinner from '../components/Spinner';
 
 import {reactive, ref, onBeforeUnmount, defineComponent} from 'vue';
 import {getFileURL, secondToString, resolveFileName, getMediaInfo, toFileSize} from '../../utils';
-import { TableColumn } from '../components/types';
-import { Song } from 'src/types';
+import {TableColumn} from '../components/types';
+import {Song} from '../../types';
 
 export default defineComponent({
   name: 'LocalMusic',
@@ -114,9 +114,9 @@ export default defineComponent({
      * @param item 数据库表单条记录
      * @return {boolean} true:保留或false:放弃
      */
-    const filter = (item: {[key: string]: any}) => {
+    const filter = (item: { [key: string]: any }) => {
       const value = inputKey.value, {title = '', album = '', singer = ''} = item;
-      return title.includes(value) || album.includes(value) || singer.includes(value) ;
+      return title.includes(value) || album.includes(value) || singer.includes(value);
     };
 
     const playSelect = () => Message({message: "播放所选音乐", showClose: true, type: 'success'});
@@ -237,7 +237,7 @@ export default defineComponent({
       },
 
       /********* 后期会删除的3个方法 **********/
-      doAddColumn: () => columns.push(/**@type {TableColumn} */ {title: '采样率', property: 'sampleRate'}),
+      doAddColumn: () => columns.push({title: '采样率', property: 'sampleRate'}),
       doDelColumn: () => columns.splice(columns.length - 1),
       doUpdColumn: () => columns[1].property = columns[1].property === 'size' ? 'title' : 'size',
     };
