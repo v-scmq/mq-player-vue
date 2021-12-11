@@ -4,7 +4,7 @@ import {request as httpsRequest} from 'https';
 /**
  * 请求参数信息
  */
-interface RequestParam {
+type RequestParam = {
     /** 访问路径 */
     url: string;
     /** 请求头 */
@@ -24,7 +24,7 @@ interface RequestParam {
 /**
  * 响应信息
  */
-interface ResponseData {
+type ResponseData = {
     /** 响应状态码 */
     statusCode: number;
     /** 响应头信息 */
@@ -34,11 +34,32 @@ interface ResponseData {
 }
 
 /**
+ * Http(s)客户端请求, 发起网络请求(默认get请求)
+ */
+type HttpClient = ((options: RequestParam) => Promise<ResponseData>) & {
+    /**
+     * 发起get请求
+     *
+     * @param options 配置选项对象
+     * @returns {Promise<ResponseData>} 异步对象Promise
+     */
+    get(options: Omit<RequestParam, 'method'>): Promise<ResponseData>,
+
+    /**
+     * 发起post请求
+     *
+     * @param options 配置选项对象
+     * @returns {Promise<ResponseData>} 异步对象Promise
+     */
+    post(options: Omit<RequestParam, 'method'>): Promise<ResponseData>,
+}
+
+/**
  * 发起网络请求(默认get请求)
  *
  * @param options 配置选项对象
  */
-const http = (options: RequestParam): Promise<ResponseData> => new Promise(resolve => {
+const http: HttpClient = options => new Promise(resolve => {
     // assert options instanceof Object === true
     // assert (!!options.url) === true
     // assert options.header instanceof Object === true
@@ -139,27 +160,15 @@ const http = (options: RequestParam): Promise<ResponseData> => new Promise(resol
     request.end();
 });
 
-/**
- * 发起get请求
- *
- * @param options 配置选项对象
- * @returns {Promise<ResponseData>} 异步对象Promise
- */
-http.get = (options: RequestParam): Promise<ResponseData> => {
+http.get = options => {
     // 设置为get请求
-    options.method = 'get';
+    (<RequestParam>options).method = 'get';
     return http(options);
 };
 
-/**
- * 发起post请求
- *
- * @param options 配置选项对象
- * @returns {Promise<ResponseData>} 异步对象Promise
- */
-http.post = (options: RequestParam): Promise<ResponseData> => {
+http.post = options => {
     // 设置为post请求
-    options.method = 'post';
+    (<RequestParam>options).method = 'post';
     return http(options);
 };
 
