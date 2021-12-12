@@ -1,4 +1,4 @@
-import {createVNode, render, ref, VNode, defineComponent, PropType} from 'vue';
+import {createVNode, render, ref, VNode, defineComponent, onMounted, PropType} from 'vue';
 
 /**  Message 图标类型 */
 const TYPE_MAP = {
@@ -120,8 +120,7 @@ const MessageComponentOptions = defineComponent({
             }
         };
 
-        // 以动画帧开始显示
-        requestAnimationFrame(() => {
+        onMounted(() => {
             visible.value = true;
             // 开始计时
             startTimer();
@@ -137,45 +136,49 @@ const instances: VNode[] = [];
 
 // @ts-ignore
 const Message: MessageComponent = (options: string | MessageOptions) => {
-    options = options || {} as MessageOptions;
-    if (typeof options === 'string') {
-        options = {message: options};
-    }
+    // 参见: https://developer.mozilla.org/zh-CN/docs/Web/API/Window/requestAnimationFrame
+    // 下一次重绘之前更新动画帧所调用(在可见时,显示Message, 才能保证每一个Message的高度被正确获得)
+    requestAnimationFrame(() => {
+        if (typeof options === 'string') {
+            options = {message: options};
+        }
 
-    // 确保类型是在 TYPE_MAP对象中的key 中
-    options.type = options.type || 'info';
+        // 确保类型是在 TYPE_MAP对象中的key 中
+        options.type = options.type || 'info';
+        // 生成随机id
+        const id = `${Math.random()}-${new Date().getTime()}`;
+        // 获取配置选项所提供的关闭回调
+        const onClose = options.onClose;
 
-    const id = `${Math.random()}-${new Date().getTime()}`;
+        // 覆盖传入的onClose方法
+        options.onClose = () => {
+            // 关闭Message
+            Message.close(id);
+            // 若指定了关闭时的回调,则调用它
+            onClose && onClose();
+        };
 
-    const onClose = options.onClose;
-    // 覆盖传入的onClose方法
-    options.onClose = () => {
-        // 关闭Message
-        Message.close(id);
-        // 若指定了关闭时的回调,则调用它
-        onClose && onClose();
-    };
+        // 计算当前message在竖直方向上的起始位置
+        options.topOffset = options.topOffset || 20;
 
-    // 计算当前message在竖直方向上的起始位置
-    options.topOffset = options.topOffset || 20;
+        for (const vm of instances) {
+            options.topOffset += ((<HTMLElement>vm.el).offsetHeight || 0) + 16;
+        }
 
-    for (const vm of instances) {
-        options.topOffset += ((<HTMLElement>vm.el).offsetHeight || 0) + 16;
-    }
+        const vm = createVNode(MessageComponentOptions, options);
+        let root: HTMLDivElement | null = document.createElement('div');
 
-    const vm = createVNode(MessageComponentOptions, options);
-    let root: HTMLDivElement | null = document.createElement('div');
+        (<any>vm.props).onDestroy = () => {
+            render(null, <HTMLDivElement>root);
+            root = null;
+        };
 
-    (<any>vm.props).onDestroy = () => {
-        render(null, <HTMLDivElement>root);
-        root = null;
-    };
+        render(vm, root);
+        document.body.appendChild(<HTMLDivElement>root.firstElementChild);
 
-    render(vm, root);
-    document.body.appendChild(<HTMLDivElement>root.firstElementChild);
-
-    (<any>vm).$nodeId = id;
-    instances.push(vm);
+        (<any>vm).$nodeId = id;
+        instances.push(vm);
+    })
 };
 
 /**
