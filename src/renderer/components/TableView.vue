@@ -84,7 +84,7 @@ export default defineComponent({
     // 获取单元格值的getter. 已废弃深度获取值, 如 column:{property: 'singer.name'},
     //                      推荐使用 column:{ valueGetter: item => item.singer?.name)
     const valueGetters = computed<CellValueGetter[]>(() => props.columns.map(column =>
-        column.valueGetter || (column.type === 'checkbox' ? null as unknown as CellValueGetter:
+        column.valueGetter || (column.type === 'checkbox' ? null as unknown as CellValueGetter :
             column.type === 'index' ? getSequenceValue : getPropertyValue)
     ));
 
@@ -413,7 +413,15 @@ export default defineComponent({
       valueGetters,
 
       onHover(event: Event) {
-        const value = (event.target as HTMLElement).getAttribute('data-row');
+        let element: HTMLElement | null = event.target as HTMLElement;
+
+        // 若不是TableCell, 则尝试从上向上逐层查找元素, 直到找到TableCell 或 找不到而返回null
+        if (!element.className.includes('table-cell')) {
+          element = element.closest('.table-cell');
+        }
+
+        const value = element && element.getAttribute('data-row');
+
         hoverRow.value = value ? ((value as unknown as number) ^ 0) : -1;
       },
 
