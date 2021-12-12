@@ -1,32 +1,12 @@
-:root {
-    --fill-base: rgb(184, 165, 149);
-    --text-base: rgb(106, 85, 102);
-    --text-hover: rgb(173, 149, 129);
-    --text-active: rgb(255, 255, 255);
-
-    --button-text-base: var(--text-active);
-    --button-fill-base: var(--text-hover);
-
-    --tab-text-base: rgb(86, 73, 81);
-    --tab-text-active: rgb(156, 102, 102);
-    --tab-fill-hover: rgb(229, 226, 223);
-    --tab-fill-active: rgb(220, 212, 206);
-
-    --tab-horiziontal-text-base: rgb(86, 73, 81);
-    --tab-horiziontal-fill-base: rgb(226, 155, 208);
-    --tab-horiziontal-text-active: rgb(226, 155, 208);
-
-    --table-cell-height: 40px;
-
-    --accordion-scroll-wrapper-height: 0;
-
-    --cell-fill-hover: rgba(228, 228, 228, 0.5);
-    --cell-fill-active: rgba(228, 228, 228, 0.7);
-
-    --fill-popup-pane: rgb(30, 31, 35);
-    --fill-popup-inner-icon: rgb(176, 158, 143);
-    --fill-popup-mode-hover: rgb(43, 44, 47);
-    --fill-popup-mode-border: rgb(113, 110, 110);
+html, body, #app {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    user-select: none;
+    white-space: nowrap;
+    background: rgb(236, 236, 236);
 }
 
 .v-row {
@@ -37,6 +17,120 @@
 .v-column {
     display: flex;
     flex-direction: column;
+}
+
+/****************** WindowStateBar ***********************/
+.window-state-bar {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.window-state-bar .icon {
+    -webkit-app-region: no-drag;
+}
+
+.window-state-bar > .icon {
+    margin: 2px 8px;
+    padding: 6px;
+}
+
+.window-state-bar > .separator {
+    height: 1em;
+    display: flex;
+    margin: 0 0.5em;
+    border-left: 2px solid #222;
+}
+
+.window-state-bar:not(.viewer) > .icon:hover {
+    background: rgba(210, 212, 216, 0.8);
+}
+
+.window-state-bar:not(.viewer) > .icon.close:hover {
+    background: rgb(232, 17, 35);
+    fill: white;
+}
+
+.window-state-bar.viewer > .icon:hover {
+    cursor: pointer;
+    fill: #f56c6c;
+    /*#eebe76*/
+}
+
+.window-state-bar:not(.viewer) > .icon {
+    width: 1em;
+    height: 1em;
+}
+
+.window-state-bar.viewer > .icon {
+    width: 1.75em;
+    height: 1.75em;
+}
+
+.window-state-bar.viewer > .icon {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.window-state-bar.viewer .icon {
+    fill: rgb(210, 210, 210);
+}
+
+/****************** Header-TitleBar ***********************/
+.title-bar {
+    -webkit-app-region: drag;
+}
+
+.title-bar .icon, .title-bar .user-icon, .title-bar .user-name, .title-bar .text-field {
+    -webkit-app-region: none;
+}
+
+/* 设置间距,用以鼠标在窗口边沿操作(如缩放) 在Electron16开始不需要设置此样式,也可以在窗口边缘resize */
+/*.title-bar.un-maximized { margin: 2px 2px 0 2px;}*/
+
+.title-bar .user-icon.cover {
+    width: 3em;
+    height: 3em;
+    background: none;
+    border-radius: 3em;
+}
+
+.title-bar .user-icon.container {
+    width: 3em;
+    height: 3em;
+    overflow: hidden;
+    border-radius: 3em;
+    box-sizing: border-box;
+    background: rgb(188, 191, 193);
+}
+
+.title-bar .user-icon.container > .icon {
+    width: 4em;
+    height: 4em;
+    margin: 0 0 0 -8px;
+    fill: rgb(251, 251, 251);
+}
+
+.title-bar .user-name {
+    margin: 0 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.title-bar .icon.disabled {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.title-bar > .option-container > .icon {
+    margin: 0 4px;
+    padding: 6px;
+    width: 1em;
+    height: 1em;
+}
+
+.title-bar > .option-container > .icon:hover {
+    background: rgba(210, 212, 216, 0.8);
 }
 
 .fixed-left-bar {
@@ -130,821 +224,45 @@
     transition: none;
 }
 
-html, body, #app {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    user-select: none;
-    white-space: nowrap;
-    background: rgb(236, 236, 236);
-}
-
-/*======================Button===================*/
-.button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0.375rem 0.75rem;
-    box-sizing: border-box;
-    font-size: 0.875em;
-    white-space: nowrap;
-    cursor: pointer;
-    border-radius: 4px;
-
-    /*border: 1px solid #c6e2ff;*/
-    /*background: #ecf5ff;*/
-    background: var(--button-fill-base);
-    /*color: #409eff;*/
-    color: var(--button-text-base);
-}
-
-.button:focus {
-    outline: none;
-    /*border: 1px solid #409eff;*/
-    /*box-shadow: 0 0 0.25em 0 #409eff;*/
-}
-
-.button > .icon {
-    fill: var(--button-text-base);
-    margin: 0 4px 0 0;
-}
-
-/*======================CheckBox===================*/
-.check-box {
-    width: 22px;
-    height: 22px;
-    padding: 1px;
-    display: flex;
-    align-items: center;
-    border-radius: 2px;
-    box-sizing: border-box;
-    border: 1px solid rgb(181, 181, 181);
-}
-
-.check-box > .icon {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    padding: 2px 0 0 2px;
-    fill: rgb(87, 87, 87);
-    background: linear-gradient(to bottom, rgb(238, 238, 238), rgb(218, 218, 218));
-}
-
-.check-box > .indeterminate-icon {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-    background: linear-gradient(to bottom, rgb(238, 238, 238), rgb(218, 218, 218));
-}
-
-.check-box .indeterminate {
-    flex: auto;
-    display: flex;
-    height: 1px;
-    margin: 0 3px;
-    border: 1px solid rgb(87, 87, 87);
-    box-sizing: border-box;
-}
-
-/*======================Slider===================*/
-.slider {
-    margin: 4px 10px;
-    padding: 6px 0; /** height: 8px; */
-    position: relative;
-    cursor: pointer;
-
-    display: flex; /** 使用flex布局,使其子元素在侧轴方向上居中对齐 */
-    align-items: center; /** 否则需要使用{top:0; bottom:0; margin:auto 0;} */
-}
-
-.slider.vertical {
-    padding: 0 6px;
-    margin: 6px 8px;
-    flex-direction: column;
-}
-
-.slider > .fill, .slider > .track, .slider > .buffering {
-    width: 100%;
-    height: 0.25em;
-    position: absolute;
-    pointer-events: none;
-}
-
-.slider.vertical > .fill, .slider.vertical > .track, .slider.vertical > .buffering {
-    width: 0.25em;
-    height: 100%;
-    bottom: 0;
-}
-
-.slider .thumb {
-    position: absolute;
-    border-radius: 0.85em;
-    height: 0.85em;
-    width: 0.85em;
-    background: #b8a595;
-    transform: translateX(-50%); /* 水平左移 相对于自身宽度的一半,方便后续计算位置*/
-}
-
-.slider.vertical > .thumb {
-    transform: translateY(-50%);
-}
-
-.slider > .track {
-    background: #9aa09a;
-}
-
-.slider > .fill {
-    background: #b8a595;
-}
-
-.slider > .buffering {
-    background: #7f6b7c;
-}
-
-/*======================Table==================*/
-.table {
-    display: flex;
-    overflow: hidden;
-    flex-direction: column;
-    color: var(--text-base);
-}
-
-.table:focus {
-    outline: none;
-}
-
-.table .table-row-columns {
-    display: grid;
-}
-
-.table .table-cell {
-    padding: 8px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    line-height: 1;
-    min-height: var(--table-cell-height);
-}
-
-.table .table-row-columns .table-cell:not(.gutter) {
-    background: rgb(230, 230, 230);
-}
-
-.table .table-row-columns .gutter {
-    flex: none;
-    padding: 0;
-    display: flex;
-    font-size: 20px;
-    align-items: center;
-    justify-content: center;
-}
-
-.table .content-wrapper .table-cell.hover {
-    background: var(--cell-fill-hover);
-}
-
-.table .content-wrapper .table-cell.selected {
-    background: var(--cell-fill-active);
-}
-
-/*======================TextField==================*/
-.text-field {
-    height: 2em;
-    color: black;
-
-    padding: 0 0.75em;
-    display: flex;
-    align-items: center;
-    border-radius: 2em;
-    position: relative;
-    background-color: rgb(223, 223, 223);
-}
-
-.text-field > .input {
-    height: 100%;
-    border: none;
-    outline: none;
-    color: black;
-    background: none;
-    box-sizing: border-box;
-}
-
-/*
-    输入框placeholder样式(对于此样式不会出现在浏览器样式列表中)
-    Chrome :  ::-webkit-input-placeholder
-    Firefox:  -moz-placeholder 或 ::moz-placeholder
-    IE10+  :  -ms-input-placeholder
-*/
-.text-field > .input::-webkit-input-placeholder {
-    color: #c0c4cc;
-}
-
-/* 解决input元素type为number时显示增加和减小按钮(input::-webkit-outer-spin-button,*/
-.text-field > .input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-}
-
-.text-field > .icon {
-    width: .75em;
-    height: .75em;
-}
-
-/*======================Accordion==================*/
-.accordion {
-    width: 200px;
-    margin: 0 1px 0 4px;
-    color: var(--text-base);
-}
-
-.accordion .list-view.expand {
-    overflow: hidden;
-}
-
-.accordion .list-view .titled-pane {
-    border: solid rgb(200, 200, 200);
-    border-width: 1px 1px 0 1px;
-    white-space: nowrap;
-    padding: 4px;
-}
-
-.accordion .list-view .titled-pane::before {
-    content: '';
-    border: 8px solid;
-    border-color: transparent transparent transparent black;
-    border-right: none;
-    transition: transform 0.5s ease;
-    margin: 0 8px;
-}
-
-.accordion .list-view.expand .titled-pane::before {
-    transform: rotate(90deg);
-}
-
-.accordion .list-view.expand .titled-pane,
-.accordion .list-view:not(.expand):last-child .titled-pane {
-    border-width: 1px;
-}
-
-.accordion .list-view .scroll-wrapper {
-    border: solid rgb(200, 200, 200);
-    border-width: 0 1px;
-    transition: height 1s;
-    overflow: auto;
-    height: 0;
-}
-
-.accordion .list-view.expand:last-child .scroll-wrapper {
-    border-width: 0 1px 1px 1px;
-}
-
-.accordion .list-view.expand .scroll-wrapper {
-    height: var(--accordion-scroll-wrapper-height);
-}
-
-.accordion .list-view .scroll-wrapper::-webkit-scrollbar {
-    display: none;
-}
-
-.accordion .list-view .item {
-    white-space: nowrap;
-    padding: 4px 10px;
-}
-
-.accordion .list-view .item:hover {
-    background: var(--cell-fill-hover);
-}
-
-.accordion .list-view .item.selected {
-    background: var(--cell-fill-active);
-}
-
-/*======================Spinner==================*/
-.spinner {
-    width: 100%;
-    height: 100%;
-    padding: 0;
-
-    top: 0;
-    left: 0;
-    z-index: 2;
-    position: absolute;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    box-sizing: border-box;
-    background-color: rgba(0, 0, 0, .5);
-}
-
-.arc-container {
-    width: 6.125em; /* 1em=16px 98px */
-    height: 6.125em;
-    border-radius: 50%;
-    box-sizing: border-box;
-    border: 6px solid rgba(255, 255, 255, .1);
-    animation: arc-container-circle 1.2s infinite ease-in-out
-}
-
-.arc-container .arc-left, .arc-container .arc-right {
-    width: 3.0625em; /* 49px */
-    height: 6.125em; /* 98px */
-    top: -6px;
-    position: absolute;
-    overflow: hidden;
-}
-
-.arc-container .arc-left {
-    left: -6px;
-}
-
-.arc-container .arc-right {
-    right: -6px;
-}
-
-.arc-container .arc-inner {
-    width: 6.125em;
-    height: 6.125em;
-
-    position: absolute;
-    border-radius: 50%;
-    box-sizing: border-box;
-    border: 6px solid rgba(255, 255, 255, .5);
-}
-
-.arc-container .arc-left .arc-inner {
-    left: 0;
-    transition-delay: .5s;
-    clip: rect(0, 6.125em, 6.125em, 3.0625em);
-}
-
-.arc-container .arc-right .arc-inner {
-    right: 0;
-    clip: rect(0, 3.0625em, 6.125em, 0);
-    animation: arc-right-inner-circle 1.2s infinite linear;
-}
-
-.spinner-inner-icon {
-    width: 5.5em;
-    height: 5.5em;
-    fill: white;
-    position: absolute;
-    animation: spinner-icon 1.2s infinite ease-in-out;
-}
-
-@keyframes spinner-icon {
-    0%, 100% {
-        opacity: .2;
-    }
-    47%, 53% {
-        opacity: .6;
-    }
-}
-
-@keyframes arc-container-circle {
-    0% {
-        transform: scaleX(-1) rotate(0) translateZ(0);
-    }
-    100% {
-        transform: scaleX(-1) rotate(180deg) translateZ(0);
-    }
-}
-
-@keyframes arc-right-inner-circle {
-    0% {
-        transform: rotate(0) translateZ(0);
-    }
-    45%, 55% {
-        transform: rotate(100deg) translateZ(0);
-    }
-    100% {
-        transform: rotate(360deg) translateZ(0);
-    }
-}
-
-/*======================Modal==================*/
-.modal {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(56, 56, 56, 0.6);
-    -webkit-app-region: none;
-}
-
-.modal .modal-content {
-    background: white;
-    border-radius: 10px;
-    transition: transform .4s;
-    transform: translate3d(100vh, 100vh, 0);
-}
-
-.modal.opened .modal-content {
-    transform: translate3d(0, 0, 0);
-}
-
-.modal .titled-pane {
-    padding: 1em;
-    color: var(--text-base);
-    border-bottom: 1px solid rgb(222, 223, 224);
-}
-
-.modal .titled-pane .close-icon {
-    width: 1em;
-    height: 1em;
-    padding: 0.5em;
-    cursor: pointer;
-    stroke-width: 2px;
-    stroke: rgb(145, 147, 153);
-    margin: 0 0 0 auto;
-}
-
-.modal .titled-pane .close-icon:hover {
-    stroke: white;
-    background: rgb(255, 102, 102);
-}
-
-.modal > .modal-content > .content {
-    flex: 1;
-    padding: 1em;
-    overflow: hidden auto;
-    align-items: center;
-}
-
-.label {
-    font-size: 1.125em;
-    white-space: pre-line;
-    overflow: hidden auto;
-    color: var(--text-base);
-}
-
-/*======================Message==================*/
-.message {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    z-index: 9999;
-    padding: 1em;
-    min-width: 380px;
-
-    display: flex;
-    align-items: center;
-
-    box-sizing: border-box;
-    border: 1px solid #ebeef5;
-    background-color: #edf2fc;
-    transform: translateX(-50%);
-    transition: opacity .3s, transform .4s, top .4s;
-    -webkit-app-region: none; /* electron独有的属性,防止message在标题栏上不能响应操作 */
-}
-
-.message.success > .message-icon {
-    fill: #67c23a;
-}
-
-.message.error > .message-icon {
-    fill: #f56c6c;
-}
-
-.message.info > .message-icon {
-    fill: #909399;
-}
-
-.message.warning > .message-icon {
-    fill: #e6a23c;
-}
-
-.message .content {
-    flex: auto;
-    padding: 0;
-    font-size: 0.875em; /** 1em = 16px => 0.875em = 14px */
-    line-height: 1;
-    display: flex;
-}
-
-.message.info > .content {
-    color: #909399;
-}
-
-.message.success {
-    background-color: #f0f9eb;
-    border-color: #e1f3d8;
-}
-
-.message.success > .content {
-    color: #67c23a;
-}
-
-.message.warning {
-    background-color: #fdf6ec;
-    border-color: #faecd8;
-}
-
-.message.warning > .content {
-    color: #e6a23c;
-}
-
-.message.error {
-    background-color: #fef0f0;
-    border-color: #fde2e2;
-}
-
-.message.error > .content {
-    color: #f56c6c;
-}
-
-.message-icon {
-    flex: none;
-    margin: 0 0.625em 0 0;
-}
-
-.message .close-icon {
-    flex: none;
-    fill: #c0c4cc;
-    cursor: pointer;
-    margin: 0 0 0 0.1em;
-    font-size: 1.6em;
-}
-
-.message .close-icon:hover {
-    fill: #909399;
-}
-
-.message-fade-enter-from, .message-fade-leave-to {
-    opacity: 0;
-    transform: translate(-50%, -100%);
-}
-
-/*======================PopupPane==================*/
-.popup-pane {
-    bottom: 3em;
-    position: absolute;
-    align-items: center;
-    justify-content: center;
-    background: var(--fill-popup-pane);
-    color: var(--text-active);
-    border-radius: 0.5em;
-    padding: 0.25em;
-    outline: none;
-
-    /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
-    /* transition: visibility 1s ease; visibility: collapse; */
-}
-
-.popup-pane:before, .popup-pane:after {
-    content: '';
-    bottom: 0;
-    position: absolute;
-    transform: translate(0, 100%);
-}
-
-.popup-pane:before {
-    width: 100%;
-    height: 50%;
-}
-
-.popup-pane:after {
-    border-width: 12px 8px 0;
-    border-style: solid;
-    border-color: var(--fill-popup-pane) transparent transparent;
-    /* width: 1em; height: 0.75em; background: var(--fill-popup-pane); clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0); */
-}
-
-.popup-container {
-    display: flex;
-    justify-content: center;
-    position: relative;
-}
-
-.popup-container > .icon {
-    z-index: 1;
-}
-
-.popup-container:not(:hover) .popup-pane {
-    display: none;
-}
-
-/*======================Pagination==================*/
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pagination .item {
-    padding: 6px 12px;
-    border: solid #ddd;
-    border-width: 1px 1px 1px 0;
-    box-sizing: border-box;
-    background: white;
-    color: #337ab7;
-    text-align: center;
-}
-
-.pagination .item.prev-button {
-    border-width: 1px;
-    border-radius: 4px 0 0 4px;
-}
-
-.pagination .item.next-button {
-    border-radius: 0 4px 4px 0;
-}
-
-.pagination .item:hover {
-    cursor: pointer;
-    color: #23527c;
-    background: #eee;
-}
-
-.pagination .item.active {
-    color: white;
-    cursor: default;
-    pointer-events: none;
-    background-color: #337ab7;
-}
-
-.pagination .item.disabled {
-    color: #777;
-    background-color: #f5f5f5;
-    cursor: not-allowed;
-}
-
-.pagination .item.more {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.pagination .item.more::after {
-    content: '∙∙∙'; /* ••• */
-    font-size: 1.5em;
-    line-height: 0;
-}
-
-.pagination .item.prev-more-button:hover::after {
-    content: '«'; /* ❮❮ */
-    padding: 0 0 2px 0;
-}
-
-.pagination .item.next-more-button:hover::after {
-    content: '»'; /* ❯❯ */
-    padding: 0 0 2px 0;
-}
-
-/****************** WindowStateBar ***********************/
-.window-state-bar {
-    flex: 1;
-    justify-content: flex-end;
-}
-
-.window-state-bar .icon {
-    -webkit-app-region: no-drag;
-}
-
-.window-state-bar > .icon {
-    margin: 2px 8px;
-    padding: 6px;
-}
-
-.window-state-bar > .separator {
-    height: 1em;
-    display: flex;
-    margin: 0 0.5em;
-    border-left: 2px solid #222;
-}
-
-.window-state-bar:not(.viewer) > .icon:hover {
-    background: rgba(210, 212, 216, 0.8);
-}
-
-.window-state-bar:not(.viewer) > .icon.close:hover {
-    background: rgb(232, 17, 35);
-    fill: white;
-}
-
-.window-state-bar.viewer > .icon:hover {
-    cursor: pointer;
-    fill: #f56c6c;
-    /*#eebe76*/
-}
-
-.window-state-bar:not(.viewer) > .icon {
-    width: 1em;
-    height: 1em;
-}
-
-.window-state-bar.viewer > .icon {
-    width: 1.75em;
-    height: 1.75em;
-}
-
-.window-state-bar.viewer > .icon {
-    width: 1.5em;
-    height: 1.5em;
-}
-
-.window-state-bar.viewer .icon {
-    fill: rgb(210, 210, 210);
-}
-
-/* 谷歌内核浏览器的滚动条样式 */
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-/* 滚动条滑块样式 */
-::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
-}
-
-/* 滚动条在鼠标按下未释放时的样式 */
-::-webkit-scrollbar-thumb:active {
-    background: #666;
-}
-
-/* 滚动条轨道样式 */
-::-webkit-scrollbar-track {
-    background: 0 0;
-}
-
-/** 水平滚动条和垂直滚动条交叉部分 */
-::-webkit-scrollbar-corner {
-    display: none
-}
-
-/****************** Header-TitleBar ***********************/
-.title-bar {
-    -webkit-app-region: drag;
-}
-
-.title-bar .icon, .title-bar .user-icon, .title-bar .user-name, .title-bar .text-field {
-    -webkit-app-region: none;
-}
-
-/* 设置间距,用以鼠标在窗口边沿操作(如缩放) 在Electron16开始不需要设置此样式,也可以在窗口边缘resize */
-/*.title-bar.un-maximized { margin: 2px 2px 0 2px;}*/
-
-.title-bar .user-icon.cover {
-    width: 3em;
-    height: 3em;
-    background: none;
-    border-radius: 3em;
-}
-
-.title-bar .user-icon.container {
-    width: 3em;
-    height: 3em;
-    overflow: hidden;
-    border-radius: 3em;
-    box-sizing: border-box;
-    background: rgb(188, 191, 193);
-}
-
-.title-bar .user-icon.container > .icon {
-    width: 4em;
-    height: 4em;
-    margin: 0 0 0 -8px;
-    fill: rgb(251, 251, 251);
-}
-
-.title-bar .user-name {
-    margin: 0 8px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.title-bar .icon.disabled {
-    opacity: 0.2;
-    pointer-events: none;
-}
-
-.title-bar > .option-container > .icon {
+.v-row.has-margin > .button {
     margin: 0 4px;
-    padding: 6px;
-    width: 1em;
-    height: 1em;
 }
 
-.title-bar > .option-container > .icon:hover {
-    background: rgba(210, 212, 216, 0.8);
+/* 设置图片不可拖动 */
+.cover {
+    -webkit-user-drag: none;
+}
+
+.data-container {
+    align-items: stretch;
+    color: var(--text-base);
+}
+
+.data-container .cover {
+    width: 13em;
+    height: 13em;
+    border-radius: 8em;
+}
+
+.data-container .v-column {
+    justify-content: space-around;
+    margin: 1em;
+}
+
+.data-container .statistic-item:nth-child(n + 2)::before {
+    content: '|';
+    margin: 0 1.5em;
+}
+
+.data-container .button {
+    margin: 0 1.5em 0 0;
+}
+
+.table .table-cell > .icon.mv-icon {
+    flex: none;
+    fill: #eb5183;
+    margin: 0 0 0 0.25em;
+    cursor: pointer;
 }
 
 /****************** 登录模态框 ***********************/
@@ -971,90 +289,6 @@ html, body, #app {
     width: 300px;
 }
 
-.singer-info-container {
-    align-items: stretch;
-    color: var(--text-base);
-}
-
-.singer-info-container .v-column {
-    justify-content: space-around;
-    margin: 1em;
-}
-
-/*.singer-info-container .v-column .v-row > * {*/
-/*    margin: 0 1em 0 0;*/
-/*}*/
-
-.singer-info-container .count-info:nth-child(n+2)::before {
-    content: '|';
-    margin: 0 1.5em;
-}
-
-.singer-info-container .button {
-    margin: 0 1.5em 0 0;
-}
-
-.table .table-cell > .icon.mv-icon {
-    fill: #eb5183;
-    margin: 0 0 0 0.25em;
-    cursor: pointer;
-}
-
-.table .table-cell .link:not(:last-child):after {
-    content: '/';
-    margin: 0 4px;
-    color: var(--text-base);
-    pointer-events: none;
-}
-
-.table .table-cell .link:hover {
-    cursor: pointer;
-    color: rgb(226, 155, 208);
-}
-
-/****************** ImageCover ***********************/
-.grid-view .content-wrapper {
-    display: grid;
-    overflow: hidden;
-    /*grid-template-columns: repeat(auto-fit, 13em);*/
-    grid-gap: 3em; /* row-gap: 3em; column-gap: 3em; grid-column-gap: 3em; */
-    justify-content: space-around;
-    position: sticky;
-    top: 0;
-    /*
-        justify-content属性是整个内容区域在容器里面的水平位置（左中右），align-content属性是整个内容区域的垂直位置（上中下）
-        place-content属性是align-content属性和justify-content属性的合并简写形式。
-
-        justify-content: start | end | center | stretch | space-around | space-between | space-evenly;
-        align-content: start | end | center | stretch | space-around | space-between | space-evenly;
-        place-content: <align-content> <justify-content>
-    */
-}
-
-.grid-view .item-cell {
-    text-align: center;
-    box-sizing: border-box;
-    white-space: normal;
-}
-
-.grid-view .item-cell .cover {
-    width: 100%;
-    height: 13em;
-    border-radius: 8em;
-    cursor: pointer;
-    transition: transform .75s cubic-bezier(0, 1, .75, 1);
-}
-
-.grid-view .item-cell:hover .cover {
-    transform: scale(1.07);
-}
-
-.grid-view.arc-rect .item-cell .cover {
-    width: 100%;
-    height: 10em;
-    border-radius: 0.75em;
-}
-
 #timer-modal .content {
     color: var(--text-base);
 }
@@ -1072,13 +306,4 @@ html, body, #app {
     width: 30%;
     font-size: 18px;
     border-radius: 1em;
-}
-
-.v-row.has-margin > .button {
-    margin: 0 4px;
-}
-
-/* 设置图片不可拖动 */
-.cover {
-    -webkit-user-drag: none;
 }
