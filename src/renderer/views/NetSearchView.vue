@@ -1,14 +1,15 @@
 <template>
-  <div class='v-row singer-info-container' v-if='singer'>
-    <img alt class='cover' :src='singer.cover'/>
+  <div class='v-row data-container' v-if='singer'>
+    <image-view v-model='singer.cover' defaultValue='/icon/singer.png'/>
+
     <div class='v-column'>
       <div>{{ singer.name || '-' }}</div>
 
-      <div class='v-row base-info'>
-        <span class='count-info'>单曲：{{ singer.songCount || '-' }}</span>
-        <span class='count-info'>专辑：{{ singer.albumCount || '-' }}</span>
-        <span class='count-info'>MV：{{ singer.mvCount || '-' }}</span>
-        <span class='count-info'>粉丝：{{ singer.fansCount || '-' }}</span>
+      <div class='v-row data-statistic'>
+        <span class='statistic-item'>单曲：{{ singer.songCount || '-' }}</span>
+        <span class='statistic-item'>专辑：{{ singer.albumCount || '-' }}</span>
+        <span class='statistic-item'>MV：{{ singer.mvCount || '-' }}</span>
+        <span class='statistic-item'>粉丝：{{ singer.fansCount || '-' }}</span>
       </div>
 
       <div class='v-row'>
@@ -51,7 +52,7 @@
       <grid-view cell-widths='repeat(auto-fit, 13em)' v-show='tabMap.value===tabMap.ALBUM_TAB' :data='albumList'
                  @infinite-scroll='loadAlbumData' :cell-height='234' @cell-click='onAlbumItemClicked'>
         <template v-slot='{item}'>
-          <img alt class=cover :src='item.cover' loading='lazy'/>
+          <image-view v-model='item.cover' defaultValue='/icon/album.png'/>
           <div class='name'>{{ item.name }}</div>
         </template>
       </grid-view>
@@ -59,7 +60,7 @@
       <grid-view class='arc-rect' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
                  :cell-height='206' @infinite-scroll='loadMvData' v-show='tabMap.value===tabMap.MV_TAB'>
         <template v-slot='{item}'>
-          <img alt class=cover :src='item.cover' loading='lazy'/>
+          <image-view v-model='item.cover' defaultValue='/icon/mv.png'/>
           <div>
             <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
               {{ singer.name }}

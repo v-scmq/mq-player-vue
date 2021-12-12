@@ -9,7 +9,7 @@
   <grid-view style='margin-top:1em' :data='specialList' cell-widths='repeat(auto-fit, 13em)'
              :cell-height='234' @infinite-scroll='loadData'>
     <template v-slot='{item}'>
-      <img alt class=cover :src='item.cover' loading='lazy'/>
+      <image-view v-model='item.cover' defaultValue='/icon/special.png'/>
       <div class='name'>{{ item.name }}</div>
     </template>
   </grid-view>

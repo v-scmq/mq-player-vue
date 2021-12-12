@@ -8,7 +8,7 @@
   <grid-view class='arc-rect' style='margin-top:1em' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
              :cell-height='206' @infinite-scroll='loadData'>
     <template v-slot='{item}'>
-      <img alt class=cover :src='item.cover' loading='lazy'/>
+      <image-view v-model='item.cover' defaultValue='/icon/mv.png'/>
       <div>
         <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
             {{ singer.name }}
@@ -58,7 +58,7 @@ export default defineComponent({
         // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
         data.page && Object.assign(page, data.page);
 
-        const tagList:TagItemNode[][] = [];
+        const tagList: TagItemNode[][] = [];
 
         // 转换结构 => {a:[{id, name}], b:[{id, name}]} => [[{id, name, group:a, value:'a;${id}'}] , ...]
         Object.keys(data.tags).forEach(key => {

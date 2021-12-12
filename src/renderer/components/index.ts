@@ -10,6 +10,7 @@ import Modal from './Modal.vue';
 import Pagination from './Pagination.vue';
 import Icon from './Icon.vue';
 import GridView from './GridView.vue'
+import ImageView from './ImageView.vue';
 
 export default {
     /**
@@ -29,5 +30,6 @@ export default {
         Vue.component(Pagination.name, Pagination);
         Vue.component(Icon.name, Icon);
         Vue.component(GridView.name, GridView);
+        Vue.component(ImageView.name, ImageView);
     }
 }

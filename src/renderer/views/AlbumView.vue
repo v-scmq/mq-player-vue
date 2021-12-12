@@ -1,14 +1,15 @@
 <template>
-  <div class='v-row singer-info-container'>
-    <img alt class='cover' :src='album.cover '/>
+  <div class='v-row data-container'>
+    <image-view v-model='album.cover' defaultValue='/icon/album.png'/>
+
     <div class='v-column'>
       <div>{{ album.name || '-' }}</div>
 
-      <div class='v-row base-info'>
-        <span class='count-info'>流派：{{ album.genre || '-' }}</span>
-        <span class='count-info'>语种：{{ album.language || '-' }}</span>
-        <span class='count-info'>唱片公司：{{ album.company || '-' }}</span>
-        <span class='count-info'>发行时间：{{ album.year || '-' }}</span>
+      <div class='v-row data-statistic'>
+        <span class='statistic-item'>流派：{{ album.genre || '-' }}</span>
+        <span class='statistic-item'>语种：{{ album.language || '-' }}</span>
+        <span class='statistic-item'>唱片公司：{{ album.company || '-' }}</span>
+        <span class='statistic-item'>发行时间：{{ album.year || '-' }}</span>
       </div>
 
       <div class='v-row'>
@@ -53,7 +54,7 @@ import {convertSinger} from '../../utils';
 import {Album, ComputedPage, Song} from '../../types';
 
 import {reactive, watch, defineComponent, PropType} from 'vue';
-import { TableColumn } from '../components/types';
+import {TableColumn} from '../components/types';
 
 export default defineComponent({
   name: 'AlbumView',

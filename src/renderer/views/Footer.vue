@@ -5,8 +5,7 @@
 
       <!-- 左侧部分 -->
       <div class='v-row' style='flex:1'>
-        <img class='cover album-icon' :src='media.cover' alt='专辑' draggable='false' @error='media.cover = DEFAULT_COVER'
-             @click='viewerVisible=true'/>
+        <image-view class='album-icon' v-model='media.cover' :defaultValue='defaultCover' @click='viewerVisible=true'/>
 
         <div class='v-column media-info'>
           <span>{{ media.singer }} - {{ media.title }}</span>
@@ -99,8 +98,6 @@ export default defineComponent({
   components: {MusicViewer},
 
   setup() {
-    const DEFAULT_COVER = 'icon/default_cover.jpg';
-
     const media = reactive({
       timeValue: 0, buffered: 0, time: '00:00', duration: '00:00', path: null,
       singer: 'MQ音乐', title: '聆听世界', album: '未知', cover: ''
@@ -277,7 +274,7 @@ export default defineComponent({
         media.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
             ((singer instanceof Object ? singer.name : singer) || '未知');
 
-        media.cover = (album instanceof Object) ? album.cover : mediaSource.cover || DEFAULT_COVER;
+        media.cover = (album instanceof Object) ? album.cover : mediaSource.cover;
 
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
@@ -302,9 +299,9 @@ export default defineComponent({
     onBeforeUnmount(() => player.release());
 
     return {
-      media, isPlaying, DEFAULT_COVER, viewerVisible, volume, speed, modeIcon, progressSlider,
-      getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange,
-      onVolumeScroll, onSpeedPaneScroll
+      media, isPlaying, viewerVisible, volume, speed, modeIcon, progressSlider,
+      defaultCover: '/icon/default_cover.jpg', onVolumeScroll, onSpeedPaneScroll,
+      getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange
     }
   }
 
