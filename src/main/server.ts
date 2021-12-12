@@ -453,7 +453,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 
             dataSource.getSongUrl(id, mid, Math.min(Math.max(1, quality), 3))
                 .then(url => handleStreamRequest(request, response, url))
-                .catch(reason => response.writeHead(500, {'content-type': 'text/plain; charset=utf-8'})
+                .catch(reason => response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
                     .end(reason.message));
 
         } catch (e: any) {
@@ -487,7 +487,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 
             dataSource.getMvUrl(vid, Math.min(Math.max(1, quality), 4))
                 .then(url => handleStreamRequest(request, response, url))
-                .catch(reason => response.writeHead(500, {'content-type': 'text/plain; charset=utf-8'})
+                .catch(reason => response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
                     .end(reason.message));
 
         } catch (e: any) {
