@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 import * as mm from 'music-metadata';
 import {contextBridge, ipcRenderer} from 'electron';
 
