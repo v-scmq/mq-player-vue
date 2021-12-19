@@ -391,7 +391,8 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/lyric'(request, response) {
-        response.end();
+        handlePostRequest(request, response, (dataSource, param) =>
+            dataSource.getLyric(param.song));
     },
 
 
