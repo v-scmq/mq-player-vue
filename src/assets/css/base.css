@@ -272,7 +272,7 @@
 .grid-view .item-cell .cover {
     width: 100%;
     height: 13em;
-    border-radius: 8em;
+    border-radius: 50%;
     cursor: pointer;
     transition: transform .75s cubic-bezier(0, 1, .75, 1);
 }

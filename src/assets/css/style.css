@@ -241,7 +241,7 @@ html, body, #app {
 .data-container .cover {
     width: 13em;
     height: 13em;
-    border-radius: 8em;
+    border-radius: 50%;
 }
 
 .data-container .v-column {
