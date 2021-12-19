@@ -70,7 +70,15 @@
         </template>
       </grid-view>
 
-      <div v-show='tabMap.value===tabMap.SPECIAL_TAB' class='label'>歌单list</div>
+      <div v-show='tabMap.value===tabMap.SPECIAL_TAB'>
+        <grid-view style='margin-top:1em' :data='specialList' cell-widths='repeat(auto-fit, 13em)'
+                   :cell-height='234' @infinite-scroll='loadSpecialData'>
+          <template v-slot='{item}'>
+            <image-view v-model='item.cover' defaultValue='/icon/special.png'/>
+            <div class='name'>{{ item.name }}</div>
+          </template>
+        </grid-view>
+      </div>
     </div>
   </div>
 </template>
@@ -288,7 +296,7 @@ export default defineComponent({
             // 修改分页信息
             data.page && Object.assign(page, data.page);
             // 添加专辑
-            albumList.splice(0, albumList.length, ...data.list);
+            albumList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);
         }
@@ -297,6 +305,7 @@ export default defineComponent({
       /** 加载数据到视图上(无限滚动触发点) */
       loadMvData() {
         const page = tabMap.MV_TAB.page;
+
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           Spinner.open();
@@ -309,7 +318,28 @@ export default defineComponent({
 
             // 添加Mv
             data.list.forEach(convertSinger);
-            mvList.splice(0, mvList.length, ...data.list);
+            mvList.push(...data.list);
+
+          }).catch(() => --page.current).finally(Spinner.close);
+        }
+      },
+
+      /** 加载数据到视图上(无限滚动触发点) */
+      loadSpecialData() {
+        const page = tabMap.SPECIAL_TAB.page;
+
+        // 若还有数据, 则发起网络请求加载歌曲数据列表
+        if (page.current >= 1 && page.current < page.pageCount) {
+          Spinner.open();
+
+          ++page.current;
+
+          searchSpecial(page, $query).then(data => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+
+            // 添加歌单
+            specialList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);
         }
