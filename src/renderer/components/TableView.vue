@@ -416,7 +416,7 @@ export default defineComponent({
         let element: HTMLElement | null = event.target as HTMLElement;
 
         // 若不是TableCell, 则尝试从上向上逐层查找元素, 直到找到TableCell 或 找不到而返回null
-        if (!element.className.includes('table-cell')) {
+        if (!element.classList.contains('table-cell')) {
           element = element.closest('.table-cell');
         }
 
