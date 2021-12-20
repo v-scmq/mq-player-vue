@@ -2,7 +2,7 @@
  *                    module: URIUtil                          *
  ***************************************************************/
 
-import { LyricLine } from "../types";
+import {LyricLine} from "../types";
 
 /**
  * 获取本地文件资源在本地服务器上的API接口地址 <br>
@@ -179,58 +179,61 @@ export const convertSinger = (value: any) =>
         value.singer instanceof Object ? [value.singer] :
             value.singer ? [{name: value.singer}] : [];
 
+
+/*****************************************************************
+ *                    module: LyricUtil                          *
+ *****************************************************************/
+
 /**
+ * 读取并转换歌词内容
  *
- * @param lyric
+ * @param text 歌词文本内容
  */
-export const read = (lyric: string) => {
-  const lyrics = lyric.split(/\r\n|\r|\n/); // 按换行符分割歌词文本
+export const readLyric = (text: string): LyricLine[] => {
+    debugger;
+    // 将歌词内容按换行符切割
+    const lyrics = text.split(/\r\n|\r|\n/); // 按换行符分割歌词文本
 
-  // 保存每一行歌词中包含的时间(如 “[00:50.80][01:20.90]ABCDEF” ->“00:50.80”,“01:20.90”)
-  const map: { [key: number]: LyricLine } = {};
+    // “[00:50.80][01:20.90] 歌词” =>
+    // {'00:50.80'对应的秒数: LyricLine, '01:20.90'对应的秒数: LyricLine}
+    const map: { [key: string]: LyricLine } = {};
 
-  const regex = /\[(\d{1,2}:\d{1,2}\.\d{1,2})\]/g;
+    // 每行歌词的时间正则匹配表达式
+    const regex = /\[(\d{1,2}):(\d{1,2})\.\d{1,2}]/g;
 
-  for (const line of lyrics) {
-    if (!line) {
-      continue;
+    for (const line of lyrics) {
+        if (!line) {
+            continue;
+        }
+
+        // 尝试匹配当前行的歌词信息
+        const matched = line.matchAll(regex);
+        // 将匹配信息转换为普通数组
+        const matchedArray = matched ? Array.from(matched) : null;
+
+        if (!matchedArray || matchedArray.length === 0) {
+            continue;
+        }
+
+        // 获取最后一个匹配项
+        const lastMatched = matchedArray[matchedArray.length - 1];
+        // 歌词文本内容的起始索引
+        const start = (lastMatched.index || 0) + lastMatched[0].length;
+        // 获取歌词文本
+        const content = line.slice(start);
+
+        for (const matchedItem of matchedArray) {
+            // 提取匹配到的分钟数和秒数(忽略毫秒数)
+            const minute = matchedItem[1], second = matchedItem[2];
+            // 将 总秒数 转换为 对象的key
+            const key = Number(minute) * 60 + Number(second);
+            // 记录歌词行信息
+            map[key] = {second: key, content};
+        }
     }
 
-    const matched = line.matchAll(regex);
-
-    const matchedArray = matched ? Array.from(matched) : null;
-
-    if (!matchedArray || matchedArray.length === 0) {
-      continue;
-    }
-
-    const lastMatched = matchedArray[matchedArray.length - 1];
-
-    const end = (lastMatched.index || 0) + lastMatched[0].length;
-
-    const content = line.slice(end + 1);
-
-    for (const matchedItem of matchedArray) {
-      const [minute, second] = matchedItem;
-      const key = Number(minute) * 60 + Number(second);
-      map[key] = { second: key, content };
-    }
-  }
-
-  const keys = Object.keys(map);
-
-  const list: LyricLine[] = [];
-
-  for(const key of keys) {
-    list.push(keys[key]);
-  }
-
-  //
-  return list;
+    return Object.keys(map).map(key => map[key]);
 };
-
-
-
 
 
 /*****************************************************************

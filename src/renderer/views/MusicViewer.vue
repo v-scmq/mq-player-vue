@@ -6,18 +6,23 @@
     </window-state-bar>
 
     <img class='cover effect-cover' alt :src='cover'/>
-    <canvas class='canvas-view' width='1600' height='400' ref='canvasRef'></canvas>
+
+    <lyric-view style='flex:1'/>
+
+    <canvas class='canvas-view' width='1600' height='200' ref='canvasRef'></canvas>
   </div>
 </template>
 
 <script lang='ts'>
 import player from '../player';
 import WindowStateBar from './WindowStateBar.vue';
+import LyricView from "./LyricView.vue";
 import {ref, onBeforeUnmount, onMounted, defineComponent} from 'vue';
 
 export default defineComponent({
   name: 'PlayDetailView',
-  components: {WindowStateBar},
+
+  components: {WindowStateBar, LyricView},
 
   props: {
     cover: String
