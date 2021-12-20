@@ -2,6 +2,8 @@
  *                    module: URIUtil                          *
  ***************************************************************/
 
+import { LyricLine } from "../types";
+
 /**
  * 获取本地文件资源在本地服务器上的API接口地址 <br>
  *
@@ -176,6 +178,59 @@ export const convertSinger = (value: any) =>
     value.singer instanceof Array ? value.singer :
         value.singer instanceof Object ? [value.singer] :
             value.singer ? [{name: value.singer}] : [];
+
+/**
+ *
+ * @param lyric
+ */
+export const read = (lyric: string) => {
+  const lyrics = lyric.split(/\r\n|\r|\n/); // 按换行符分割歌词文本
+
+  // 保存每一行歌词中包含的时间(如 “[00:50.80][01:20.90]ABCDEF” ->“00:50.80”,“01:20.90”)
+  const map: { [key: number]: LyricLine } = {};
+
+  const regex = /\[(\d{1,2}:\d{1,2}\.\d{1,2})\]/g;
+
+  for (const line of lyrics) {
+    if (!line) {
+      continue;
+    }
+
+    const matched = line.matchAll(regex);
+
+    const matchedArray = matched ? Array.from(matched) : null;
+
+    if (!matchedArray || matchedArray.length === 0) {
+      continue;
+    }
+
+    const lastMatched = matchedArray[matchedArray.length - 1];
+
+    const end = (lastMatched.index || 0) + lastMatched[0].length;
+
+    const content = line.slice(end + 1);
+
+    for (const matchedItem of matchedArray) {
+      const [minute, second] = matchedItem;
+      const key = Number(minute) * 60 + Number(second);
+      map[key] = { second: key, content };
+    }
+  }
+
+  const keys = Object.keys(map);
+
+  const list: LyricLine[] = [];
+
+  for(const key of keys) {
+    list.push(keys[key]);
+  }
+
+  //
+  return list;
+};
+
+
+
 
 
 /*****************************************************************
