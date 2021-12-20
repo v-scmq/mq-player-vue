@@ -193,7 +193,7 @@ html, body, #app {
     width: 4.5em;
     background: none;
     flex-direction: column;
-    color: var(--tab-horiziontal-text-base);
+    color: var(--tab-horizontal-text-base);
 }
 
 .tab-pane.v-column .tab-container .tab:not(:last-child) {
@@ -207,7 +207,7 @@ html, body, #app {
     display: block;
     transform: scaleX(0);
     margin: 0.25em 0 0 0;
-    background: var(--tab-horiziontal-fill-base);
+    background: var(--tab-horizontal-fill-base);
     transition: transform 0.3s ease-in-out;
 }
 
@@ -216,7 +216,7 @@ html, body, #app {
 }
 
 .tab-pane.v-column .tab-container .tab.active {
-    color: var(--tab-horiziontal-text-active);
+    color: var(--tab-horizontal-text-active);
 }
 
 .tab-pane.v-column .tab-container .tab.active:after {

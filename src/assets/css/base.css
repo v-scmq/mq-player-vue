@@ -39,9 +39,9 @@
     --tab-fill-hover: rgb(229, 226, 223);
     --tab-fill-active: rgb(220, 212, 206);
 
-    --tab-horiziontal-text-base: rgb(86, 73, 81);
-    --tab-horiziontal-fill-base: rgb(226, 155, 208);
-    --tab-horiziontal-text-active: rgb(226, 155, 208);
+    --tab-horizontal-text-base: rgb(86, 73, 81);
+    --tab-horizontal-fill-base: rgb(226, 155, 208);
+    --tab-horizontal-text-active: rgb(226, 155, 208);
 
     --table-cell-height: 40px;
 
