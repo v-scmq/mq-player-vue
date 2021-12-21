@@ -1,32 +1,79 @@
 <template>
-  <div class='lyric-view'>
-    <div class='lyric-item' :class='{active: second === line.second}'
+  <div class='lyric-view' ref='el'>
+    <div class='lyric-item' :class='{active: activeIndex === index}'
          v-for='(line, index) in lyrics' :key='index'>
       {{ line.content }}
     </div>
+    <div class='lyric-item' ref='fillItem'>&nbsp;</div>
   </div>
 </template>
 
 <script lang='ts'>
-import {reactive, ref, defineComponent, onMounted} from 'vue'
+import {ref, computed, defineComponent, inject, onMounted, onBeforeUnmount} from 'vue'
 
 import {LyricLine} from '../../types';
-import {getLyric} from '../api';
 
 export default defineComponent({
 
+  name: 'LyricView',
+
   setup() {
-    const lyrics = reactive<LyricLine[]>([]);
+    const el = ref(null as unknown as HTMLElement);
+    const fillItem = ref(null as unknown as HTMLElement);
 
-    const second = ref(15);
+    const lyrics = inject<LyricLine[]>('lyrics', []);
+    const playedTime = inject<number>('playedTime', 0);
 
-    onMounted(() => {
-      getLyric({mid: 'vq12342'}).then(data => {
-        lyrics.splice(0, lyrics.length, ...data);
-      })
+    let offsetHeight = 1, cellHeight = 1;
+    let resizeObserver: ResizeObserver;
+
+    const activeIndex = computed(() => {
+      const second = playedTime;
+      const max = lyrics.length - 1;
+      let index = -1;
+
+      if(max < 0) {
+        return index;
+      }
+
+      for(; index < max; ++index) {
+        const line = lyrics[index + 1];
+
+        if(second < line.second) {
+          break;
+        }
+      }
+
+      // 可见单元格数量除以2
+      const visibleCount = (offsetHeight / cellHeight) >> 1;
+
+      el.value.scrollTo({
+        behavior: 'smooth',
+        top: index < visibleCount ? 0 : (index - visibleCount) * cellHeight
+      });
+
+      return index;
     });
 
-    return {lyrics, second};
+    onMounted(() => {
+      resizeObserver = new ResizeObserver(() => {
+        offsetHeight = el.value.offsetHeight;
+        cellHeight = fillItem.value.offsetHeight;
+      });
+
+      resizeObserver.observe(el.value);
+    });
+
+    onBeforeUnmount(() => {
+      if(resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null as any;
+      }
+
+      offsetHeight = cellHeight = null as any;
+    });
+
+    return {el, fillItem, activeIndex, lyrics};
   },
 
 })
@@ -37,7 +84,6 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   overflow: hidden auto;
-  gap: 20px 0;
 }
 
 .lyric-view .lyric-item {
@@ -46,6 +92,7 @@ export default defineComponent({
   justify-content: center;
   font-size: 18px;
   color: white;
+  padding: 0 4px;
 }
 
 .lyric-view .lyric-item.active {

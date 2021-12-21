@@ -87,10 +87,12 @@
 import player, {Status} from '../player';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
+import {getLyric} from '../api';
 
-import {defineComponent, onBeforeUnmount, reactive, ref} from 'vue';
+import {defineComponent, onBeforeUnmount, reactive, ref, provide, readonly} from 'vue';
 
 import MusicViewer from './MusicViewer.vue';
+import {LyricLine} from 'src/types';
 
 export default defineComponent({
   name: 'Footer',
@@ -103,17 +105,35 @@ export default defineComponent({
       singer: 'MQ音乐', title: '聆听世界', album: '未知', cover: ''
     });
 
-    const isPlaying = ref(false);       // 播放状态(特指 未播放 或 播放)
+    // 播放状态(特指 未播放 或 播放)
+    const isPlaying = ref(false);
 
-    const volume = ref(0.2);            // 音量大小
+    // 音量大小
+    const volume = ref(0.2);
 
-    const modeIcon = ref('list-loop'); // 播放模式图标
+    // 播放模式图标
+    const modeIcon = ref('list-loop');
 
-    const speed = ref(1 / 3);           // 播放速率大小 「1 = 1.5x + 0.5 => x = 1/3」
+    // 播放速率大小 「1 = 1.5x + 0.5 => x = 1/3」
+    const speed = ref(1 / 3);
 
-    const viewerVisible = ref(false);   // 音乐详情页面可见性
+    // 音乐详情页面可见性
+    const viewerVisible = ref(false);
 
-    const progressSlider = ref(null as any);   // 进度Slider
+    // 进度Slider
+    const progressSlider = ref(null as any);
+
+    // 歌词行信息
+    const lyrics = reactive<LyricLine[]>([]);
+
+    // 已播放时间(单位秒)
+    const playedTime = ref(0);
+
+    // 提供给LyricView组件所使用的歌词内容
+    provide('lyrics', readonly(lyrics));
+
+    // 提供给LyricView组件所使用的已播放时间
+    provide('playedTime', readonly(playedTime));
 
     /**
      * 获取播放器媒体播放索引
@@ -123,21 +143,25 @@ export default defineComponent({
      */
     const getIndex = (next: boolean) => {
       let index = player.index, size = player.playList.length;
+
       // 列表循环
       if (modeIcon.value === 'list-loop') {
         return next ? (++index >= size ? 0 : index) : (--index < 0 ? --size : index);
       }
+
       // 顺序播放
       if (modeIcon.value === 'order') {
         // 若生成下一个索引,则直接增加;
         // 若生成上一个且生成的索引小于0时返回不等于-1且小于0的整数,表示列表播放完毕
         return next ? (++index >= size ? -2 : index) : (--index < 0 ? -2 : index);
       }
+
       // 随机播放
       if (modeIcon.value === 'random') {
         // [0,1) * length => [0,length)
         return Math.floor(Math.random() * size);
       }
+
       // 单曲循环
       return index;
     };
@@ -152,17 +176,20 @@ export default defineComponent({
       let list = player.playList;
       // 暂停当前播放的媒体
       player.pause();
+
       if (!list || list.length === 0 || index === -1 || index >= list.length) {
         Message.warning('没有播放数据源，请选择一个播放源！');
         return;
       }
 
       player.index = index;
+
       // 若index==-2,则是列表播放模式,且列表播放已完成,不播放下一首,
       // 可以不处理,因为index==-2在下面的执行中无法通过
       // 若播放索引在正常范围内,则准备播放媒体
       if (index >= 0 && index < list.length) {
         let media = list[index];
+
         if (!media) {
           Message.info('媒体信息不存在，即将播放下一首');
           playNext && play(++index, true);
@@ -185,11 +212,9 @@ export default defineComponent({
      * 播放或暂停
      */
     const playOrPause = () => {
-      if (player.isPlayable()) {
-        !player.isPlaying() ? player.play() : player.pause();
-      } else {
-        play(player.index, false);
-      }
+      player.isPlayable()
+        ? (player.isPlaying() ? player.pause() : player.play())
+        : play(player.index, false);
     };
 
     /**
@@ -200,8 +225,12 @@ export default defineComponent({
      */
     const valueChanged = (newValue: number, seek: boolean) => {
       media.time = secondToString(newValue * player.getDuration());
+
       if (seek && player.status !== Status.UNKNOWN) {
-        player.seek(newValue * player.getDuration());
+        const value = newValue * player.getDuration();
+
+        player.seek(value);
+        playedTime.value = value;
       }
     };
 
@@ -278,6 +307,12 @@ export default defineComponent({
 
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
+
+        // 清空歌词信息
+        lyrics.splice(0, lyrics.length);
+
+        // 重新加载歌词
+        getLyric(mediaSource).then(data => void lyrics.push(...data));
       },
 
       bufferChanged(value) {
