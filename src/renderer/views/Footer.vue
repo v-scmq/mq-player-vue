@@ -123,17 +123,11 @@ export default defineComponent({
     // 进度Slider
     const progressSlider = ref(null as any);
 
-    // 歌词行信息
-    const lyrics = reactive<LyricLine[]>([]);
+    // 歌词信息
+    const lyrics = reactive({list: [] as LyricLine[], playedTime: 0});
 
-    // 已播放时间(单位秒)
-    const playedTime = ref(0);
-
-    // 提供给LyricView组件所使用的歌词内容
+    // 提供给LyricView组件所使用的歌词信息
     provide('lyrics', readonly(lyrics));
-
-    // 提供给LyricView组件所使用的已播放时间
-    provide('playedTime', readonly(playedTime));
 
     /**
      * 获取播放器媒体播放索引
@@ -213,8 +207,8 @@ export default defineComponent({
      */
     const playOrPause = () => {
       player.isPlayable()
-        ? (player.isPlaying() ? player.pause() : player.play())
-        : play(player.index, false);
+          ? (player.isPlaying() ? player.pause() : player.play())
+          : play(player.index, false);
     };
 
     /**
@@ -224,14 +218,11 @@ export default defineComponent({
      * @param seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
      */
     const valueChanged = (newValue: number, seek: boolean) => {
-      media.time = secondToString(newValue * player.getDuration());
+      const value = newValue * player.getDuration();
 
-      if (seek && player.status !== Status.UNKNOWN) {
-        const value = newValue * player.getDuration();
-
-        player.seek(value);
-        playedTime.value = value;
-      }
+      media.time = secondToString(value);
+      lyrics.playedTime = value;
+      seek && player.status !== Status.UNKNOWN && player.seek(value);
     };
 
     /**
@@ -308,11 +299,12 @@ export default defineComponent({
         // 重新媒体后需要重新设置播放速率
         handleSpeedChange(speed.value);
 
+        const list = lyrics.list;
         // 清空歌词信息
-        lyrics.splice(0, lyrics.length);
+        list.splice(0, list.length);
 
         // 重新加载歌词
-        getLyric(mediaSource).then(data => void lyrics.push(...data));
+        getLyric({id: 1234, mid: 'v123423'}).then(data => void list.push(...data));
       },
 
       bufferChanged(value) {
