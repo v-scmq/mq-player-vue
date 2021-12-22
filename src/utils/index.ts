@@ -228,11 +228,23 @@ export const readLyric = (text: string): LyricLine[] => {
             // 将 总秒数 转换为 对象的key
             const key = Number(minute) * 60 + Number(second);
             // 记录歌词行信息
-            map[key] = {second: key, content};
+            map[key] = {start: key, end: key, content};
         }
     }
 
-    return Object.keys(map).map(key => map[key]);
+    const list = Object.keys(map).map(key => map[key]);
+
+    const max = list.length - 1;
+
+    for (let index = 0; index < max; ++index) {
+        const currentLine = list[index], nextLine = list[index + 1];
+        currentLine.end = nextLine.start;
+    }
+
+    // 最后一行结束时间是接近无限的
+    list[max].end = 1 << 30;
+
+    return list.filter(line => !!line.content);
 };
 
 

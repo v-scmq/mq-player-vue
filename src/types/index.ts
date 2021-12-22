@@ -141,8 +141,10 @@ export type Mv = {
  * 歌词行数据
  */
 export type LyricLine = {
-    /** 歌词时间(单位: 秒) */
-    second: number;
+    /** 歌词开始时间(单位: 秒) */
+    start: number;
+    /** 歌词开始时间(单位: 秒) */
+    end: number;
     /** 歌词内容 */
     content: string;
 };
