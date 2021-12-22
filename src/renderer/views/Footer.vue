@@ -5,7 +5,8 @@
 
       <!-- 左侧部分 -->
       <div class='v-row' style='flex:1'>
-        <image-view class='album-icon' v-model='media.cover' :defaultValue='defaultCover' @click='viewerVisible=true'/>
+        <image-view class='album-icon' v-model='media.cover' defaultValue='/icon/default_cover.jpg'
+                    @click='viewerVisible=true'/>
 
         <div class='v-column media-info'>
           <span>{{ media.singer }} - {{ media.title }}</span>
@@ -326,9 +327,8 @@ export default defineComponent({
     onBeforeUnmount(() => player.release());
 
     return {
-      media, isPlaying, viewerVisible, volume, speed, modeIcon, progressSlider,
-      defaultCover: '/icon/default_cover.jpg', onVolumeScroll, onSpeedPaneScroll,
-      getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange
+      media, isPlaying, viewerVisible, volume, speed, modeIcon, progressSlider, onVolumeScroll,
+      onSpeedPaneScroll, getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange
     }
   }
 

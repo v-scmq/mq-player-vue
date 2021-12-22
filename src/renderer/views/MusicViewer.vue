@@ -1,11 +1,11 @@
 <template>
   <div class='v-column music-viewer'>
+    <image-view class='effect-cover' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
+
     <window-state-bar viewer style='flex:none'>
       <!-- 关闭播放详情视图 -->
       <icon class='icon-menu' name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
     </window-state-bar>
-
-    <img class='cover effect-cover' alt :src='cover'/>
 
     <lyric-view style='flex:1'/>
 

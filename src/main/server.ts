@@ -26,7 +26,7 @@ const MIME_TYPE: { [key: string]: string } = {
 const DATA_SOURCE_IMPL = {
     [DefaultSource.id]: DefaultSource,
     [QQMusicSource.id]: QQMusicSource
-};
+} as { [key: string]: DataSource };
 
 /**
  * 处理本地文件资源请求
@@ -441,9 +441,9 @@ const RequestMappingHandler: RequestMappingHandler = {
             // 歌曲mid
             const mid = (<URL>url).searchParams.get('mid') as string;
             // 音质 => 1:标准 | 2:高品质 | 3:无损
-            const quality = ((<URL>url).searchParams.get('quality') as unknown as number || 1) ^ 0;
+            const quality = Number((<URL>url).searchParams.get('quality') || 1);
             // 数据源
-            const dataSource = DATA_SOURCE_IMPL[(<URL>url).searchParams.get('platform') as unknown as number];
+            const dataSource = DATA_SOURCE_IMPL[(<URL>url).searchParams.get('platform') as string];
             // 错误消息
             const error = !dataSource ? '没有相应的数据源api实现此接口' : !mid ? '歌曲mid无效' : null;
 
@@ -472,12 +472,12 @@ const RequestMappingHandler: RequestMappingHandler = {
      */
     '/api/url/mv'(request, response, url) {
         try {
-            // @ts-ignore  mv vid
-            const vid = url.searchParams.get('vid');
-            // @ts-ignore  画质 => 1:标清 | 2:高清 | 3:超清 | 4:蓝光
-            const quality = (url.searchParams.get('quality') || 1) ^ 0;
-            // @ts-ignore  数据源
-            const dataSource = DATA_SOURCE_IMPL[url.searchParams.get('platform')];
+            // mv vid
+            const vid = (<URL>url).searchParams.get('vid') as string;
+            // 画质 => 1:标清 | 2:高清 | 3:超清 | 4:蓝光
+            const quality = Number((<URL>url).searchParams.get('quality') || 1);
+            // 数据源
+            const dataSource = DATA_SOURCE_IMPL[(<URL>url).searchParams.get('platform') as string];
             // 错误消息
             const error = !dataSource ? '没有相应的数据源api实现此接口' : !vid ? 'MV vid无效' : null;
 

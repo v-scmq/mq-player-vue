@@ -255,7 +255,7 @@ export default defineComponent({
         if (classList.contains('cover') || classList.contains('name')) {
           // 获取数据索引
           const value = (node.parentNode as HTMLElement).getAttribute('data-index');
-          const index = value ? (value as unknown as number) ^ 0 : -1;
+          const index = value ? Number(value) : -1;
           // 提取专辑信息
           const album = albumList[index] && {...albumList[index], singer: null};
           // 若存在专辑信息, 则跳转到专辑视图

@@ -82,7 +82,7 @@ export default defineComponent({
         const dataIndex = node.getAttribute('data-index');
 
         if (dataIndex) {
-          const itemIndex = (dataIndex as unknown as number) ^ 0;
+          const itemIndex = Number(dataIndex);
           const newId = `${index}-${itemIndex}`;
 
           if (selectedId.value !== newId) {

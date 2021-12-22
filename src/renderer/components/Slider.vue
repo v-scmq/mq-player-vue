@@ -109,8 +109,8 @@ export default defineComponent({
       value = value < 0 ? 0 : value > total ? total : value;
 
       // 计算新的值,此时保留3为有效数字,然后检测值是否变化,才提交值(虽然提交相同值不会触发value改变)
-      value = props.vertical ? 1 - ((value / total).toFixed(3) as unknown as number) :
-          ((value / total).toFixed(3) as unknown as number) ^ 0;
+      value = Number((value / total).toFixed(3));
+      value = props.vertical ? 1 - value : value;
 
       if (props.modelValue !== value) {
         // 立刻置为true,这将用于表名滑块确实发生过拖动
@@ -128,8 +128,12 @@ export default defineComponent({
      */
     const onSliderClicked = (e: PointerEvent) => {
       if (e.target === el.value) {
-        let value = props.vertical ? e.offsetY / el.value.clientHeight : e.offsetX / el.value.clientWidth;
-        value = (value.toFixed(3) as unknown as number) ^ 0;
+
+        let value = props.vertical
+            ? e.offsetY / el.value.clientHeight
+            : e.offsetX / el.value.clientWidth;
+
+        value = Number(value.toFixed(3));
         value = props.vertical ? 1 - value : value;
 
         if (value !== props.modelValue) {
