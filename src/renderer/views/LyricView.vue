@@ -1,9 +1,10 @@
 <template>
   <div class='lyric-view' ref='el'>
-    <div class='content-wrapper' :style='{transform: translated}'>
+    <div class='content-wrapper' :style='{transform: translate}'>
 
-      <div class='lyric-item' :class='{active: activeIndex === index}'
-           v-for='(line, index) in lyrics.list' :key='index'>
+      <div class='lyric-item' v-for='(line, index) in lyrics.list' :key='index'
+           :ref='element => {if(children && element) children[index] = element}'
+           :class='{active: selectedIndex === index}'>
         {{ line.content }}
       </div>
 
@@ -12,7 +13,7 @@
 </template>
 
 <script lang='ts'>
-import {ref, computed, watch, defineComponent, inject, onMounted, onBeforeUnmount} from 'vue'
+import {ref, watch, defineComponent, inject, onMounted, onBeforeUnmount} from 'vue'
 
 import {LyricLine} from '../../types';
 
@@ -21,55 +22,70 @@ export default defineComponent({
   name: 'LyricView',
 
   setup() {
+    // 已选定的歌词索引
+    const selectedIndex = ref(-1);
+    // 包裹所有歌词的内容元素在y轴方向上的平移
+    const translate = ref('translateY(0px)');
+
     // 组件根元素引用
     const el = ref(null as unknown as HTMLElement);
+    // 所有的歌词内容元素引用
+    const children = ref<HTMLElement[]>([]);
 
     // 注入歌词信息
     const lyrics = inject('lyrics') as { list: LyricLine[], playedTime: number };
 
-    let offsetHeight = 1, cellHeight = 1;
+    let visibleHeight = 1, scrolledIndex = 0;
     let resizeObserver: ResizeObserver;
 
-    const active = ref(false);
-    const selectedIndex = ref(-1);
-
-    watch(lyrics, () =>{
+    watch(lyrics, () => {
       const {list, playedTime} = lyrics;
 
-      const max = list.length - 1;
-      let activated = false, index = 0;
+      const max = list.length;
+      let active = false, index = 0;
 
-      for (let max = list.length - 1, index = 0; index < max; ++index) {
-        const line = list[index + 1];
+      for (; index < max; ++index) {
+        const line = list[index];
 
-        if (playedTime > line.start && playedTime < line.end) {
-          active.value = true;
-          selectedIndex.value = index;
-          return;
+        if (playedTime < line.start) {
+          active = false;
+          break;
         }
 
-        if(playedTime < line.start){
-          active.value = false;
-          selectedIndex.value = index;
-          return;
+        if (playedTime < line.end) {
+          active = true;
+          break;
         }
       }
 
-      active.value = false;
-      selectedIndex.value = -1;
-    });
+      selectedIndex.value = active ? index : -1;
 
-    const translated = computed(() => {
-      const index = selectedIndex.value;
-      // 可见单元格数量除以2
-      const visibleCount = (offsetHeight / cellHeight) >> 1;
-      const value = index < visibleCount ? 0 : (index - visibleCount) * cellHeight;
-      return `translateY(-${value}px)`;
+      if (active && scrolledIndex !== index) {
+        scrolledIndex = index;
+        const element = children.value[index];
+
+        //       ---------------------------  content-wrapper
+        //    ↗ |                         |  ↖
+        //       |                         |     translateY(所求值)
+        //       |                         |  ↙
+        //  top  ===========================  root-element
+        //       |                         |  ↖
+        //    ↘ |                         |  ↙ (rootElement.height - targetElement.height) / 2
+        //       |+++++++++++++++++++++++++|  target-element(处于视图垂直居中的元素)
+        //       |                         |
+        //       |                         |
+        //       ===========================
+
+        if (element) {
+          const {offsetHeight: height, offsetTop: top} = element;
+          translate.value = `translateY(-${top - (visibleHeight - height) / 2}px)`;
+        }
+      }
     });
 
     onMounted(() => {
       resizeObserver = new ResizeObserver(() => {
-        offsetHeight = el.value.offsetHeight;
+        visibleHeight = el.value.offsetHeight;
       });
 
       resizeObserver.observe(el.value);
@@ -81,10 +97,15 @@ export default defineComponent({
         resizeObserver = null as any;
       }
 
-      offsetHeight = cellHeight = null as any;
+      children.value = null as any;
+      visibleHeight = null as any;
     });
 
-    return {el, active, selectedIndex, lyrics, translated};
+    // onBeforeUpdate(() => {
+    //   children.value = [];
+    // })
+
+    return {el, children, selectedIndex, lyrics, translate};
   },
 
 })
@@ -106,7 +127,7 @@ export default defineComponent({
 
 .lyric-view .content-wrapper {
   transition: transform 0.1s ease-out 0s;
-  /*transform: translateY(0);*/
+  /** transform: translateY(0); */
 }
 
 .lyric-view .lyric-item {
