@@ -1,9 +1,9 @@
 <template>
-  <div class='lyric-view' ref='el'>
+  <div class='lyric-view' :ref='element => void (elements[-1] = element)'>
     <div class='content-wrapper' :style='{transform: translate}'>
 
       <div class='lyric-item' v-for='(line, index) in lyrics.list' :key='index'
-           :ref='element => {if(children && element) children[index] = element}'
+           :ref='element => void (elements[index] = element)'
            :class='{active: selectedIndex === index}'>
         {{ line.content }}
       </div>
@@ -13,7 +13,7 @@
 </template>
 
 <script lang='ts'>
-import {ref, watch, defineComponent, inject, onMounted, onBeforeUnmount} from 'vue'
+import {ref, watch, defineComponent, inject, onMounted, onUnmounted} from 'vue';
 
 import {LyricLine} from '../../types';
 
@@ -27,10 +27,8 @@ export default defineComponent({
     // 包裹所有歌词的内容元素在y轴方向上的平移
     const translate = ref('translateY(0px)');
 
-    // 组件根元素引用
-    const el = ref(null as unknown as HTMLElement);
-    // 所有的歌词内容元素引用
-    const children = ref<HTMLElement[]>([]);
+    // 组件根元素 和 所有的歌词内容元素
+    let elements: HTMLElement[] = [];
 
     // 注入歌词信息
     const lyrics = inject('lyrics') as { list: LyricLine[], playedTime: number };
@@ -38,8 +36,13 @@ export default defineComponent({
     let visibleHeight = 1, scrolledIndex = 0;
     let resizeObserver: ResizeObserver;
 
-    watch(lyrics, () => {
-      const {list, playedTime} = lyrics;
+    /**
+     * 滚动歌词内容到可见视图的中央
+     *
+     * @param newValue 歌词信息
+     */
+    const scrollLyric = (newValue: typeof lyrics) => {
+      const {list, playedTime} = newValue;
 
       const max = list.length;
       let active = false, index = 0;
@@ -52,7 +55,7 @@ export default defineComponent({
           break;
         }
 
-        if (playedTime < line.end) {
+        if (playedTime <= line.end) {
           active = true;
           break;
         }
@@ -62,7 +65,7 @@ export default defineComponent({
 
       if (active && scrolledIndex !== index) {
         scrolledIndex = index;
-        const element = children.value[index];
+        const element = elements[index];
 
         //       ---------------------------  content-wrapper
         //    ↗ |                         |  ↖
@@ -81,31 +84,43 @@ export default defineComponent({
           translate.value = `translateY(-${top - (visibleHeight - height) / 2}px)`;
         }
       }
-    });
+    }
 
     onMounted(() => {
-      resizeObserver = new ResizeObserver(() => {
-        visibleHeight = el.value.offsetHeight;
+      resizeObserver = new ResizeObserver(([{contentRect}]) => {
+        // 可见高度设定为组件根元素内容盒子的高度
+        visibleHeight = contentRect.height;
+
+        // 尝试滚动歌词, 因为 宽度 或 高度 发生了变化,
+        // 但在这之前必须将标记的滚动位置重置, 才能重新滚动
+        scrolledIndex = -1;
+        scrollLyric(lyrics);
       });
 
-      resizeObserver.observe(el.value);
+      // 开始观察组件根元素的 宽度 或 高度 变化
+      resizeObserver.observe(elements[-1]);
     });
 
-    onBeforeUnmount(() => {
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-        resizeObserver = null as any;
+    onUnmounted(() => {
+      // 取消和结束目标对象上所有对element的观察
+      resizeObserver.disconnect();
+
+      // 断开所有引用
+      for (let index = elements.length - 1; index >= -1; --index) {
+        elements[index] = null as any;
       }
 
-      children.value = null as any;
-      visibleHeight = null as any;
+      visibleHeight = resizeObserver = elements = null as any;
     });
 
+    // 开始监听 歌词内容 和 播放时间 的变化
+    watch(lyrics, scrollLyric);
+
     // onBeforeUpdate(() => {
-    //   children.value = [];
+    //   elements.value = [];
     // })
 
-    return {el, children, selectedIndex, lyrics, translate};
+    return {elements, selectedIndex, lyrics, translate};
   },
 
 })

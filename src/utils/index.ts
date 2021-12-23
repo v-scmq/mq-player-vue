@@ -199,7 +199,7 @@ export const readLyric = (text: string): LyricLine[] => {
     const map: { [key: string]: LyricLine } = {};
 
     // 每行歌词的时间正则匹配表达式
-    const regex = /\[(\d{1,2}):(\d{1,2})\.\d{1,2}]/g;
+    const regex = /\[(\d+):(\d{1,2})\.(\d{1,2})]/g;
 
     for (const line of lyrics) {
         if (!line) {
@@ -222,13 +222,16 @@ export const readLyric = (text: string): LyricLine[] => {
         // 获取歌词文本
         const content = line.slice(start);
 
-        for (const matchedItem of matchedArray) {
-            // 提取匹配到的分钟数和秒数(忽略毫秒数)
-            const minute = matchedItem[1], second = matchedItem[2];
-            // 将 总秒数 转换为 对象的key
-            const key = Number(minute) * 60 + Number(second);
-            // 记录歌词行信息
-            map[key] = {start: key, end: key, content};
+        for (const item of matchedArray) {
+            // 提取匹配到的总秒数
+            const second = Number(item[1]) * 60 + Number(item[2]);
+            // 提取匹配到的毫秒数(应该乘以10后才是毫秒值)
+            const millis = Number(item[3]) * 10;
+            // 转换为总秒数
+            const start = second + millis * 0.001;
+
+            // 记录歌词行信息 (将 总秒数 转换为 总毫秒数 然后作为对象的key, 必须使用整数作为对象的key否则顺序得不到保证)
+            map[second * 1000 + millis] = {start, end: -1, content};
         }
     }
 
