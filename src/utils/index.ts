@@ -225,28 +225,31 @@ export const readLyric = (text: string): LyricLine[] => {
         for (const item of matchedArray) {
             // 提取匹配到的总秒数
             const second = Number(item[1]) * 60 + Number(item[2]);
-            // 提取匹配到的毫秒数(应该乘以10后才是毫秒值)
+            // 提取匹配到的毫秒数(乘以10后才是毫秒值)
             const millis = Number(item[3]) * 10;
             // 转换为总秒数
             const start = second + millis * 0.001;
 
-            // 记录歌词行信息 (将 总秒数 转换为 总毫秒数 然后作为对象的key, 必须使用整数作为对象的key否则顺序得不到保证)
+            // 记录歌词行信息 (将 总秒数 转换为 总毫秒数 然后作为对象的key,
+            //                注意: 必须使用整数作为对象的key, 否则顺序得不到保证)
             map[second * 1000 + millis] = {start, end: -1, content};
         }
     }
 
+    // 将map信息对象转为数组对象
     const list = Object.keys(map).map(key => map[key]);
-
+    // 元素的最大索引值
     const max = list.length - 1;
 
     for (let index = 0; index < max; ++index) {
-        const currentLine = list[index], nextLine = list[index + 1];
-        currentLine.end = nextLine.start;
+        // 当前行的结束时间指定为下一行的开始时间
+        list[index].end = list[index + 1].start;
     }
 
     // 最后一行结束时间是接近无限的
     list[max].end = 1 << 30;
 
+    // 去除所有空白行
     return list.filter(line => !!line.content);
 };
 
