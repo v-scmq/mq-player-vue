@@ -275,7 +275,7 @@ export const sleep = (timeout = 3000) => new Promise(resolve =>
 /**
  * 获取字符序列对应的MD5字符序列
  *
- * @param {string} sequence {String} 需要转换的字符串
+ * @param {string} sequence 需要转换的字符串
  * @returns {string} 原字符序列对应的MD5字符序列
  */
 export const md5 = (sequence: string) => {
