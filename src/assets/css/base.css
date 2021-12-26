@@ -189,33 +189,29 @@
     overflow: hidden;
     flex-direction: column;
     color: var(--text-base);
-}
-
-.table:focus {
     outline: none;
 }
 
-.table .table-row-columns {
+.table > .table-column-wrapper {
     display: grid;
 }
 
 .table .table-cell {
     padding: 8px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    box-sizing: border-box;
     display: flex;
     align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
     line-height: 1;
     min-height: var(--table-cell-height);
 }
 
-.table .table-row-columns .table-cell:not(.gutter) {
+.table > .table-column-wrapper > .table-cell:not(.gutter) {
     background: rgb(230, 230, 230);
 }
 
-.table .table-row-columns .gutter {
+.table > .table-column-wrapper > .gutter {
     flex: none;
     padding: 0;
     display: flex;
@@ -224,22 +220,34 @@
     justify-content: center;
 }
 
-.table .content-wrapper .table-cell.hover {
+.table .content-wrapper > .table-cell.hover {
     background: var(--cell-fill-hover);
 }
 
-.table .content-wrapper .table-cell.selected {
+.table .content-wrapper > .table-cell.selected {
     background: var(--cell-fill-active);
 }
 
-.table .table-cell .link:not(:last-child):after {
+.table .content-wrapper > .table-cell > .cell-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.table .content-wrapper > .table-cell .link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table .content-wrapper > .table-cell .link:not(:last-child):after {
     content: '/';
     margin: 0 4px;
     color: var(--text-base);
     pointer-events: none;
 }
 
-.table .table-cell .link:hover {
+.table .content-wrapper > .table-cell .link:hover {
     cursor: pointer;
     color: rgb(226, 155, 208);
 }

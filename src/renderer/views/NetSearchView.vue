@@ -34,18 +34,17 @@
       <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
                   v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
         <template v-slot:title='{item}'>
-          {{ item.title }}
+          <span class='cell-text'>{{ item.title }}</span>
           <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
         </template>
 
         <template v-slot:singer='{item:{singer:singers = []}}'>
-          <span class='link' v-for='(singer, index) in singers' :key='index' :data-mid='singer.mid'>
-            {{ singer.name }}
-          </span>
+        <span class='link cell-text' v-for='(singer, index) in singers' :key='index'
+              :data-mid='singer.mid'>{{ singer.name }}</span>
         </template>
 
-        <template v-slot:album='{item:{album}}'>
-          <span class='link' :data-mid='album && album.mid'>{{ album && album.name }}</span>
+        <template v-slot:album='{item: {album = {} }}'>
+          <span class='link cell-text' :data-mid='album.mid'>{{ album.name }}</span>
         </template>
       </table-view>
 
