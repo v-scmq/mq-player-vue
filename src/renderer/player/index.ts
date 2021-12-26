@@ -33,7 +33,7 @@ type MediaEventListener = {
      *
      * @param media 媒体资源信息
      */
-    mediaChanged<T extends { path?: string, [key: string]: any}>(media: T): void;
+    mediaChanged<T extends { path?: string, [key: string]: any }>(media: T): void;
 
     /**
      * 播放时长发生变化
@@ -196,10 +196,12 @@ const player = {
         // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
         // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
 
-        // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
-        nativePlayer.src = path;
+        if (nativePlayer.src !== path) {
+            // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
+            nativePlayer.src = path;
+            eventListener && eventListener.mediaChanged(media);
+        }
 
-        eventListener && eventListener.mediaChanged(media);
         return true;
     },
 
