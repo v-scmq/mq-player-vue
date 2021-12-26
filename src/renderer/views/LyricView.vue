@@ -2,7 +2,7 @@
   <div class='lyric-view' :ref='element => void (elements[-1] = element)'>
     <div class='content-wrapper' :style='{transform: translate}'>
 
-      <div class='lyric-item' v-for='(line, index) in lyrics.list' :key='index'
+      <div class='lyric-item' v-for='(line, index) in list' :key='index'
            :ref='element => void (elements[index] = element)'
            :class='{active: selectedIndex === index}'>
         {{ line.content }}
@@ -33,7 +33,13 @@ export default defineComponent({
     // 注入歌词信息
     const lyrics = inject('lyrics') as { list: LyricLine[], playedTime: number };
 
-    let visibleHeight = 1, scrolledIndex = 0;
+    // 组件根元素可见高度
+    let visibleHeight = 1;
+    // 已滚动的歌词内容索引
+    let scrolledIndex = 0;
+    // 标记是否需要强制滚动歌词内容
+    let force = false;
+
     let resizeObserver: ResizeObserver;
 
     /**
@@ -61,10 +67,21 @@ export default defineComponent({
         }
       }
 
-      selectedIndex.value = active ? index : -1;
+      // 若播放时间处于某一行歌词,那么高亮它, 否则取消高亮
+      const newSelectedIndex = active ? index : -1;
 
-      if (active && scrolledIndex !== index) {
-        scrolledIndex = index;
+      // 若标记的选择歌词索引发生了变化了, 则更新选择索引标记
+      if (selectedIndex.value !== newSelectedIndex) {
+        selectedIndex.value = newSelectedIndex;
+      }
+
+      // 重置为是否需要发生滚动的标记
+      active = active && scrolledIndex !== index;
+      // 标记已滚动的索引
+      scrolledIndex = index;
+
+      // 若需要滚动, 那么将指定索引的歌词内容滚动到可视区域的中央
+      if (active || force) {
         const element = elements[index];
 
         //       ---------------------------  content-wrapper
@@ -81,20 +98,22 @@ export default defineComponent({
 
         if (element) {
           const {offsetHeight: height, offsetTop: top} = element;
-          translate.value = `translateY(-${top - (visibleHeight - height) / 2}px)`;
+          translate.value = `translateY(${-top + (visibleHeight - height) / 2}px)`;
         }
       }
-    }
+    };
 
     onMounted(() => {
       resizeObserver = new ResizeObserver(([{contentRect}]) => {
         // 可见高度设定为组件根元素内容盒子的高度
         visibleHeight = contentRect.height;
 
-        // 尝试滚动歌词, 因为 宽度 或 高度 发生了变化,
-        // 但在这之前必须将标记的滚动位置重置, 才能重新滚动
-        scrolledIndex = -1;
+        // 因为 宽度 或 高度 发生了变化, 所以打开强制滚动标记
+        force = true;
+        // 强制滚动歌词内容
         scrollLyric(lyrics);
+        // 关闭强制滚动标记
+        force = false;
       });
 
       // 开始观察组件根元素的 宽度 或 高度 变化
@@ -120,7 +139,7 @@ export default defineComponent({
     //   elements.value = [];
     // })
 
-    return {elements, selectedIndex, lyrics, translate};
+    return {elements, selectedIndex, list: lyrics.list, translate};
   },
 
 })
