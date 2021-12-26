@@ -45,7 +45,7 @@
         <!-- 上一首 -->
         <icon width='2em' height='2em' name='previous' @click='play(getIndex(false),false)'/>
         <!-- 播放或暂停 -->
-        <icon width='3em' height='3em' :name="isPlaying ? 'pause' : 'play' " @click='playOrPause'/>
+        <icon width='3em' height='3em' :name="isPlaying ? 'pause' : 'play' " @click='togglePlay'/>
         <!-- 下一首 -->
         <icon width='2em' height='2em' name='next' @click='play(getIndex(true),false)'/>
 
@@ -206,7 +206,7 @@ export default defineComponent({
     /**
      * 播放或暂停
      */
-    const playOrPause = () => {
+    const togglePlay = () => {
       player.isPlayable()
           ? (player.isPlaying() ? player.pause() : player.play())
           : play(player.index, false);
@@ -328,7 +328,7 @@ export default defineComponent({
 
     return {
       media, isPlaying, viewerVisible, volume, speed, modeIcon, progressSlider, onVolumeScroll,
-      onSpeedPaneScroll, getIndex, play, playOrPause, valueChanged, handleVolumeChange, handleSpeedChange
+      onSpeedPaneScroll, getIndex, play, togglePlay, valueChanged, handleVolumeChange, handleSpeedChange
     }
   }
 
