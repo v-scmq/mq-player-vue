@@ -1,5 +1,5 @@
 <template>
-  <div class='lyric-view' :ref='element => void (elements[-1] = element)'>
+  <div class='lyric-view' :ref='element => void (elements[-1] = element)' @pointerdown='onDragStart'>
     <div class='content-wrapper' :style='{transform: translate}'>
 
       <div class='lyric-item' v-for='(line, index) in list' :key='index'
@@ -37,8 +37,15 @@ export default defineComponent({
     let visibleHeight = 1;
     // 已滚动的歌词内容索引
     let scrolledIndex = 0;
-    // 标记是否需要强制滚动歌词内容
-    let force = false;
+    // 是否可滚动歌词内容
+    let scrollable = true;
+
+    let translateY = 0;
+
+    // 指针设备在节点上按下时的y偏移量
+    let offsetY = 0;
+    // 滚动计时器
+    let scrollTimer: number | null = null;
 
     let resizeObserver: ResizeObserver;
 
@@ -48,8 +55,11 @@ export default defineComponent({
      * @param newValue 歌词信息
      */
     const scrollLyric = (newValue: typeof lyrics) => {
-      const {list, playedTime} = newValue;
+      if (!scrollable) {
+        return;
+      }
 
+      const {list, playedTime} = newValue;
       const max = list.length;
       let active = false, index = 0;
 
@@ -75,30 +85,32 @@ export default defineComponent({
         selectedIndex.value = newSelectedIndex;
       }
 
-      // 重置为是否需要发生滚动的标记
-      active = active && scrolledIndex !== index;
-      // 标记已滚动的索引
-      scrolledIndex = index;
-
       // 若需要滚动, 那么将指定索引的歌词内容滚动到可视区域的中央
-      if (active || force) {
+      if (scrolledIndex !== (active ? index : --index)) {
+        scrolledIndex = index;
+
         const element = elements[index];
 
         //       ---------------------------  content-wrapper
-        //    ↗ |                         |  ↖
-        //       |                         |     translateY(所求值)
-        //       |                         |  ↙
-        //  top  ===========================  root-element
-        //       |                         |  ↖
-        //    ↘ |                         |  ↙ (rootElement.height - targetElement.height) / 2
-        //       |+++++++++++++++++++++++++|  target-element(处于视图垂直居中的元素)
+        //     + |                         |  ↖
+        //     + |                         |     translateY(所求值)
+        //     + |                         |  ↙
+        // top + ===========================  root-element
+        //     + |                         |  ↖
+        //     + |                         |  ↙ (rootElement.height - targetElement.height) / 2
+        //       |*************************|  target-element(处于视图垂直居中的元素)
         //       |                         |
         //       |                         |
         //       ===========================
+        //
+        // 注: top右侧 +号等价于{符号 , 它指示目标元素到它的父元素content-wrapper的上偏移量
+        //     translateY = - (top - (组件可见高度 - 目标元素高度) / 2)
+        //                =   -top + (组件可见高度 - 目标元素高度) / 2
 
         if (element) {
           const {offsetHeight: height, offsetTop: top} = element;
-          translate.value = `translateY(${-top + (visibleHeight - height) / 2}px)`;
+          translateY = -top + (visibleHeight - height) / 2;
+          translate.value = `translateY(${translateY}px)`;
         }
       }
     };
@@ -108,12 +120,10 @@ export default defineComponent({
         // 可见高度设定为组件根元素内容盒子的高度
         visibleHeight = contentRect.height;
 
-        // 因为 宽度 或 高度 发生了变化, 所以打开强制滚动标记
-        force = true;
-        // 强制滚动歌词内容
+        // 因为 宽度 或 高度 发生了变化, 重置滚动索引,使其能够重新滚动
+        scrolledIndex = -1;
+        // 尝试滚动歌词内容
         scrollLyric(lyrics);
-        // 关闭强制滚动标记
-        force = false;
       });
 
       // 开始观察组件根元素的 宽度 或 高度 变化
@@ -139,7 +149,50 @@ export default defineComponent({
     //   elements.value = [];
     // })
 
-    return {elements, selectedIndex, list: lyrics.list, translate};
+    /**
+     * 开始拖动(指针设备在滑块上按下)时触发, 此时并还未开始拖动,仅仅是准备好拖动.
+     * 需要注意检测中断拖动不能依靠滑块(div)元素本身,需要借助document对象 或 window对象
+     * 因为元素本身在鼠标移动后,所监听的鼠标释放事件并不会触发,但是document或window一定会触发
+     *
+     * @param {PointerEvent} event 指针事件
+     */
+    const onDragStart = (event: PointerEvent) => {
+      event.preventDefault();
+
+      // 关闭歌词滚动
+      scrollable = false;
+      // 清除计时器
+      scrollTimer && window.clearTimeout(scrollTimer);
+      scrollTimer = null as any;
+
+      offsetY = event.pageY;
+
+      document.onpointermove = onDragging;
+      document.onpointerup = onDragEnd;
+    };
+
+    /**
+     * 滑块被拖动时触发.在此过程中,只会提交input事件以修改value属性值
+     * @param {PointerEvent} event 指针事件
+     */
+    const onDragging = (event: PointerEvent) => {
+      event.preventDefault();
+
+      translateY = -(offsetY - event.pageY) - translateY;
+      translate.value = `translateY(${translateY}px)`;
+    };
+
+    /**
+     * 鼠标停止拖动(鼠标在页面开始按下后,然后释放)时触发.
+     * 此时只会提交change事件,并且传出的第2个参数boolean值true以方便侦测滑块拖动结束
+     */
+    const onDragEnd = () => {
+      document.onpointermove = document.onpointerup = null;
+
+      scrollTimer = window.setTimeout(() => void (scrollable = true), 3500);
+    };
+
+    return {elements, selectedIndex, list: lyrics.list, translate, onDragStart};
   },
 
 })
