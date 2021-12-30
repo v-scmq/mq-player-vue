@@ -7,9 +7,10 @@
       <icon class='icon-menu' name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
     </window-state-bar>
 
-    <lyric-view style='flex:1'/>
+    <image-view class='cover--rect-inner' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
+    <lyric-view/>
 
-    <canvas class='canvas-view' width='1600' height='200' ref='canvasRef'></canvas>
+    <canvas width='1600' height='200' style='margin:4px' ref='canvasRef'></canvas>
   </div>
 </template>
 
@@ -200,10 +201,5 @@ export default defineComponent({
   filter: blur(60px);
   opacity: 0.6;
   z-index: -1;
-}
-
-.canvas-view {
-  flex: 1;
-  margin: 4px;
 }
 </style>

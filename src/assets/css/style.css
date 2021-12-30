@@ -307,3 +307,16 @@ html, body, #app {
     font-size: 18px;
     border-radius: 1em;
 }
+
+.cover--rect-inner {
+    height: 400px;
+    top: 100px;
+    left: 20px;
+    position: absolute;
+    border-radius: 12px;
+}
+
+.lyric-view {
+    align-self: flex-end;
+    width: calc(100% - 430px);
+}
