@@ -13,6 +13,10 @@ if (isProduction && !app.requestSingleInstanceLock()) {
     app.quit();
 
 } else {
+    // 强制锁定DPI缩放为1, 参见 https://github.com/electron/electron/issues/6571
+    app.commandLine.appendSwitch('high-dpi-support', '1');
+    app.commandLine.appendSwitch('force-device-scale-factor', '1');
+
     /****************************************************************
      *  应用程序就绪之前,获取环境配置以及注册自定义协议和设置程序资源路径 *
      *  检查是否是 windows 平台                                      *
@@ -137,9 +141,9 @@ if (isProduction && !app.requestSingleInstanceLock()) {
             return
         }
 
-        // 设置浏览器窗口为80%的默认缩放比例
+        // 设置浏览器窗口为80%的默认缩放比例 (不再使用, 已使用命令行开关api强制锁定缩放比例)
         // 1 => 1 ; 1.25 => 0.8 ;  =>> zoomFactor = 1 / 屏幕缩放比例
-        mainWindow.webContents.setZoomFactor(0.8);
+        // mainWindow.webContents.setZoomFactor(0.8);
 
         // 注意tray需要声明为全局变量,否则会被自动回收对象,导致自动销毁系统托盘
         tray = new Tray(`${iconPath}/tray.ico`);
