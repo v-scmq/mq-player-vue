@@ -68,7 +68,7 @@ export default createRouter({
             component: () => import('../views/Favorite.vue'),
             meta: {
                 title: '我的收藏',
-                icon: 'my-favorites'
+                icon: 'heart'
             }
         },
         {
@@ -89,7 +89,7 @@ export default createRouter({
         },
         {
             path: '/system-setting',
-            component: () => import('../views/SystemSetting.vue'),
+            component: () => import('../views/SystemSetting.vue')
         },
         {
             path: '/component-list',
@@ -124,7 +124,7 @@ export default createRouter({
                     path: '/component-list/grid-view',
                     meta: {title: '虚拟滚动网格组件'},
                     component: () => import('../views/doc/GridView.vue')
-                },
+                }
             ]
         }
     ]

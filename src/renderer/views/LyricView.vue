@@ -228,31 +228,3 @@ export default defineComponent({
 
 })
 </script>
-
-<style scoped>
-.lyric-view {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  cursor: grab;
-  mask-image: linear-gradient(180deg, #fff0 0, #fff9 15%, #fff 25%, #fff 75%, #fff9 85%, #fff0);
-}
-
-.lyric-view .content-wrapper.animation {
-  transition: transform 0.1s ease-out;
-}
-
-.lyric-view .lyric-item {
-  text-align: center;
-  font-size: 18px;
-  color: white;
-  padding: 12px 0;
-  white-space: pre-wrap;
-  transition: transform 0.1s ease-out;
-}
-
-.lyric-view .lyric-item.active {
-  color: rgb(226, 155, 208);
-  transform: scale(1.5);
-}
-</style>

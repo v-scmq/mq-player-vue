@@ -2,39 +2,56 @@
   <div class='v-column music-viewer'>
     <image-view class='effect-cover' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
 
-    <window-state-bar viewer style='flex:none'>
+    <window-state-bar viewer style='flex:none;'>
       <!-- 关闭播放详情视图 -->
-      <icon class='icon-menu' name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
+      <icon name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
     </window-state-bar>
 
-    <image-view class='cover--rect-inner' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
-    <lyric-view/>
+    <div class='v-row' style='flex:1; align-items:stretch; overflow:hidden; margin:20px 0;'>
+      <image-view class='cover--rect-inner' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
+      <lyric-view style='flex:1;'/>
+    </div>
 
-    <canvas width='1600' height='200' style='margin:4px' ref='canvasRef'></canvas>
+    <!-- 注意必须为canvas元素提供width和height,否则绘制无效 -->
+    <canvas height='200' style='flex:0 0 200px' ref='canvasRef'></canvas>
   </div>
 </template>
 
 <script lang='ts'>
 import player from '../player';
+
+import LyricView from './LyricView.vue';
 import WindowStateBar from './WindowStateBar.vue';
-import LyricView from "./LyricView.vue";
-import {ref, onBeforeUnmount, onMounted, defineComponent} from 'vue';
+
+import {ref, defineComponent, onMounted, onBeforeUnmount} from 'vue';
 
 export default defineComponent({
-  name: 'PlayDetailView',
+  name: 'MusicViewer',
 
   components: {WindowStateBar, LyricView},
 
-  props: {
-    cover: String
-  },
+  props: {cover: String},
 
   emits: ['close'],
 
   setup() {
-    const canvasRef = ref(null as unknown as HTMLCanvasElement);
-    let canvasContext: CanvasRenderingContext2D;
+    // null值
+    const nullValue: any = null;
+    // canvas元素引用
+    const canvasRef = ref<HTMLCanvasElement>(nullValue);
+
+    // 画布宽度
+    let canvasWidth = 0;
+    // 画布高度
+    let canvasHeight = 200;
+
+    // 画笔渐变色
     let color: CanvasGradient;
+    // 画笔
+    let canvasContext: CanvasRenderingContext2D;
+
+    // 画布resize观察者
+    let canvasResizeObserver: ResizeObserver;
 
     /**
      * 矩形频谱渲染方法
@@ -42,164 +59,167 @@ export default defineComponent({
      * @param dataArray 音频频谱数据
      */
     const rectRenderFrame = (dataArray: Uint8Array) => {
-      let width = canvasRef.value.width, height = canvasRef.value.height - 1;
-      let step = Math.round(dataArray.length / 60);
-      canvasContext.clearRect(0, 0, width, height);
+      const canvas = canvasRef.value;
+
+      if (!canvas) {
+        return;
+      }
+
+      canvasContext.clearRect(0, 0, canvasWidth, canvasHeight);
       canvasContext.beginPath();
 
-      for (let i = 1; i <= 60; ++i) {
-        let value = dataArray[step * i];
-        // 设置画笔填充色
-        canvasContext.fillStyle = color;
-        // 由画布中间向两边画矩形
-        canvasContext.fillRect(width * 0.5 - (i - 1) * 10, height, 8, (-value) + 1);
-        canvasContext.fillRect(i * 10 + width * 0.5, height, 8, (-value) + 1);
-        canvasContext.fill();
+      // 设置画笔填充色
+      canvasContext.fillStyle = color;
+
+      const width = canvasWidth >> 1;
+      const height = canvasHeight - 1;
+      // => length:1024 / 128 = 8
+      const step = dataArray.length >> 7;
+      const max = 128;// 1 << 7;
+
+      for (let i = 1; i <= max; ++i) {
+        // => -dataArray[step * i] + 1
+        const h = ~dataArray[step * i] + 2;
+
+        // 绘制左边的矩形
+        canvasContext.fillRect(width - (i - 1) * 10, height, 8, h);
+        // 绘制右边的矩形
+        canvasContext.fillRect(i * 10 + width, height, 8, h);
       }
     };
 
-    // /**
-    //  * 圆形粒子频谱渲染方法
-    //  *
-    //  * @param {Uint8Array} dataArray 音频频谱数据
-    //  */
-    // const circleRenderFrame = dataArray => {
-    //   let {width, height} = this._canvas;
-    //
-    //   const du = 2; // 圆心到两条射线距离所成的角度
-    //   const potInt = {x: width >> 1, y: height >> 1}; // 起始坐标
-    //   const R = 150; // 半径
-    //   const W = 3; // 射线的宽度
-    //   const L = 35; // 射线的长度
-    //
-    //   this._canvasContext.clearRect(0, 0, width, height);
-    //   for (let i = 0; i < 360; ++i) {
-    //     let value = dataArray[i + 100] / 4;
-    //     // let value = 20
-    //     this._canvasContext.lineWidth = W;
-    //     let Rv1 = R - value;
-    //     let Rv2 = R + value;
-    //     this._canvasContext.beginPath();
-    //
-    //     let gradient = this._canvasContext.createLinearGradient(
-    //         Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
-    //         -Math.cos(((i * du) / 180) * Math.PI) * R + potInt.x,
-    //         Math.sin(((i * du) / 180) * Math.PI) * (Rv2 + L) +
-    //         potInt.y,
-    //         -Math.cos(((i * du) / 180) * Math.PI) * (Rv2 + L) +
-    //         potInt.x
-    //     );
-    //
-    //     gradient.addColorStop(0, 'rgba(226, 225, 0, .4)');
-    //     gradient.addColorStop(0.3, 'rgba(226, 225, 0, .4)');
-    //     gradient.addColorStop(0.3, 'rgba(226, 225, 0, .4)');
-    //     gradient.addColorStop(1, 'rgba(226, 225, 0, 0)');
-    //     if (i < 360 / du) {
-    //       this._canvasContext.moveTo(
-    //           Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
-    //           -Math.cos(((i * du) / 180) * Math.PI) * R + potInt.x
-    //       );
-    //       this._canvasContext.lineTo(
-    //           Math.sin(((i * du) / 180) * Math.PI) * (Rv2 + L) +
-    //           potInt.y,
-    //           -Math.cos(((i * du) / 180) * Math.PI) * (Rv2 + L) +
-    //           potInt.x
-    //       );
-    //     }
-    //
-    //     this._canvasContext.lineCap = 'round';
-    //     this._canvasContext.strokeStyle = gradient;
-    //     this._canvasContext.stroke();
-    //     this._canvasContext.closePath();
-    //
-    //     this._canvasContext.beginPath();
-    //     if (i < 360 / du / 3) {
-    //       let diff = Rv1 + 20 > R ? R : Rv1 + 20;
-    //       this._canvasContext.arc(
-    //           Math.sin(((i * du * 3) / 180) * Math.PI) * diff +
-    //           potInt.y,
-    //           -Math.cos(((i * du * 3) / 180) * Math.PI) * diff +
-    //           potInt.x,
-    //           2,
-    //           0,
-    //           Math.PI * 2,
-    //           false
-    //       );
-    //       this._canvasContext.fillStyle = 'rgba(226, 225, 0, .5)';
-    //     }
-    //     this._canvasContext.fill();
-    //     this._canvasContext.closePath();
-    //
-    //     this._canvasContext.beginPath();
-    //     if (i < 360 / du) {
-    //       this._canvasContext.moveTo(
-    //           Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
-    //           -Math.cos(((i * du) / 180) * Math.PI) * R + potInt.x
-    //       );
-    //       this._canvasContext.lineTo(
-    //           Math.sin(((i * du) / 180) * Math.PI) * Rv2 + potInt.y,
-    //           -Math.cos(((i * du) / 180) * Math.PI) * Rv2 + potInt.x
-    //       );
-    //     }
-    //
-    //     this._canvasContext.lineCap = 'round';
-    //     this._canvasContext.strokeStyle = 'rgba(226, 225, 0, 1)';
-    //     this._canvasContext.stroke();
-    //     this._canvasContext.closePath();
-    //   }
-    // };
+    /**
+     * 圆形粒子频谱渲染方法
+     *
+     * @param dataArray 音频频谱数据
+     */
+    const circleRenderFrame = (dataArray: Uint8Array) => {
+      const width = 200, height = 200;
+
+      const du = 2; // 圆心到两条射线距离所成的角度
+      const potInt = {x: 200, y: height >> 1}; // 起始坐标
+      const R = height >> 1; // 半径
+      const W = 3; // 射线的宽度
+      const L = 35; // 射线的长度
+
+      canvasContext.clearRect(0, 0, width, height);
+      for (let i = 0; i < 360; ++i) {
+        let value = dataArray[i + 100] >> 2;
+        // let value = 20
+        canvasContext.lineWidth = W;
+        let Rv1 = R - value;
+        let Rv2 = R + value;
+        canvasContext.beginPath();
+
+        let gradient = canvasContext.createLinearGradient(
+            Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
+            -Math.cos(((i * du) / 180) * Math.PI) * R + potInt.x,
+            Math.sin(((i * du) / 180) * Math.PI) * (Rv2 + L) +
+            potInt.y,
+            -Math.cos(((i * du) / 180) * Math.PI) * (Rv2 + L) +
+            potInt.x
+        );
+
+        gradient.addColorStop(0, 'rgba(226, 225, 0, .4)');
+        gradient.addColorStop(0.3, 'rgba(226, 225, 0, .4)');
+        gradient.addColorStop(0.3, 'rgba(226, 225, 0, .4)');
+        gradient.addColorStop(1, 'rgba(226, 225, 0, 0)');
+        if (i < 360 / du) {
+          canvasContext.moveTo(
+              Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
+              -Math.cos(((i * du) / 180) * Math.PI) * R + potInt.x
+          );
+          canvasContext.lineTo(
+              Math.sin(((i * du) / 180) * Math.PI) * (Rv2 + L) +
+              potInt.y,
+              -Math.cos(((i * du) / 180) * Math.PI) * (Rv2 + L) +
+              potInt.x
+          );
+        }
+
+        canvasContext.lineCap = 'round';
+        canvasContext.strokeStyle = gradient;
+        canvasContext.stroke();
+        canvasContext.closePath();
+
+        canvasContext.beginPath();
+        if (i < 360 / du / 3) {
+          let diff = Rv1 + 20 > R ? R : Rv1 + 20;
+          canvasContext.arc(
+              Math.sin(((i * du * 3) / 180) * Math.PI) * diff +
+              potInt.y,
+              -Math.cos(((i * du * 3) / 180) * Math.PI) * diff +
+              potInt.x,
+              2,
+              0,
+              Math.PI * 2,
+              false
+          );
+          canvasContext.fillStyle = 'rgba(226, 225, 0, .5)';
+        }
+        canvasContext.fill();
+        canvasContext.closePath();
+
+        canvasContext.beginPath();
+        if (i < 360 / du) {
+          canvasContext.moveTo(
+              Math.sin(((i * du) / 180) * Math.PI) * R + potInt.y,
+              -Math.cos(((i * du) / 180) * Math.PI) * R + potInt.x
+          );
+          canvasContext.lineTo(
+              Math.sin(((i * du) / 180) * Math.PI) * Rv2 + potInt.y,
+              -Math.cos(((i * du) / 180) * Math.PI) * Rv2 + potInt.x
+          );
+        }
+
+        canvasContext.lineCap = 'round';
+        canvasContext.strokeStyle = 'rgba(226, 225, 0, 1)';
+        canvasContext.stroke();
+        canvasContext.closePath();
+      }
+    };
 
     onMounted(() => {
+      // 获取canvas
       const canvas = canvasRef.value;
-      canvasContext = canvas.getContext('2d') as CanvasRenderingContext2D;
 
-      // 柱状图颜色
-      // 1. Math.ceil()用作向上取整。 2. Math.floor()用作向下取整。 3. Math.round() 四舍五入取整
-      color = canvasContext.createLinearGradient(canvas.width * 0.5, 0, canvas.width * 0.5, 400);
-      color.addColorStop(0, '#0990ee');
-      color.addColorStop(0.1, '#FF00FF');
-      color.addColorStop(0.4, '#f30b7c');
-      color.addColorStop(0.7, '#9744e0');
-      color.addColorStop(1, '#e85ce8');
+      // 获取画笔
+      canvasContext = canvas.getContext('2d') as any;
 
-      // #7EC0EE', '#9AFF9A', '#FF86C1', '#FFA07A', '#FF00FF
+      // 绘制柱形频谱的画笔颜色
+      color = canvasContext.createLinearGradient(0, canvasHeight, 0, 0);
+      color.addColorStop(0, '#7ec0ee');
+      color.addColorStop(0.2, '#9aff9a');
+      color.addColorStop(0.4, '#ffa07a');
+      color.addColorStop(0.6, '#ff86c1');
+      color.addColorStop(0.8, '#e85ce8');
+      color.addColorStop(1, '#9744e0');
+
+      // 创建元素(节点)观察者对象
+      canvasResizeObserver = new ResizeObserver(([{contentRect}]) =>
+          void (canvas.width = canvasWidth = contentRect.width));
+
+      // 开始观察canvas元素
+      canvasResizeObserver.observe(canvas);
 
       // 异步执行音频频谱监听(若是第一次调用, AudioAnalyser相关的对象在创建时可能发生阻塞)
-      setTimeout(() => player.setAudioSpectrumListener(rectRenderFrame));
+      setTimeout(() => {
+        player.setAudioSpectrumListener(rectRenderFrame || circleRenderFrame)
+      }, 1);
+
     });
 
-    onBeforeUnmount(() => player.setAudioSpectrumListener(color = canvasContext = null as any));
+    onBeforeUnmount(() => {
+      // 移除频谱监听
+      player.setAudioSpectrumListener(null);
+      // 终止canvas元素的resize观察
+      canvasResizeObserver && canvasResizeObserver.disconnect();
+      // 解除引用
+      canvasResizeObserver = color = canvasContext = canvasWidth = canvasHeight = nullValue;
+    });
 
     return {canvasRef};
   }
 
 });
 </script>
-
-<style scoped>
-.music-viewer {
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  z-index: 9;
-  overflow: hidden;
-  /*background-color: black;*/
-  /*background: rgb(224, 224, 224);*/
-  background: rgb(100, 100, 100);
-  /*rgb(250,235,215)*/
-  /*FAEBD7FF*/
-}
-
-.effect-cover {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  /*filter: blur(150px);*/
-  /*filter: blur(60px) brightness(60%);*/
-  filter: blur(60px);
-  opacity: 0.6;
-  z-index: -1;
-}
-</style>

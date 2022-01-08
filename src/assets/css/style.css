@@ -19,19 +19,40 @@ html, body, #app {
     flex-direction: column;
 }
 
-/****************** WindowStateBar ***********************/
+/****************** Header-TitleBar ***********************/
+.title-bar {
+    -webkit-app-region: drag;
+}
+
+.title-bar .icon, .title-bar .user-name, .title-bar .text-field {
+    -webkit-app-region: none;
+}
+
 .window-state-bar {
     flex: 1;
     justify-content: flex-end;
+
+    --icon-fill-base: unset;
+    --icon-fill-hover: unset;
 }
 
-.window-state-bar .icon {
-    -webkit-app-region: no-drag;
+.window-state-bar.viewer {
+    -webkit-app-region: drag;
+
+    --icon-fill-base: rgb(210, 210, 210);
+    --icon-fill-hover: rgb(245, 108, 108);
 }
 
 .window-state-bar > .icon {
     margin: 2px 8px;
     padding: 6px;
+    width: 1em;
+    height: 1em;
+    fill: var(--icon-fill-base);
+}
+
+.window-state-bar > .icon:hover {
+    fill: var(--icon-fill-hover);
 }
 
 .window-state-bar > .separator {
@@ -50,37 +71,10 @@ html, body, #app {
     fill: white;
 }
 
-.window-state-bar.viewer > .icon:hover {
-    cursor: pointer;
-    fill: #f56c6c;
-    /*#eebe76*/
-}
-
-.window-state-bar:not(.viewer) > .icon {
-    width: 1em;
-    height: 1em;
-}
-
-.window-state-bar.viewer > .icon {
-    width: 1.75em;
-    height: 1.75em;
-}
-
 .window-state-bar.viewer > .icon {
     width: 1.5em;
     height: 1.5em;
-}
-
-.window-state-bar.viewer .icon {
-    fill: rgb(210, 210, 210);
-}
-
-/****************** Header-TitleBar ***********************/
-.title-bar {
-    -webkit-app-region: drag;
-}
-
-.title-bar .icon, .title-bar .user-icon, .title-bar .user-name, .title-bar .text-field {
+    cursor: pointer;
     -webkit-app-region: none;
 }
 
@@ -91,23 +85,15 @@ html, body, #app {
     width: 3em;
     height: 3em;
     background: none;
-    border-radius: 3em;
+    border-radius: 50%;
 }
 
-.title-bar .user-icon.container {
+.title-bar .user-icon.icon {
     width: 3em;
     height: 3em;
-    overflow: hidden;
-    border-radius: 3em;
-    box-sizing: border-box;
-    background: rgb(188, 191, 193);
-}
-
-.title-bar .user-icon.container > .icon {
-    width: 4em;
-    height: 4em;
-    margin: 0 0 0 -8px;
-    fill: rgb(251, 251, 251);
+    background: white;
+    border-radius: 50%;
+    fill: rgb(188, 191, 193);
 }
 
 .title-bar .user-name {
@@ -181,6 +167,7 @@ html, body, #app {
     flex: auto;
     overflow: hidden;
     box-sizing: border-box;
+    padding: 20px 0 0 16px;
 }
 
 .tab-pane.v-column .tab-content {
@@ -224,9 +211,85 @@ html, body, #app {
     transition: none;
 }
 
-.v-row.has-margin > .button {
-    margin: 0 4px;
+/********************* MediaControl(Footer) **********************/
+.media-control {
+    --icon-fill-base: var(--fill-base);
+    --stroke-icon-fill-base: var(--fill-base);
+
+    color: var(--text-base);
 }
+
+.media-control.viewer {
+    --slider-filler-fill: rgb(226, 155, 208);
+    --slider-thumb-fill: rgb(226, 155, 208);
+    --slider-buffer-fill: rgb(210, 210, 210);
+
+    --icon-fill-base: rgb(210, 210, 210);
+    --stroke-icon-fill-base: var(--icon-fill-base);
+
+    color: white;
+
+    margin: 0 0 4px 0;
+}
+
+.media-control .album-icon {
+    width: 4em;
+    height: 4em;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 4px 2px 2px;
+}
+
+.media-control .stroke-icon {
+    z-index: 1;
+    cursor: pointer;
+    padding: 1px 10px;
+    border-radius: 1.25em;
+    color: var(--stroke-icon-fill-base);
+    border: 1px solid var(--stroke-icon-fill-base);
+}
+
+.media-control .icon {
+    z-index: 1;
+    cursor: pointer;
+    fill: var(--icon-fill-base);
+}
+
+/* 音量弹出式面板 */
+.media-control .popup-pane.volume, .popup-pane.speed {
+    height: 10.5em;
+    width: 4.5em;
+    padding: 1em 0;
+}
+
+/* 播放模式弹出式面板 */
+.media-control .popup-pane.mode {
+    width: 8em;
+    white-space: nowrap;
+    fill: var(--fill-base);
+}
+
+.media-control .popup-pane.mode .title {
+    margin: 0 0 0 0.5em;
+    font-size: 0.875em;
+}
+
+.media-control .popup-pane.mode .v-row {
+    width: 100%;
+    cursor: pointer;
+    padding: 0.5em 0.25em;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.media-control .popup-pane.mode .v-row:not(:last-child) {
+    border-bottom: 1px solid var(--fill-popup-mode-border);
+}
+
+.media-control .popup-pane.mode .v-row:hover {
+    background: var(--fill-popup-mode-hover);
+}
+
 
 /* 设置图片不可拖动 */
 .cover {
@@ -302,21 +365,73 @@ html, body, #app {
 }
 
 #timer-modal .content .button {
-    background: rgb(226, 155, 208);
     width: 30%;
     font-size: 18px;
     border-radius: 1em;
+    background: rgb(226, 155, 208);
 }
 
 .cover--rect-inner {
-    height: 400px;
-    top: 100px;
-    left: 20px;
-    position: absolute;
+    flex: 1;
+    margin: 0 20px;
+    align-self: center;
+    max-width: 400px;
+    min-width: 100px;
+    max-height: 400px;
+    min-height: 100px;
     border-radius: 12px;
 }
 
+/************************ LyricView ******************************/
 .lyric-view {
-    align-self: flex-end;
-    width: calc(100% - 430px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: grab;
+    mask-image: linear-gradient(180deg, #fff0 0, #fff9 15%, #fff 25%, #fff 75%, #fff9 85%, #fff0);
+}
+
+.lyric-view .content-wrapper.animation {
+    transition: transform 0.1s ease-out;
+}
+
+.lyric-view .lyric-item {
+    text-align: center;
+    font-size: 18px;
+    color: white;
+    padding: 12px 0;
+    white-space: pre-wrap;
+    transition: transform 0.1s ease-out;
+}
+
+.lyric-view .lyric-item.active {
+    color: rgb(226, 155, 208);
+    transform: scale(1.5);
+}
+
+/************************ Effect-Cover ******************************/
+.music-viewer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    overflow: hidden;
+    /*background-color: black;*/
+    /*background: rgb(224, 224, 224);*/
+    background: rgb(100, 100, 100);
+    /*rgb(250,235,215)*/
+    /*FAEBD7FF*/
+}
+
+.music-viewer > .effect-cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /*filter: blur(150px);*/
+    /*filter: blur(60px) brightness(60%);*/
+    filter: blur(60px);
+    opacity: 0.6;
+    z-index: -9;
 }

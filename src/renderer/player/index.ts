@@ -94,6 +94,19 @@ let audioSpectrumListener: () => void;
 /** 事件监听器 */
 let eventListener: MediaEventListener;
 
+/** 当前加载的媒体资源路径 */
+let currentPath: string | null;
+
+const stopTimer = () => {
+    if (audioSpectrumListener) {
+        dataArray.fill(0);
+        audioSpectrumListener && audioSpectrumListener();
+    }
+
+    spectrumTimer && cancelAnimationFrame(spectrumTimer);
+    spectrumTimer = null as any;
+};
+
 /**
  * 播放器对象
  */
@@ -135,11 +148,12 @@ const player = {
             } else {
                 setTimeout(() => {
                     const media = this.playList[++this.index];
-                    media && this.prepare(media).then(handle);
-                }, 100);
+                    handle(media && this.prepare(media));
+                }, 500);
             }
         }
-        this.prepare(list[index]).then(handle);
+
+        Promise.resolve(this.prepare(list[index])).then(handle);
     },
 
     /**
@@ -184,10 +198,12 @@ const player = {
      * @param media 媒体资源信息
      * @return {Promise<boolean>} 异步Promise对象
      */
-    async prepare(media: { path?: string, [key: string]: any }) {
+    prepare(media: { path?: string, [key: string]: any }) {
         const path = media && media.path;
+
         // 路径至少包含2个字符
         if (!path || path.length < 2) {
+            currentPath = null;
             nativePlayer.src = '';
             return false;
         }
@@ -196,11 +212,12 @@ const player = {
         // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
         // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
 
-        if (nativePlayer.src !== path) {
-            // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
-            nativePlayer.src = path;
-            eventListener && eventListener.mediaChanged(media);
+        if (currentPath !== path && eventListener) {
+            eventListener.mediaChanged(media);
         }
+
+        // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
+        nativePlayer.src = currentPath = path;
 
         return true;
     },
@@ -326,10 +343,9 @@ const player = {
      * @param listener 音频频谱数据监听器处理方法
      */
     setAudioSpectrumListener(listener: AudioSpectrumListener | null) {
-        // 取消原有监听器
-        spectrumTimer && cancelAnimationFrame(spectrumTimer);
-        // 解除原有监听器引用
+        stopTimer();
         audioSpectrumListener = null as any;
+
         // 若未提供监听器,则后续什么也不做
         if (!listener) {
             return;
@@ -359,14 +375,15 @@ const player = {
             // 主动调用传入的监听方法,以便渲染频谱数据
             listener(dataArray);
             // 以每秒60次的调用继续调用代理监听方法
-            spectrumTimer = requestAnimationFrame(audioSpectrumListener);
+            spectrumTimer = requestAnimationFrame(audioSpectrumListener || (() => null));
         };
 
         // 主动执行一次代理监听方法
         audioSpectrumListener();
+
         // 若播放器并未播放,则取消监听
         if (!this.isPlaying()) {
-            cancelAnimationFrame(spectrumTimer);
+            stopTimer();
         }
     }
 };
@@ -413,7 +430,7 @@ nativePlayer.onended = () => {
     eventListener && eventListener.finished();
 
     // 取消音频频谱数据监听
-    spectrumTimer && cancelAnimationFrame(spectrumTimer);
+    stopTimer();
 };
 
 // 注册播放器暂停时的回调
@@ -423,7 +440,7 @@ nativePlayer.onpause = () => {
     // 回调播放器状态变化事件
     eventListener && eventListener.statusChanged(Status.PAUSED);
     // 取消音频频谱数据监听
-    spectrumTimer && cancelAnimationFrame(spectrumTimer);
+    stopTimer();
 };
 
 // 注册播放器阻塞时的回调
@@ -433,7 +450,7 @@ nativePlayer.onstalled = () => {
     // 回调播放器状态变化事件
     eventListener && eventListener.statusChanged(Status.STALLED);
     // 取消音频频谱数据监听
-    spectrumTimer && cancelAnimationFrame(spectrumTimer);
+    stopTimer();
 };
 
 // 注册播放器发生错误时的回调
@@ -441,7 +458,7 @@ nativePlayer.onerror = (event, source, lineno, colno, error) => {
     // 回调播放器发生错误事件
     eventListener && eventListener.error(error || null);
     // 取消音频频谱数据监听
-    spectrumTimer && cancelAnimationFrame(spectrumTimer);
+    stopTimer();
 };
 
 // 导出对象

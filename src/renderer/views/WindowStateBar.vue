@@ -3,8 +3,7 @@
     <slot></slot>
 
     <!-- 全屏/退出全屏(播放详情时可见) -->
-    <icon class='screen' :name='isFullScreen ? "fulled-screen" :"full-screen" '
-          @click='setScreenState' v-if='viewer'/>
+    <icon :name='isFullScreen ? "fulled-screen" :"full-screen" ' @click='setScreenState' v-if='viewer'/>
 
     <!-- 图标分割符 -->
     <span class='separator' v-else></span>

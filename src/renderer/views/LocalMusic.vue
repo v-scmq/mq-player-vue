@@ -1,20 +1,20 @@
 <template>
-  <div class="v-row has-margin" style="margin: 0 0 12px 0;">
-    <Button text="播放全部" @click="playSelect" prefixIcon='play-select' prefixIconSize='1.5em'/>
-    <Button text="批量操作" @click="onMultiple" prefixIconSize='1.5em'
-            :prefixIcon="multiple ? 'exit-multiple' : 'multiple' "/>
-    <Button text="增加列" @click="doAddColumn"/>
-    <Button text="删除列" @click="doDelColumn"/>
-    <Button text="修改列" @click="doUpdColumn"/>
+  <div class='v-row' style='margin:0 8px 12px 0; gap:8px; flex-wrap:wrap;'>
+    <Button text='播放全部' @click='playSelect' prefixIcon='play-select' prefixIconSize='1.5em'/>
+    <Button text='批量操作' @click='onMultiple' prefixIconSize='1.5em'
+            :prefixIcon='multiple ? "exit-multiple" : "multiple" '/>
+    <Button text='增加列' @click='doAddColumn'/>
+    <Button text='删除列' @click='doDelColumn'/>
+    <Button text='修改列' @click='doUpdColumn'/>
 
-    <text-field v-model="inputKey" placeholder="搜索本地歌曲" @input="handleMusicFilter" style='margin:0 10px 0 auto'/>
+    <text-field v-model='inputKey' placeholder='搜索本地歌曲' @input='handleMusicFilter' style='margin:0 0 0 auto'/>
 
-    <Button text='导入歌曲' @click="onImportButtonClicked" prefixIcon='import' prefixIconSize='1.5em'/>
-    <input type="file" style="display:none" ref="fileChooser" multiple accept="audio/*" @change="addMusic"/>
-    <Button text="排序方式" prefixIcon='sort' prefixIconSize='1.2em'/>
+    <Button text='导入歌曲' @click='onImportButtonClicked' prefixIcon='import' prefixIconSize='1.5em'/>
+    <input type='file' style='display:none' ref='fileChooser' multiple accept='audio/*' @change='addMusic'/>
+    <Button text='排序方式' prefixIcon='sort' prefixIconSize='1.2em'/>
   </div>
 
-  <table-view :columns="columns" :data='list' style="flex:auto;" @row-dblclick="onCellClick"/>
+  <table-view :columns='columns' :data='list' style='flex:auto;' @row-dblclick='onCellClick'/>
 </template>
 
 <script lang='ts'>
@@ -71,7 +71,7 @@ export default defineComponent({
         size: toFileSize(2, file.size),
         bitrate: meta.format.bitrate,
         sampleRate: meta.format.sampleRate
-        // codec: meta.format.codec, // "MPEG 1 Layer 3"
+        // codec: meta.format.codec, // 'MPEG 1 Layer 3'
         // codecProfile: meta.format.codecProfile,
         // container: meta.format.container,
         // lossless: false,
@@ -119,7 +119,7 @@ export default defineComponent({
       return title.includes(value) || album.includes(value) || singer.includes(value);
     };
 
-    const playSelect = () => Message({message: "播放所选音乐", showClose: true, type: 'success'});
+    const playSelect = () => Message({message: '播放所选音乐', showClose: true, type: 'success'});
 
     /** 开始执行本地歌曲模糊搜索(使用事件防抖原理,避免频繁调用过滤逻辑) */
     const handleMusicFilter: any = () => {

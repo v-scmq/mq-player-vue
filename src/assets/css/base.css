@@ -34,6 +34,11 @@
     --button-text-base: var(--text-active);
     --button-fill-base: var(--text-hover);
 
+    --slider-track-fill: #9aa09a;
+    --slider-thumb-fill: #b8a595;
+    --slider-filler-fill: #b8a595;
+    --slider-buffer-fill: #7f6b7c;
+
     --tab-text-base: rgb(86, 73, 81);
     --tab-text-active: rgb(156, 102, 102);
     --tab-fill-hover: rgb(229, 226, 223);
@@ -43,10 +48,9 @@
     --tab-horizontal-fill-base: rgb(226, 155, 208);
     --tab-horizontal-text-active: rgb(226, 155, 208);
 
-    --table-cell-height: 40px;
-
     --accordion-scroll-wrapper-height: 0;
 
+    --table-cell-height: 40px;
     --cell-fill-hover: rgba(228, 228, 228, 0.5);
     --cell-fill-active: rgba(228, 228, 228, 0.7);
 
@@ -75,13 +79,13 @@
     background: var(--button-fill-base);
     /*color: #409eff;*/
     color: var(--button-text-base);
+    outline: none;
 }
 
-.button:focus {
-    outline: none;
-    /*border: 1px solid #409eff;*/
-    /*box-shadow: 0 0 0.25em 0 #409eff;*/
-}
+/*.button:focus {
+    border: 1px solid #409eff;
+    box-shadow: 0 0 0.25em 0 #409eff;
+}*/
 
 .button > .icon {
     fill: var(--button-text-base);
@@ -145,14 +149,14 @@
     flex-direction: column;
 }
 
-.slider > .fill, .slider > .track, .slider > .buffering {
+.slider > .filler, .slider > .track, .slider > .buffer {
     width: 100%;
     height: 0.25em;
     position: absolute;
     pointer-events: none;
 }
 
-.slider.vertical > .fill, .slider.vertical > .track, .slider.vertical > .buffering {
+.slider.vertical > .filler, .slider.vertical > .track, .slider.vertical > .buffer {
     width: 0.25em;
     height: 100%;
     bottom: 0;
@@ -163,7 +167,7 @@
     border-radius: 0.85em;
     height: 0.85em;
     width: 0.85em;
-    background: #b8a595;
+    background: var(--slider-thumb-fill);
     transform: translateX(-50%); /* 水平左移 相对于自身宽度的一半,方便后续计算位置*/
 }
 
@@ -172,15 +176,15 @@
 }
 
 .slider > .track {
-    background: #9aa09a;
+    background: var(--slider-track-fill);
 }
 
-.slider > .fill {
-    background: #b8a595;
+.slider > .filler {
+    background: var(--slider-filler-fill);
 }
 
-.slider > .buffering {
-    background: #7f6b7c;
+.slider > .buffer {
+    background: var(--slider-buffer-fill);
 }
 
 /*====================== Table ==================*/
@@ -304,11 +308,11 @@
     display: flex;
     align-items: center;
     border-radius: 2em;
-    position: relative;
     background-color: rgb(223, 223, 223);
 }
 
 .text-field > .input {
+    flex: 1;
     height: 100%;
     border: none;
     outline: none;
@@ -414,7 +418,7 @@
 
     top: 0;
     left: 0;
-    z-index: 2;
+    z-index: 999;
     position: absolute;
 
     display: flex;
@@ -738,7 +742,17 @@
 
 
 /*====================== PopupPane ==================*/
-.popup-pane {
+.popup-container {
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+.popup-container:not(:hover) > .popup-pane {
+    display: none;
+}
+
+.popup-container > .popup-pane {
     bottom: 3em;
     position: absolute;
     align-items: center;
@@ -753,35 +767,21 @@
     /* transition: visibility 1s ease; visibility: collapse; */
 }
 
-.popup-pane:before, .popup-pane:after {
+.popup-container > .popup-pane:before, .popup-container > .popup-pane:after {
     content: '';
     bottom: 0;
     position: absolute;
     transform: translate(0, 100%);
 }
 
-.popup-pane:before {
+.popup-container > .popup-pane:before {
     width: 100%;
     height: 50%;
 }
 
-.popup-pane:after {
+.popup-container > .popup-pane:after {
     border-width: 12px 8px 0;
     border-style: solid;
     border-color: var(--fill-popup-pane) transparent transparent;
     /* width: 1em; height: 0.75em; background: var(--fill-popup-pane); clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0); */
-}
-
-.popup-container {
-    display: flex;
-    justify-content: center;
-    position: relative;
-}
-
-.popup-container > .icon {
-    z-index: 1;
-}
-
-.popup-container:not(:hover) .popup-pane {
-    display: none;
 }

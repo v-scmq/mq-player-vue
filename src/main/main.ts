@@ -138,6 +138,7 @@ if (isProduction && !app.requestSingleInstanceLock()) {
         }
 
         // 设置浏览器窗口为80%的默认缩放比例
+        // 1 => 1 ; 1.25 => 0.8 ;  =>> zoomFactor = 1 / 屏幕缩放比例
         mainWindow.webContents.setZoomFactor(0.8);
 
         // 注意tray需要声明为全局变量,否则会被自动回收对象,导致自动销毁系统托盘

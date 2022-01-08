@@ -6,9 +6,7 @@
            @click='loginModal = true'/>
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
-      <div class='user-icon container' v-else>
-        <icon name='user' @click='login'/>
-      </div>
+      <icon name='user-circle' class='user-icon' @click='login' v-else/>
 
       <span class='user-name' :title='user.nickName' @click='user.uin ? (loginModal = true) : login($event)'>
         {{ user.uin ? user.nickName : '点击登录' }}
@@ -58,15 +56,18 @@
 import db from '../database';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
+
 import WindowStateBar from './WindowStateBar.vue';
 
 import {useRoute, useRouter} from 'vue-router';
 import {nextTick, reactive, ref, defineComponent} from 'vue';
 import {login as loginApi, logout as logoutApi} from '../api';
-import { User } from 'src/types';
+
+import {User} from 'src/types';
 
 export default defineComponent({
-  name: 'Header',
+  name: 'TitleBar',
+
   components: {WindowStateBar},
 
   setup() {
@@ -77,6 +78,7 @@ export default defineComponent({
 
     // 用户基本信息
     const user = reactive<User>({} as User);
+
     const router = useRouter(), route = useRoute();
 
     let navigation: boolean | null = null;
@@ -162,6 +164,7 @@ export default defineComponent({
 
     return {
       loginModal, backLength, forwardLength, searchInput, user,
+
       /** 后退 */
       back() {
         if (backLength.value) {
@@ -204,20 +207,21 @@ export default defineComponent({
 
       /** 打开资源搜索页面 */
       openNetSearchView() {
-        let value = searchInput.value;
-        if (!value) {
-          return;
-        }
+        const value = searchInput.value;
 
-        const viewPath = '/net-search-view', {path, query} = route;
+        if (value) {
+          const viewPath = '/net-search-view', {path, query} = route;
 
-        // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
-        return (path === viewPath && query.value === value) ? null :
+          // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
+          if ((path !== viewPath || query.value !== value)) {
             router.push({path: viewPath, query: {value}});
+          }
+        }
       },
 
       openSystemSetting() {
         const viewPath = '/system-setting', path = route.path;
+
         if (path !== viewPath) {
           router.push({path: viewPath});
         }

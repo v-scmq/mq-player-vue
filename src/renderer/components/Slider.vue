@@ -1,15 +1,15 @@
 <template>
   <div class='slider' ref='el' :class='{vertical}' @click='onSliderClicked'>
     <div class='track'/>
-    <div class='buffering' v-if='buffering >= 0' :style='{width:`${buffering * 100}%`}'/>
+    <div class='buffer' v-if='buffering >= 0' :style='{width:`${buffering * 100}%`}'/>
 
     <template v-if='vertical'>
-      <div class='fill' :style='{height: `${value}%`}'/>
+      <div class='filler' :style='{height: `${value}%`}'/>
       <div class='thumb' ref='thumb' :style='{top: `${100 - value}%`}' @pointerdown='onDragStart'/>
     </template>
 
     <template v-else>
-      <div class='fill' :style='{width: `${value}%`}'/>
+      <div class='filler' :style='{width: `${value}%`}'/>
       <div class='thumb' ref='thumb' :style='{left: `${value}%`}' @pointerdown='onDragStart'/>
     </template>
 
