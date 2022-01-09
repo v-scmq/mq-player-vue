@@ -78,7 +78,6 @@
 <script lang='ts'>
 import player from '../player';
 import Spinner from '../components/Spinner';
-import {convertSinger} from '../../utils';
 import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
 
 import {Album, Mv, Singer, Song, ComputedPage} from '../../types';
@@ -151,7 +150,6 @@ export default defineComponent({
           // 修改歌手信息
           data.singer && Object.assign(singer, data.singer);
           // 添加歌曲
-          data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list);
 
         }).catch(() => newTab.update = true).finally(Spinner.close);
@@ -174,7 +172,6 @@ export default defineComponent({
           // 修改分页信息
           data.page && Object.assign(page, data.page);
           // 添加Mv
-          data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
         }).catch(() => newTab.update = true).finally(Spinner.close);
@@ -245,8 +242,6 @@ export default defineComponent({
           getSingerSongList(page, singer).then(data => {
             // 重设置分页信息
             data.page && Object.assign(page, data.page);
-            // 转换歌手为Array类型
-            data.list.forEach(convertSinger);
             // 添加歌曲
             songList.push(...data.list);
 
@@ -286,7 +281,6 @@ export default defineComponent({
             // 修改分页信息
             data.page && Object.assign(page, data.page);
             // 添加Mv
-            data.list.forEach(convertSinger);
             mvList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);

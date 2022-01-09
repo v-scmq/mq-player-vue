@@ -22,7 +22,6 @@
 
 <script lang='ts'>
 import {getMvList} from '../api';
-import {convertSinger} from '../../utils';
 import Spinner from '../components/Spinner';
 
 import {reactive, onMounted, defineComponent} from 'vue';
@@ -77,7 +76,6 @@ export default defineComponent({
         tags.splice(0, tags.length, ...tagList);
 
         // 添加Mv数据
-        data.list.forEach(convertSinger);
         mvList.splice(0, mvList.length, ...data.list);
 
       }).finally(Spinner.close);
@@ -115,8 +113,6 @@ export default defineComponent({
         getMvList(page, mvTagParam).then(data => {
           Object.assign(page, data.page);
 
-          // 转换歌手为Array类型
-          data.list.forEach(convertSinger);
           mvList.splice(0, mvList.length, ...data.list);
 
         }).finally(Spinner.close);
@@ -133,8 +129,6 @@ export default defineComponent({
           getMvList(page, mvTagParam).then(data => {
             Object.assign(page, data.page);
 
-            // 转换歌手为Array类型
-            data.list.forEach(convertSinger);
             mvList.push(...data.list);
 
           }).catch(() => --page.current).finally(Spinner.close);

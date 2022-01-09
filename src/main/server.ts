@@ -3,7 +3,7 @@ import {createReadStream, existsSync, statSync} from 'fs';
 import {request as httpsRequest} from 'https';
 import {createServer, request as httpRequest, IncomingMessage, ServerResponse, IncomingHttpHeaders} from 'http';
 
-import {HttpBaseResponse, DataSource} from '../types';
+import {HttpBaseResponse, DataSource, Song} from '../types';
 
 import {QQMusicSource} from './api/tencent';
 import {DefaultSource} from './api/default';
@@ -24,8 +24,8 @@ const MIME_TYPE: { [key: string]: string } = {
 
 // 数据源
 const DATA_SOURCE_IMPL = {
-    [DefaultSource.id]: DefaultSource,
-    [QQMusicSource.id]: QQMusicSource
+    [DefaultSource.platform]: DefaultSource,
+    [QQMusicSource.platform]: QQMusicSource
 } as { [key: string]: DataSource };
 
 /**
@@ -86,7 +86,6 @@ const handleFileRequest = (request: IncomingMessage, response: ServerResponse, p
         response.once('close', dispose);
         response.once('finish', dispose);
         response.once('end', dispose);
-        // inputStream.once('close', () => response.end());
 
         // 写入响应头信息到客户端
         response.writeHead(code, headers);
@@ -99,7 +98,14 @@ const handleFileRequest = (request: IncomingMessage, response: ServerResponse, p
     }
 };
 
-type RequestCallback = (dataSource: DataSource, param: any) => Promise<HttpBaseResponse>;
+/**
+ * 请求处理回调方法.
+ *
+ * ①当返回值是null时, 表明未找到匹配的数据源api实现;
+ * ②当返回值是Promise对象时, 表明已找到匹配的数据源api实现;
+ * ③若抛出异常, 表明校验参数失败.
+ */
+type RequestCallback = (param: { [key: string]: any }) => Promise<HttpBaseResponse> | null;
 
 /**
  * 处理post请求,并调用传入的callback方法获取数据
@@ -119,16 +125,17 @@ const handlePostRequest = (request: IncomingMessage, response: ServerResponse, c
 
             // 获取请求参数
             const param: { platform: number, [key: string]: any } = JSON.parse(buffers.toString());
-            // 根据平台id查找对应的数据源实现
-            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            // 执行回调方法, 在回调方法中校验参数
+            const promise = callback(param);
 
-            if (!dataSource) {
+            // 不是promise对象, 中断后续处理
+            if (!promise) {
                 const headers = {'content-type': 'text/plain; charset=utf-8'};
                 return response.writeHead(403, headers).end('没有相应的数据源api实现此接口');
             }
 
             // 睡眠一段时间后才开始发出HTTP请求
-            sleep().then(() => callback(dataSource, param)).then(data => {
+            promise.then(data => {
                 debugger;
                 data = data || {};
 
@@ -233,9 +240,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/singers'(request, response) {
-        // param: {platform:number, page: Page, tag: SingerTagsParam} = {};
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.singerList(param.tag, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.singerList(param.tag, param.page)) : null;
+        });
     },
 
     /**
@@ -245,9 +253,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/singer/songs'(request, response) {
-        // const param: {platform:number, page: Page, singer: Singer} = {};
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.singerSongList(param.singer, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.singer.platform];
+            return dataSource ? sleep().then(() => dataSource.singerSongList(param.singer, param.page)) : null;
+        });
     },
 
     /**
@@ -257,9 +266,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/singer/albums'(request, response) {
-        // const param: {platform:number, page: Page, singer: Singer} = {};
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.singerAlbumList(param.singer, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.singer.platform];
+            return dataSource ? sleep().then(() => dataSource.singerAlbumList(param.singer, param.page)) : null;
+        });
     },
 
     /**
@@ -269,8 +279,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/album/songs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.albumSongList(param.album, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.album.platform];
+            return dataSource ? sleep().then(() => dataSource.albumSongList(param.album, param.page)) : null;
+        });
     },
 
     /**
@@ -280,8 +292,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/singer/mvs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.singerMvList(param.singer, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.singer.platform];
+            return dataSource ? sleep().then(() => dataSource.singerMvList(param.singer, param.page)) : null;
+        });
     },
 
     /**
@@ -291,8 +305,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/specials'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.specialList(param.tag, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.specialList(param.tag, param.page)) : null;
+        });
     },
 
 
@@ -303,8 +319,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/special/songs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.specialSongList(param.special, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.special.platform];
+            return dataSource ? sleep().then(() => dataSource.specialSongList(param.special, param.page)) : null;
+        });
     },
 
     /**
@@ -314,8 +332,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/mvs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.mvList(param.tag, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.mvList(param.tag, param.page)) : null;
+        });
     },
 
     /**
@@ -325,8 +345,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/ranks/songs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.rankSongList(param.item, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.rankSongList(param.item, param.page)) : null;
+        });
     },
 
     /**
@@ -336,8 +358,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/search/singers'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.singerSearch(param.keyword));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.singerSearch(param.keyword)) : null;
+        });
     },
 
     /**
@@ -347,8 +371,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/search/songs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.songSearch(param.keyword, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.songSearch(param.keyword, param.page)) : null;
+        });
     },
 
     /**
@@ -358,8 +384,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/search/albums'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.albumSearch(param.keyword, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.albumSearch(param.keyword, param.page)) : null;
+        });
     },
 
     /**
@@ -369,8 +397,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/search/specials'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.specialSearch(param.keyword, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.specialSearch(param.keyword, param.page)) : null;
+        });
     },
 
     /**
@@ -380,8 +410,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/search/mvs'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.mvSearch(param.keyword, param.page));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.mvSearch(param.keyword, param.page)) : null;
+        });
     },
 
     /**
@@ -391,8 +423,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/lyric'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.getLyric(param.song));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? dataSource.getLyric(param as Song) : null;
+        });
     },
 
 
@@ -403,7 +437,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/singer/pic'(request, response) {
-        response.end();
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? dataSource.getSingerCovers(param as Song) : null;
+        });
     },
 
     /**
@@ -413,8 +450,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/user/login'(request, response) {
-        handlePostRequest(request, response, (dataSource, param) =>
-            dataSource.login(param.cookies));
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? dataSource.login(param.cookies) : null;
+        });
     },
 
     /**
@@ -424,7 +463,10 @@ const RequestMappingHandler: RequestMappingHandler = {
      * @param response 服务器响应信息
      */
     '/api/user/logout'(request, response) {
-        handlePostRequest(request, response, (dataSource) => dataSource.logout());
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? dataSource.logout() : null;
+        });
     },
 
     /**

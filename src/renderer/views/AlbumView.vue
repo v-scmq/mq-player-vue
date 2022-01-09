@@ -47,9 +47,9 @@
 
 <script lang='ts'>
 import player from '../player';
-import element from '../components/Spinner';
+import Spinner from '../components/Spinner';
 import {getAlbumSongList} from '../api';
-import {convertSinger} from '../../utils';
+
 import {Album, ComputedPage, Song} from '../../types';
 
 import {reactive, watch, defineComponent, PropType} from 'vue';
@@ -75,7 +75,7 @@ export default defineComponent({
 
     watch(() => props.query, newQuery => {
       if (newQuery && album.mid !== newQuery.mid) {
-        element.open();
+        Spinner.open();
 
         getAlbumSongList(page, newQuery).then(data => {
           // 重设分页信息
@@ -83,10 +83,9 @@ export default defineComponent({
           // 更新专辑信息
           data.album && Object.assign(album, data.album);
           // 添加歌曲数据
-          data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list);
 
-        }).finally(element.close);
+        }).finally(Spinner.close);
       }
 
     }, {immediate: true});
@@ -106,17 +105,15 @@ export default defineComponent({
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           ++page.current;
-          element.open();
+          Spinner.open();
 
           getAlbumSongList(page, album).then(data => {
             // 重设置分页信息
             data.page && Object.assign(page, data.page);
-            // 转换歌手为Array类型
-            data.list.forEach(convertSinger);
             // 添加歌曲
             songList.push(...data.list);
 
-          }).catch(() => --page.current).finally(element.close);
+          }).catch(() => --page.current).finally(Spinner.close);
         }
       }
     };

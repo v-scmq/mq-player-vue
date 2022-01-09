@@ -53,7 +53,7 @@ export const getSingerList = (page: Page, tag: SingerTagsParam | null) =>
  * @return {Promise<SingerSongModuleData>} 异步Promise对象
  */
 export const getSingerSongList = (page: Page, singer: Singer) =>
-    axios.post('/api/singer/songs', {platform, page, singer})
+    axios.post('/api/singer/songs', {page, singer})
         .then<SingerSongModuleData>(DataReducer);
 
 /**
@@ -64,7 +64,7 @@ export const getSingerSongList = (page: Page, singer: Singer) =>
  * @return {Promise<SingerAlbumModuleData>} 异步Promise对象
  */
 export const getSingerAlbumList = (page: Page, singer: Singer) =>
-    axios.post('/api/singer/albums', {platform, page, singer})
+    axios.post('/api/singer/albums', {page, singer})
         .then<SingerAlbumModuleData>(DataReducer);
 
 /**
@@ -75,7 +75,7 @@ export const getSingerAlbumList = (page: Page, singer: Singer) =>
  * @return {Promise<AlbumSongModuleData>} 异步Promise对象
  */
 export const getAlbumSongList = (page: Page, album: Album) =>
-    axios.post('/api/album/songs', {platform, page, album})
+    axios.post('/api/album/songs', {page, album})
         .then<AlbumSongModuleData>(DataReducer);
 
 /**
@@ -86,7 +86,7 @@ export const getAlbumSongList = (page: Page, album: Album) =>
  * @return {Promise<SingerMvModuleData>} 异步Promise对象
  */
 export const getSingerMvList = (page: Page, singer: Singer) =>
-    axios.post('/api/singer/mvs', {platform, page, singer})
+    axios.post('/api/singer/mvs', {page, singer})
         .then<SingerMvModuleData>(DataReducer);
 
 /**
@@ -108,7 +108,7 @@ export const getSpecialList = (page: Page, tag: Tag | null) =>
  * @return {Promise<SpecialSongModuleData>} 异步Promise对象
  */
 export const getSpecialSongList = (page: Page, special: Special) =>
-    axios.post('/api/special/songs', {platform, page, special})
+    axios.post('/api/special/songs', {page, special})
         .then<SpecialSongModuleData>(DataReducer);
 
 /**
@@ -194,18 +194,16 @@ export const searchMv = (page: Page, keyword: string) =>
  * @return {Promise<LyricLine[]>} 异步Promise对象
  */
 export const getLyric = (song: Song) =>
-    axios.post('/api/lyric', {platform, song})
-        .then<LyricLine[]>(DataReducer);
+    axios.post('/api/lyric', song).then<LyricLine[]>(DataReducer);
 
 /**
  * 获取歌手写真图片列表
  *
- * @param {Singer}  singer      歌曲信息
+ * @param song 歌曲信息
  * @return {Promise<string[]>} 异步Promise对象
  */
-export const getSingeCovers = (singer: Singer) =>
-    axios.post('/api/singer/pic', {platform, singer})
-        .then<string[]>(DataReducer);
+export const getSingeCovers = (song: Song) =>
+    axios.post('/api/singer/pic', song).then<string[]>(DataReducer);
 
 /**
  * 获取热搜词列表

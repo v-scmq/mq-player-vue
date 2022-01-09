@@ -14,7 +14,7 @@ type RequestParam = {
     /** 发送到服务器的数据 */
     data?: string | Record<string, any>;
     /** 是否模拟手机端请求 */
-    isMobile?: boolean;
+    mobile?: boolean;
     /** 数据响应类型 */
     responseType?: 'json' | 'text' | 'buffer';
     /** post请求提交的数据类型 */
@@ -66,7 +66,7 @@ const http: HttpClient = options => new Promise(resolve => {
 
     // 若没有提供UA信息,则提供默认的UA信息
     if (!options.headers['user-agent']) {
-        options.headers['user-agent'] = options.isMobile ?
+        options.headers['user-agent'] = options.mobile ?
             // 用户代理 手机浏览器标识
             'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36'
             // 用户代理 PC浏览器标识
@@ -78,7 +78,7 @@ const http: HttpClient = options => new Promise(resolve => {
         options.headers.referer = options.url;
     }
 
-    const method = options.method || 'get'
+    const method = options.method || 'get';
 
     // 若有提交的数据,必须设置请求的中的内容类型
     if (method === 'post' && options.data) {

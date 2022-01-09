@@ -1,9 +1,11 @@
 import {DataSource} from '../../types';
 import {readLyric} from "../../utils";
 
+const platform = 0;
+
 /** 默认的数据源API实现 */
 export const DefaultSource: DataSource = {
-    id: 0,
+    platform,
 
     async singerList(tag, page) {
         const list = []
@@ -11,7 +13,8 @@ export const DefaultSource: DataSource = {
             list.push({
                 mid: `mid-${index}`,
                 name: `-singer-${index}-name`,
-                cover: '/icon/default_cover.jpg'
+                cover: '/icon/default_cover.jpg',
+                platform
             })
         }
         return {
@@ -60,7 +63,7 @@ export const DefaultSource: DataSource = {
     },
 
     async singerSearch(keyword) {
-        return {list: [{mid: '1S21239V', name: keyword}], httpInfo: {statusCode: 200, headers: {}}};
+        return {list: [{mid: '1S21239V', name: keyword, platform}], httpInfo: {statusCode: 200, headers: {}}};
     },
 
     async songSearch(keyword, page) {

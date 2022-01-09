@@ -1,7 +1,7 @@
 /**
  * 打开模态框时所需的配置选项
  */
-import {IncomingHttpHeaders} from "http";
+import {IncomingHttpHeaders} from 'http';
 
 export type ModalOpenOption = {
     /** URL地址 */
@@ -47,6 +47,8 @@ export type Singer = {
     otherName?: string;
     /** 歌手拼音 */
     spell?: string;
+    /** 所属平台id */
+    platform?: number;
 }
 
 /**
@@ -60,7 +62,7 @@ export type Album = {
     /** 专辑名称 */
     name?: string;
     /** 所属歌手 */
-    singer?: string | Singer;
+    singer?: string | Singer[];
     /** 专辑封面图片 URI */
     cover?: string;
     /** 专辑介绍 */
@@ -75,6 +77,8 @@ export type Album = {
     language?: string;
     /**  唱片公司 */
     company?: string;
+    /** 所属平台id */
+    platform?: number;
 }
 
 /**
@@ -105,6 +109,8 @@ export type Song = {
     size?: string;
     /** 音质等级 */
     quality?: number;
+    /** 所属平台id */
+    platform?: number;
 }
 
 /**
@@ -135,6 +141,8 @@ export type Mv = {
     size?: string;
     /** 画质等级 */
     quality?: number;
+    /** 所属平台id */
+    platform?: number;
 }
 
 /**
@@ -219,12 +227,12 @@ export type SpecialTags = {
  * 歌单信息
  */
 export type Special = {
+    /** 歌单id */
+    id?: string | number;
     /** 歌单mid */
     mid?: string;
     /** 歌单名称 */
     name?: string;
-    /** 歌单id */
-    id?: string | number;
     /** 歌单封面URL */
     cover?: string;
     /** 歌单简介 */
@@ -233,6 +241,8 @@ export type Special = {
     creator?: string;
     /** 用户id */
     userId?: string;
+    /** 所属平台id */
+    platform?: number;
 }
 
 /**
@@ -520,8 +530,8 @@ export type LoginModuleData = {
  * 音乐数据源接口
  */
 export interface DataSource {
-    /** 数据源id */
-    id: number;
+    /** 数据源平台id */
+    platform: number;
 
     /**
      * 获取歌手列表信息集合

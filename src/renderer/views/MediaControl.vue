@@ -121,7 +121,7 @@ import MusicViewer from './MusicViewer.vue';
 
 import {defineComponent, reactive, ref, nextTick, readonly, provide, onBeforeUnmount} from 'vue';
 
-import {LyricLine} from "../../types";
+import {LyricLine} from '../../types';
 
 export default defineComponent({
   name: 'MediaControl',
@@ -286,7 +286,7 @@ export default defineComponent({
         list.splice(0, list.length);
 
         // 重新加载歌词
-        getLyric({id: 1234, mid: 'v123423'}).then(data => void list.push(...data));
+        getLyric(media).then(data => void list.push(...data));
       },
 
       bufferChanged(value) {

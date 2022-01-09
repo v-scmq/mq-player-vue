@@ -2,7 +2,7 @@
  *                    module: URIUtil                          *
  ***************************************************************/
 
-import {LyricLine} from "../types";
+import {LyricLine, Singer} from "../types";
 
 /**
  * 获取本地文件资源在本地服务器上的API接口地址 <br>
@@ -171,13 +171,20 @@ export const getMediaInfo = (file: File, isElectron: boolean) => {
 /**
  * 转换歌手信息, 确保它应该是一个数组
  *
- * @param {Song | Mv | Album} value 歌手信息
+ * @param value 歌手信息
+ * @param platform 歌手所属平台
  * @return {Singer[]} 歌手信息列表
  */
-export const convertSinger = (value: any) =>
-    value.singer instanceof Array ? value.singer :
-        value.singer instanceof Object ? [value.singer] :
-            value.singer ? [{name: value.singer}] : [];
+export const convertSinger = (value: string | Singer | Singer[], platform: number) => {
+    const list: Singer[] = value instanceof Array ? value :
+        ((typeof value === 'string') ? [{name: value} as Singer] : [value]);
+
+    for (const singer of list) {
+        singer.platform = platform;
+    }
+
+    return list;
+}
 
 
 /*****************************************************************

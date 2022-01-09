@@ -30,7 +30,6 @@ import Message from '../components/Message';
 import Spinner from '../components/Spinner';
 
 import {getRanksSongList} from '../api';
-import {convertSinger} from '../../utils';
 import {ComputedPage, Rank, RankItem, Song} from 'src/types';
 import {TableColumn} from '../components/types';
 
@@ -59,8 +58,6 @@ export default defineComponent({
 
       data.rankList && rankList.splice(0, rankList.length, ...data.rankList);
 
-      // 转换歌手为Array类型
-      data.list.forEach(convertSinger);
       songList.splice(0, songList.length, ...data.list);
 
     }).finally(Spinner.close);
@@ -83,8 +80,6 @@ export default defineComponent({
 
         getRanksSongList(page, rankItem).then(data => {
           data.page && Object.assign(page, data.page);
-          // 转换歌手为Array类型
-          data.list.forEach(convertSinger);
           songList.splice(0, songList.length, ...data.list)
 
         }).finally(Spinner.close);
@@ -107,8 +102,6 @@ export default defineComponent({
           getRanksSongList(page, currentRankItem).then(data => {
             // 重设置分页信息
             data.page && Object.assign(page, data.page);
-            // 转换歌手为Array类型
-            data.list.forEach(convertSinger);
             // 添加歌曲
             songList.push(...data.list);
 

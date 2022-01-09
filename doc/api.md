@@ -8,7 +8,7 @@
 ### 第三方资源
 
 参数说明
-> platform &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 1:x | 2:y | 3:z <br>
+> platform = 1:x | 2:y | 3:z <br>
 > quality(song) = 1:标准 | 2:高品质 | 3:无损 <br>
 > quality(mv) &nbsp;&nbsp; = 1:标清 | 2:高清 | 3:超清 | 4:蓝光 <br>
 
@@ -20,26 +20,26 @@
 
 #### 歌手歌曲列表(post)
 
-> 接口: /api/singer/songs => data = {platform:number, page:Page, singer:Singer} <br>
-> 示例: /api/singer/songs => data = {platform:1, page:{current:1, size:30}, singer:{mid:"1234v"}} <br>
+> 接口: /api/singer/songs => data = {page:Page, singer:Singer} <br>
+> 示例: /api/singer/songs => data = {page:{current:1, size:30}, singer:{mid:"1234v"}} <br>
 > 返回: {page:Page, singer:Singer | null, list:Song[]}
 
 #### 歌手专辑列表(post)
 
-> 接口: /api/singer/albums => data = {platform:number, page:Page, singer:Singer} <br>
-> 示例: /api/singer/albums => data = {platform:1, page:{current:1, size:30}, singer:{mid:"1234v"}} <br>
+> 接口: /api/singer/albums => data = {page:Page, singer:Singer} <br>
+> 示例: /api/singer/albums => data = {page:{current:1, size:30}, singer:{mid:"1234v"}} <br>
 > 返回: {page:Page, list:Album[]}
 
 #### 专辑歌曲列表(post)
 
-> 接口: /api/album/songs => data = {platform:number, page:Page, album:Album} <br>
-> 示例: /api/album/songs => data = {platform:1, page:{current:1, size:30}, album:{mid:"t02kl"}} <br>
+> 接口: /api/album/songs => data = {page:Page, album:Album} <br>
+> 示例: /api/album/songs => data = {page:{current:1, size:30}, album:{mid:"t02kl"}} <br>
 > 返回: {page:Page, album:Album | null, list:Song[]}
 
 #### 歌手MV列表(post)
 
-> 接口: /api/singer/mvs => data = {platform:number, page:Page, singer:Singer} <br>
-> 示例: /api/singer/mvs => data = {platform:1, page:{current:1, size:30}, singer:{mid:"1234v"}} <br>
+> 接口: /api/singer/mvs => data = {page:Page, singer:Singer} <br>
+> 示例: /api/singer/mvs => data = {page:{current:1, size:30}, singer:{mid:"1234v"}} <br>
 > 返回: {page:Page, list:MV[]}
 
 #### 歌单列表(post)
@@ -50,13 +50,13 @@
 
 #### 歌单歌曲列表(post)
 
-> 接口: /api/special/songs => data = {platform:number, page:Page, special:Special} <br>
-> 示例: /api/special/songs => data = {platform:1, page:{current:1, size:30}, special:{id:'1sdlt0'}} <br>
+> 接口: /api/special/songs => data = {page:Page, special:Special} <br>
+> 示例: /api/special/songs => data = {page:{current:1, size:30}, special:{id:'1sdlt0'}} <br>
 > 返回: {page:Page, special:Special, list:Song[]}
 
 #### MV列表(post)
 
-> 接口: /api/mvs => data = {platform:number, page:Page, tag:{area:string, version:string}} <br>
+> 接口: /api/mvs => data = {platform:number, page:Page, tag:MvTagsParam} <br>
 > 示例: /api/mvs => data = {platform:1, page:{current:1, size:30}, tag:{area:'1', version:'2'}} <br>
 > 返回: {page:Page, tags:MvTags, list:Mv[]}
 
@@ -98,14 +98,14 @@
 
 #### 歌词(post)
 
-> 接口: /api/lyric => data = {platform:number, mid:string} <br>
-> 示例: /api/lyric => data = {platform:1, mid:'1232v'} <br>
-> 返回: [{millis:number, content:string}]
+> 接口: /api/lyric => data = {id:string, mid:string, platform:number} <br>
+> 示例: /api/lyric => data = {id:123986, mid:'132v', platform:1} <br>
+> 返回: [{start:number, end:number, content:string}]
 
 #### 歌手写真列表(post)
 
-> 接口: /api/singer/pic => data = {platform:number, mid:string} <br>
-> 示例: /api/singer/pic => data = {platform:1, mid:'1232v'} <br>
+> 接口: /api/singer/pic => data = {id:string, mid:string, platform:number} <br>
+> 示例: /api/singer/pic => data = {id:123986, mid:'132v', platform:1} <br>
 > 返回: ['url1', 'url2']
 
 #### 获取登录配置选项 或 开始登录
