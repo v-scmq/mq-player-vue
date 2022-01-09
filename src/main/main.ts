@@ -53,8 +53,8 @@ if (isProduction && !app.requestSingleInstanceLock()) {
     app.on('ready', () => {
         // 创建浏览器主窗口
         mainWindow = new BrowserWindow({
-            width: 800,
-            height: 600,
+            width: 1000,
+            height: 800,
             show: false,
             frame: false,
             backgroundColor: 'rgb(236, 236, 236)',
@@ -202,11 +202,7 @@ if (isProduction && !app.requestSingleInstanceLock()) {
 
         // 加载指定的URL
         modal.loadURL(option.url).then();
-        // 设置页面缩放比例为80%
-        modal.once('ready-to-show', () => {
-            modal.show();
-            modal.webContents.setZoomFactor(0.8);
-        });
+        modal.once('ready-to-show', () => modal.show());
 
         // 当页面开始导航(页面跳转)
         modal.webContents.on('will-navigate', (event, url) => {
