@@ -97,6 +97,9 @@ let eventListener: MediaEventListener;
 /** 当前加载的媒体资源路径 */
 let currentPath: string | null;
 
+/** 播放速率 */
+let speed = 1;
+
 const stopTimer = () => {
     if (audioSpectrumListener) {
         dataArray.fill(0);
@@ -219,6 +222,9 @@ const player = {
         // 已使用代理方式 代替本地文件资源和第三方网络资源,无需在做任何转换
         nativePlayer.src = currentPath = path;
 
+        // 必须重新设定播放速率, 否则之前的设定无效
+        this.setSpeed(speed);
+
         return true;
     },
 
@@ -243,10 +249,10 @@ const player = {
     /**
      * 设置播放速率
      *
-     * @param {number} value 播放速率值, [0.5,2]
+     * @param {number} value 播放速率值, [0.5, 2]
      */
     setSpeed(value: number) {
-        nativePlayer.playbackRate = Math.min(Math.max(value, 0.5), 2);
+        nativePlayer.playbackRate = speed = Math.min(Math.max(value, 0.5), 2);
     },
 
     /**
