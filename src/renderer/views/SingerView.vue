@@ -44,8 +44,8 @@
               :data-mid='singer.mid'>{{ singer.name }}</span>
         </template>
 
-        <template v-slot:album='{item: {album = {} }}'>
-          <span class='link cell-text' :data-mid='album.mid'>{{ album.name }}</span>
+        <template v-slot:album='{item:{album}}'>
+          <span class='link cell-text' :data-mid='album.mid' v-if='album'>{{ album.name }}</span>
         </template>
       </table-view>
 
