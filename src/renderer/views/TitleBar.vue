@@ -53,7 +53,7 @@
 </template>
 
 <script lang='ts'>
-import db from '../database';
+import {db, tables} from '../database';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
 
@@ -127,7 +127,7 @@ export default defineComponent({
         } else {
           // 从数据库获取用户信息
           await db.open();
-          const usersInfo = await db.queryAll(db.tables.user.name);
+          const usersInfo = await db.queryAll(tables.user);
           const [{uin = '', cookies: cookieArray = []} = {}] = usersInfo || [];
 
           cookies = uin && cookieArray;
@@ -146,9 +146,9 @@ export default defineComponent({
         }
 
         // 删除indexDB中存储的用户信息
-        await db.delete(db.tables.user.name, userInfo.uin);
+        await db.delete(tables.user, userInfo.uin);
         // 添加新的用户信息到indexDB中
-        await db.insert(db.tables.user.name, userInfo);
+        await db.insert(tables.user, userInfo);
         // 将新的用户信息复制到视图展示的user对象上
         Object.assign(user, userInfo);
 
@@ -196,7 +196,7 @@ export default defineComponent({
       logout() {
         if (user.uin) {
           // 删除indexDB中存储的用户信息
-          db.delete(db.tables.user.name, user.uin).then(logoutApi).then(data => {
+          db.delete(tables.user, user.uin).then(logoutApi).then(data => {
             if (data && data.cookieURL) {
               const {electron: electronApi} = window as any;
               electronApi.removeAllCookie(data.cookieURL);

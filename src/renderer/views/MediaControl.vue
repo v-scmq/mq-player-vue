@@ -20,8 +20,12 @@
           <image-view class='album-icon' v-model='media.cover' defaultValue='/icon/default_cover.jpg'
                       @click='openViewer'/>
 
-          <div class='v-column media-info'>
-            <span>{{ media.singer }} - {{ media.title }}</span>
+          <div class='v-column'>
+            <div class='v-row data-media' style='gap:8px'>
+              <span class='link'>{{ media.singer }}</span>
+              <span v-if='media.hasLine'>-</span>
+              <span class='link'>{{ media.title }}</span>
+            </div>
 
             <div class='v-row'>
               <span>{{ media.time }}</span>
@@ -106,13 +110,23 @@
   </teleport>
 
   <teleport to='body' v-if='viewer'>
-    <music-viewer :cover='media.cover' @close='closeViewer'/>
+    <music-viewer :cover='media.cover' @close='closeViewer'>
+      <template v-slot:song>
+        <div class='v-row data-media'>
+          <span class='link'>{{ media.singer }}</span>
+          <span v-if='media.hasLine'>-</span>
+          <span class='link'>{{ media.title }}</span>
+          <icon class='mv-icon link' name='mv' v-if='media.vid'/>
+        </div>
+      </template>
+    </music-viewer>
   </teleport>
 
 </template>
 
 <script lang='ts'>
 import {getLyric} from '../api';
+import {db, tables} from '../database';
 import player, {Status} from '../player';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
@@ -131,7 +145,8 @@ export default defineComponent({
   setup() {
     const currentMedia = reactive({
       timeValue: 0, buffered: 0, time: '00:00', duration: '00:00',
-      singer: 'MQ音乐', title: '聆听世界', album: '未知', cover: ''
+      singer: 'MQ音乐', title: '聆听世界', album: '未知', cover: '', vid: 1,
+      hasLine: false,
     });
 
     // 是否正在播放
@@ -143,7 +158,7 @@ export default defineComponent({
     // 播放模式图标
     const modeIcon = ref('list-loop');
 
-    // 播放速率大小 「1 = 1.5x + 0.5 => x = 1/3」
+    // 播放速率大小(用于绑定滑动条) 「1 = 1.5x + 0.5 => x = 1/3」
     const speed = ref(1 / 3);
 
     // 指定是否为viewer, 默认为false
@@ -235,15 +250,6 @@ export default defineComponent({
       }
     };
 
-
-    /**
-     * 当播放速率值改变时,给播放器设置这个速率值
-     * 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」
-     *
-     * @param {number} newValue 播放速率
-     */
-    const handleSpeedChange = (newValue: number) => player.setSpeed(1.5 * newValue + 0.5);
-
     player.setEventListener({
       statusChanged(status) {
         console.info(status);
@@ -273,20 +279,62 @@ export default defineComponent({
 
         let singer = media.singer, album = media.album;
 
-        currentMedia.singer = (singer instanceof Array) ? singer.map(item => item.name).join('/') :
-            ((singer instanceof Object ? singer.name : singer) || '未知');
+        currentMedia.singer = ((singer instanceof Array)
+            ? singer.map(item => item.name).join('/')
+            : (singer instanceof Object ? singer.name : singer)) || '未知';
+
+        currentMedia.hasLine = true;
 
         currentMedia.cover = (album instanceof Object) ? album.cover : media.cover;
 
-        // 重新媒体后需要重新设置播放速率
-        handleSpeedChange(speed.value);
+        currentMedia.vid = media.vid;
 
         const list = lyrics.list;
-        // // 清空歌词信息
-        list.splice(0, list.length);
+        // 清空歌词信息
+        list.length > 0 && list.splice(0, list.length);
 
-        // 重新加载歌词
-        getLyric(media).then(data => void list.push(...data));
+        type LyricRowData = {
+          id: string | number,
+          mid: string | number,
+          list: LyricLine[],
+          [key: string]: any,
+        };
+
+        // 使否来自数据源接口
+        const fromDataSource = media.platform > 0;
+
+        // 先尝试从indexedDB中获取歌词
+        const promise = fromDataSource
+            // 若是网络资源
+            ? db.queryOfFilter<LyricRowData>(tables.lyrics, data =>
+                data.id === media.id && data.mid === media.mid)
+
+            // 若是本地资源
+            : db.queryOfFilter<LyricRowData>(tables.lyrics, data =>
+                data.title === currentMedia.title && data.singer === currentMedia.singer);
+
+        promise.then(data => {
+          // 若存在歌词, 添加到歌词列表
+          if (data && data.length > 0) {
+            list.push(...data[0].list);
+          }
+
+        }).finally(() => {
+          // 若未找到歌词 且 来自数据源接口
+          if (list.length < 1 && fromDataSource) {
+            // 从数据源api获取歌词
+            getLyric(media).then(data => {
+              if (data.length > 0) {
+                list.push(...data);
+
+                db.insert<LyricRowData>(tables.lyrics, {
+                  id: media.id, mid: media.mid, list: data,
+                  title: currentMedia.title, singer: currentMedia.singer
+                });
+              }
+            });
+          }
+        });
       },
 
       bufferChanged(value) {
@@ -309,7 +357,7 @@ export default defineComponent({
 
     return {
       media: currentMedia, isPlaying, volume, speed, modeIcon, progressSlider,
-      viewer, notTeleported, getIndex, play, handleSpeedChange,
+      viewer, notTeleported, getIndex, play,
 
       openViewer() {
         viewer.value = true;
@@ -353,17 +401,14 @@ export default defineComponent({
       },
 
       /**
-       * 滑动条值改变事件回调方法
+       * 当播放速率值改变时,给播放器设置这个速率值
+       * 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」
        *
-       * @param newValue 滑动条新的值
-       * @param seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
+       * @param {number} newValue 播放速率
        */
-      valueChanged(newValue: number, seek: boolean) {
-        const value = newValue * player.getDuration();
-
-        currentMedia.time = secondToString(value);
-        lyrics.playedTime = value;
-        seek && player.status !== Status.UNKNOWN && player.seek(value);
+      handleSpeedChange(newValue: number) {
+        const value = 1.5 * newValue + 0.5;
+        player.setSpeed(Number(value.toFixed(1)));
       },
 
       /**
@@ -372,7 +417,22 @@ export default defineComponent({
        * @param {number} newValue 新的播放器音量值
        */
       handleVolumeChange(newValue: number) {
-        player.setVolume(newValue)
+        player.setVolume(newValue);
+      },
+
+      /**
+       * 滑动条值改变事件回调方法
+       *
+       * @param newValue 滑动条新的值
+       * @param seek 是否为用户主动操作而导致的改变(如滑块被拖动 或 滑动条滑轨被点击)
+       */
+      valueChanged(newValue: number, seek: boolean) {
+        const value = newValue * player.getDuration();
+
+        // 重设歌词播放时间点
+        currentMedia.time = secondToString(lyrics.playedTime = value);
+        // 若未在拖动滑动条, 则跳到指定时间播放
+        seek && player.status !== Status.UNKNOWN && player.seek(value);
       }
     };
   }

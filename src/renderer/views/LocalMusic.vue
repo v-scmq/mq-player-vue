@@ -18,8 +18,8 @@
 </template>
 
 <script lang='ts'>
-import db from '../database';
 import player from '../player';
+import {db, tables} from '../database';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
 
@@ -132,7 +132,7 @@ export default defineComponent({
           const limited = maxSize > 1024;
           limited && Spinner.open();
 
-          const table = db.tables.localMusic.name;
+          const table = tables.localMusic;
           // 若输入了搜索关键词,则调用过滤,否则查询所有
           const promise = inputKey.value ? db.queryOfFilter(table, filter) : db.queryAll(table);
 
@@ -197,7 +197,7 @@ export default defineComponent({
 
       if (savedList.length) {
         list.push(...savedList);
-        await db.insert(db.tables.localMusic.name, savedList);
+        await db.insert(tables.localMusic, savedList);
         maxSize += savedList.length;
       }
 
@@ -207,12 +207,9 @@ export default defineComponent({
     onBeforeUnmount(() => db.close());
 
     /************ 加载表格视图数据 START ************/
-        // 获取数据库表名称
-    let tableNamed = db.tables.localMusic.name;
-
     Spinner.open();
     db.open()
-        .then(() => db.queryAll(tableNamed))
+        .then(() => db.queryAll(tables.localMusic))
         .then(data => maxSize = list.push(...data))
         .finally(Spinner.close);
     /************ 加载表格视图数据   END ************/

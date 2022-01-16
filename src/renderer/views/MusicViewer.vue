@@ -9,7 +9,11 @@
 
     <div class='v-row' style='flex:1; align-items:stretch; overflow:hidden; margin:20px 0;'>
       <image-view class='cover--rect-inner' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
-      <lyric-view style='flex:1;'/>
+
+      <div class='v-column' style='flex:1'>
+        <slot name='song'></slot>
+        <lyric-view style='flex:1;'/>
+      </div>
     </div>
 
     <!-- 注意必须为canvas元素提供width和height,否则绘制无效 -->
