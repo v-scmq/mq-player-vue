@@ -372,13 +372,13 @@ html, body, #app {
 }
 
 .cover--rect-inner {
-    flex: 1;
+    /*flex: 1;*/
     margin: 0 20px;
-    align-self: center;
-    max-width: 400px;
+    max-width: 360px;
     min-width: 100px;
-    max-height: 400px;
+    max-height: 360px;
     min-height: 100px;
+    height: 100%;
     border-radius: 12px;
 }
 
@@ -391,11 +391,25 @@ html, body, #app {
     mask-image: linear-gradient(180deg, #fff0 0, #fff9 15%, #fff 25%, #fff 75%, #fff9 85%, #fff0);
 }
 
-.lyric-view .content-wrapper.animation {
+.lyric-view.empty {
+    cursor: default;
+    align-items: center;
+    justify-content: center;
+}
+
+.lyric-view.empty::after {
+    color: white;
+    padding: 12px;
+    font-size: 28px;
+    /* CSS表达式 attr() 用来获取选择到的元素的某一HTML属性值, 并用于其样式 */
+    content: attr(data-placeholder);
+}
+
+.lyric-view > .content-wrapper.animation {
     transition: transform 0.1s ease-out;
 }
 
-.lyric-view .lyric-item {
+.lyric-view > .content-wrapper > .lyric-item {
     text-align: center;
     font-size: 18px;
     color: white;
@@ -404,7 +418,7 @@ html, body, #app {
     transition: transform 0.1s ease-out;
 }
 
-.lyric-view .lyric-item.active {
+.lyric-view > .content-wrapper > .lyric-item.active {
     color: rgb(226, 155, 208);
     transform: scale(1.5);
 }
@@ -434,4 +448,22 @@ html, body, #app {
     filter: blur(60px);
     opacity: 0.6;
     z-index: -9;
+}
+
+.music-viewer .data-media {
+    color: white;
+    font-size: 20px;
+    justify-content: center;
+    margin: 0 0 1em 0;
+    gap: 8px;
+}
+
+.data-media .link {
+    cursor: pointer;
+}
+
+.music-viewer .data-media .mv-icon {
+    fill: #ffc100;
+    width: 1em;
+    height: 1em;
 }

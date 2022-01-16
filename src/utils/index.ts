@@ -195,11 +195,23 @@ export const convertSinger = (value: string | Singer | Singer[], platform: numbe
  * 读取并转换歌词内容
  *
  * @param text 歌词文本内容
+ * @param translation 歌词翻译文本内容
  */
-export const readLyric = (text: string): LyricLine[] => {
+export const readLyric = (text: string, translation: string): LyricLine[] => {
     debugger;
+
+    // 若标准的歌词文本不存在, 则尝试使用翻译文本
+    if (!text && translation) {
+        // 翻译文本作为普通歌词文本解析
+        text = translation;
+        // 不再单独解析翻译文本
+        translation = '';
+    }
+
     // 将歌词内容按换行符切割
-    const lyrics = text.split(/\r\n|\r|\n/); // 按换行符分割歌词文本
+    const lyrics = text ? text.split(/\r\n|\r|\n/) : [];
+    // 将歌词翻译内容按换行符切割
+    const translations = translation ? translation.split(/\r\n|\r|\n/) : [];
 
     // “[00:50.80][01:20.90] 歌词” =>
     // {'00:50.80'对应的秒数: LyricLine, '01:20.90'对应的秒数: LyricLine}
@@ -208,6 +220,7 @@ export const readLyric = (text: string): LyricLine[] => {
     // 每行歌词的时间正则匹配表达式
     const regex = /\[(\d+):(\d{1,2})\.(\d{1,2})]/g;
 
+    // 解析歌词内容
     for (const line of lyrics) {
         if (!line) {
             continue;
@@ -243,18 +256,61 @@ export const readLyric = (text: string): LyricLine[] => {
         }
     }
 
-    // 将map信息对象转为数组对象
-    const list = Object.keys(map).map(key => map[key]);
-    // 元素的最大索引值
-    const max = list.length - 1;
+    // 解析歌词翻译内容
+    for (const translation of translations) {
+        if (!translation) {
+            continue;
+        }
 
-    for (let index = 0; index < max; ++index) {
-        // 当前行的结束时间指定为下一行的开始时间
-        list[index].end = list[index + 1].start;
+        // 尝试匹配当前行的歌词信息
+        const matched = translation.matchAll(regex);
+        // 将匹配信息转换为普通数组
+        const matchedArray = matched ? Array.from(matched) : null;
+
+        if (!matchedArray || matchedArray.length === 0) {
+            continue;
+        }
+
+        // 获取最后一个匹配项
+        const lastMatched = matchedArray[matchedArray.length - 1];
+        // 歌词文本内容的起始索引
+        const start = (lastMatched.index || 0) + lastMatched[0].length;
+        // 获取歌词文本
+        const content = translation.slice(start);
+
+        // 若翻译文本是 '//' , 则跳过
+        if (content === '//') {
+            continue;
+        }
+
+        for (const item of matchedArray) {
+            // 提取匹配到的总秒数
+            const second = Number(item[1]) * 60 + Number(item[2]);
+            // 提取匹配到的毫秒数(乘以10后才是毫秒值)
+            const millis = Number(item[3]) * 10;
+
+            // 获取已经读取并转换的歌词信息
+            const lyricLine = map[second * 1000 + millis];
+
+            // 若存在则为其指定翻译文本
+            lyricLine && (lyricLine.translation = content);
+        }
     }
 
-    // 最后一行结束时间是接近无限的
-    list[max].end = 1 << 30;
+    const keys = Object.keys(map), max = keys.length - 1;
+
+    // 将map信息对象转为数组对象
+    const list = keys.map((key, index) => {
+        const value = map[key];
+
+        value.end = index < max
+            // 当前行的结束时间指定为下一行的开始时间
+            ? map[keys[index + 1]].start
+            // 最后一行结束时间是接近无限的(相对于 移位运算 来说)
+            : (1 << 30);
+
+        return value;
+    });
 
     // 去除所有空白行
     return list.filter(line => !!line.content);
@@ -271,7 +327,7 @@ export const readLyric = (text: string): LyricLine[] => {
  * @param {number} timeout 睡眠超时(单位:毫秒)
  * @return {Promise<null>} 异步Promise对象
  */
-export const sleep = (timeout = 3000) => new Promise(resolve =>
+export const sleep = (timeout = 3000) => new Promise<null>(resolve =>
     setTimeout(() => resolve(null), Math.max(timeout, 3000)));
 
 

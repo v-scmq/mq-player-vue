@@ -1,20 +1,21 @@
 <template>
-  <div class='lyric-view' :ref='element => void (elements[-1] = element)' @pointerdown='onDragStart'>
+  <div data-placeholder='暂无歌词' class='lyric-view' :class='{empty: lyricList.length < 1}'
+       :ref='element => void (elements[-1] = element)' @pointerdown='onDragStart'>
+
     <div class='content-wrapper' :class='{animation: scrollable}'
          :style='{transform: `translateY(${translatedY}px)`}'>
 
-      <div class='lyric-item' v-for='(line, index) in list' :key='index'
+      <div class='lyric-item' v-for='(line, index) in lyricList' :key='index'
            :ref='element => void (elements[index] = element)'
            :class='{active: selectedIndex === index}'>
         {{ line.content }}
       </div>
-
     </div>
   </div>
 </template>
 
 <script lang='ts'>
-import {ref, watch, defineComponent, inject, nextTick, onMounted, onUnmounted} from 'vue';
+import {ref, watch, defineComponent, inject, nextTick, onMounted, onUnmounted, computed} from 'vue';
 
 import {LyricLine} from '../../types';
 
@@ -35,6 +36,14 @@ export default defineComponent({
 
     // 注入歌词信息
     const lyrics = inject('lyrics') as { list: LyricLine[], playedTime: number };
+
+    // 若有歌词翻译, 则歌词翻译在普通歌词的下一行显示
+    const lyricList = computed(() => lyrics.list.map(({start, end, content, translation}) => ({
+      start, end,
+      content: translation
+          ? `${content}\n${translation}`
+          : content
+    })));
 
     // 组件根元素可见高度
     let visibleHeight = 1;
@@ -212,7 +221,7 @@ export default defineComponent({
 
 
     // 监听歌词变化, 重新计算歌词 在 y轴方向上的 最大 和 最小 平移量
-    watch(lyrics.list, () => void (nextTick(() => {
+    watch(lyricList, () => void (nextTick(() => {
       // 计算最大平移量(基本上是正值)
       maxTranslateY = computeTranslateY(0);
       // 计算最小平移量(平移得越多, 负得越多, 则变得越小)
@@ -223,7 +232,7 @@ export default defineComponent({
     // 开始监听 歌词内容 和 播放时间 的变化
     watch(() => lyrics.playedTime as any, scrollLyric);
 
-    return {elements, selectedIndex, translatedY, scrollable, list: lyrics.list, onDragStart};
+    return {elements, selectedIndex, translatedY, scrollable, lyricList, onDragStart};
   },
 
 })

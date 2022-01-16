@@ -155,6 +155,8 @@ export type LyricLine = {
     end: number;
     /** 歌词内容 */
     content: string;
+    /** 歌词翻译 */
+    translation?: string;
 };
 
 /**
