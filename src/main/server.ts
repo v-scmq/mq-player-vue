@@ -123,18 +123,16 @@ const handlePostRequest = (request: IncomingMessage, response: ServerResponse, c
         try {
             debugger;
 
-            // 获取请求参数
-            const param: { platform: number, [key: string]: any } = JSON.parse(buffers.toString());
-            // 执行回调方法, 在回调方法中校验参数
-            const promise = callback(param);
+            // 执行回调方法, 在回调方法中校验参数 
+            // 注意: 若buffers是空数组, toString()后是空串, 但是这里不作处理它, 因为已经try catch
+            const promise = callback(JSON.parse(buffers.toString()));
 
             // 不是promise对象, 中断后续处理
             if (!promise) {
                 const headers = {'content-type': 'text/plain; charset=utf-8'};
-                return response.writeHead(403, headers).end('没有相应的数据源api实现此接口');
+                return response.writeHead(403, headers).end('没有数据源api实现此接口');
             }
 
-            // 睡眠一段时间后才开始发出HTTP请求
             promise.then(data => {
                 debugger;
                 data = data || {};
@@ -487,7 +485,7 @@ const RequestMappingHandler: RequestMappingHandler = {
             // 数据源
             const dataSource = DATA_SOURCE_IMPL[(<URL>url).searchParams.get('platform') as string];
             // 错误消息
-            const error = !dataSource ? '没有相应的数据源api实现此接口' : !mid ? '歌曲mid无效' : null;
+            const error = !dataSource ? '没有数据源api实现此接口' : !mid ? '歌曲mid无效' : null;
 
             if (error) {
                 // 拒绝访问
@@ -521,7 +519,7 @@ const RequestMappingHandler: RequestMappingHandler = {
             // 数据源
             const dataSource = DATA_SOURCE_IMPL[(<URL>url).searchParams.get('platform') as string];
             // 错误消息
-            const error = !dataSource ? '没有相应的数据源api实现此接口' : !vid ? 'MV vid无效' : null;
+            const error = !dataSource ? '没有数据源api实现此接口' : !vid ? 'MV vid无效' : null;
 
             if (error) {
                 // 拒绝访问
