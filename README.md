@@ -1,16 +1,14 @@
-# mq-player-vue <a href="https://github.com/v-scmq/mq-player-vue"><img src="https://img.shields.io/badge/Github-green.svg" alt></a> <a href="https://gitee.com/scmq/mq-player/"><img src="https://img.shields.io/badge/Gitee-blue.svg" alt></a>
+# mq-player-vue [![](https://img.shields.io/badge/Github-green.svg)](https://github.com/v-scmq/mq-player-vue) [![](https://img.shields.io/badge/Gitee-blue.svg)](https://gitee.com/scmq/mq-player)
 
 MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ### 项目技术栈
 
-<div>
-    <img src="https://img.shields.io/badge/Electron-16-success.svg" alt>
-    <img src="https://img.shields.io/badge/Vue-3-success.svg" alt>
-    <img src="https://img.shields.io/badge/NodeJS-16-blue.svg" alt>
-    <img src="https://img.shields.io/badge/TypeScript-4.5-blue.svg" alt>
-    <img src="https://img.shields.io/badge/MusicMetadata-7.9-blue.svg" alt>
-</div>
+![](https://img.shields.io/badge/Electron-16-success.svg)
+![](https://img.shields.io/badge/Vue-3-success.svg)
+![](https://img.shields.io/badge/NodeJS-16-blue.svg)
+![](https://img.shields.io/badge/TypeScript-4.5-blue.svg)
+![](https://img.shields.io/badge/MusicMetadata-7.9-blue.svg)
 
 ### 特性
 
@@ -24,31 +22,39 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 + 本地音乐
 
-![本地音乐](preview/local-music.png "本地音乐")
+![本地音乐](preview/1.png "本地音乐")
 
 + 播放详情
 
-![播放详情](preview/music-viewer.png "背景虚化")
+![播放详情](preview/2.png "背景虚化")
 
 + 歌手分类
 
-![歌手分类](preview/net-music-singer.png "歌手分类")
+![歌手分类](preview/3.png "歌手分类")
+
++ 歌手歌曲
+
+![歌手歌曲](preview/4.png "歌手歌曲")
+
++ 歌手专辑
+
+![歌手专辑](preview/5.png "歌手专辑")
+
++ 歌单分类
+
+![歌手专辑](preview/6.png "歌单分类")
 
 + MV分类
 
-![MV分类](preview/net-music-mv.png "MV分类")
+![MV分类](preview/7.png "MV分类")
 
 + 榜单分类
 
-![榜单分类](preview/net-music-rank.png "榜单分类")
-
-+ 歌手详情
-
-![歌手详情](preview/singer-view.png "歌手详情")
+![榜单分类](preview/8.png "榜单分类")
 
 + 歌曲搜索
 
-![歌曲搜索](preview/net-search-singer.png "歌曲搜索")
+![歌曲搜索](preview/9.png "歌曲搜索")
 
 #### 问题汇集
 
@@ -76,121 +82,18 @@ app.whenReady().then(() => {
 
 > 2.Electron环境中的各种问题
 
-  1) 在渲染进程中,不能导入electron <br>
-        使用window.require代替require,因为require会被webpack将其替换为__webpack_require__
+1) 在渲染进程中,不能导入electron <br>
+   使用window.require代替require,因为require会被webpack将其替换为__webpack_require__
 
-  2) 导入music-metadata库打包后在electron中报错 <br>
-     若是直接在渲染进程中导入,需要在以下2个文件中将require('fs')替换为window.require('fs')
-         %project_home%\node_modules\strtok3\lib\FsPromise.js (
-         %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js <br>
-     目前最佳方案:在preload.js中引入music-metadata,并且将preload.js在electron-builder插件配置选项中引入
+2) 导入music-metadata库打包后在electron中报错 <br>
+   若是直接在渲染进程中导入,需要在以下2个文件中将require('fs')替换为window.require('fs')
+   %project_home%\node_modules\strtok3\lib\FsPromise.js (
+   %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js <br>
+   目前最佳方案:在preload.js中引入music-metadata,并且将preload.js在electron-builder插件配置选项中引入
 
-  3) 在Electron14以后警告不能在package.json中使用 【main:'background.js'】作为配置项,
-     若移除此配置项,在打包构建时,会找不到主进程相关文件(此时默认为index.js),
-     解决办法: 在node-modules/vue-cli-plugin-electron-builder/index.js中的bundleMain方法中
-              修改mainConfig.entry(isBuild ? 'background' : 'index') => mainConfig.entry('index')
-> 3.文件上传总结
-
-不论以下哪一种方式,form表单中的按钮默认有提交功能,若需要显示按钮,则应该用`<input type='button' value='按钮文本'/>`
-
-1).前端部分
-
-```html
-
-<html lang>
-<head>
-    <title></title>
-    <style>
-        .v-row {
-            display: flex;
-            align-items: center;
-        }
-
-        .v-column {
-            display: flex;
-            flex-direction: column;
-        }
-    </style>
-</head>
-<body>
-<div class="v-row">
-    <form class="v-column" action="http://localhost:8080//api/upload" enctype="multipart/form-data" method="post">
-        <div>通过普通表单上传文件</div>
-        <div><input name="name"/></div>
-        <div><input type="file" name="file1"/></div>
-        <div><input type="file" name="file2"/></div>
-        <div><input type="submit" value="上传"/></div>
-        <div>
-            <button>上传</button>
-        </div>
-    </form>
-
-    <form class="v-column" id="form-upload">
-        <div>通过ajax上传文件</div>
-        <div><input name="name"/></div>
-        <div><input type="file" id="file1" name="file1"/></div>
-        <div><input type="file" id="file2" name="file2"/></div>
-        <div><input type="button" id="submit-button" value="上传"/></div>
-    </form>
-</div>
-
-<!-- 引入jquery -->
-<!-- <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script> -->
-<script>
-    document.querySelector('#submit-button').onclick = () => {
-        let formData = new FormData(document.querySelector('#form-upload'));
-        let ajax = $ ? $['ajax'] : () => ({}); 
-        ajax({
-            type: 'POST',
-            data: formData,
-            url: "http://localhost:8080/api/upload",
-            contentType: false, /* 发送信息至服务器时内容编码类型(String),这里明确指定为false */
-            processData: false, /* 发送 DOM 树信息或其它不希望转换的信息,设置为 false */
-        }).success(data => {
-            console.info('success-data=>', data)
-        }).error(data => {
-            console.info('error-data=>', data)
-        });
-    };
-</script>
-</body>
-</html>
-```
-
-2)后端部分
-
-```java
-import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
-@Data
-public class UploadData {
-    private String name;
-    private MultipartFile file1;
-    private MultipartFile file2;
-}
-
-
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartFile;
-
-@Controller
-@RequestMapping("/api")
-public class BaseController {
-    @ResponseBody
-    @PostMapping("/upload")
-    public boolean upload(UploadData data) {
-        if (data.getFile1() == null || data.getFile1().isEmpty()) {
-            System.out.println("未选择文件！");
-        }
-        // ......
-        return true;
-    }
-}
-
-```
+3) 在Electron14以后警告不能在package.json中使用 【main:'background.js'】作为配置项, 若移除此配置项,在打包构建时,会找不到主进程相关文件(此时默认为index.js), 解决办法:
+   在node-modules/vue-cli-plugin-electron-builder/index.js中的bundleMain方法中 修改mainConfig.entry(isBuild ? 'background' : '
+   index') => mainConfig.entry('index')
 
 ### 位运算总结
 
@@ -223,7 +126,5 @@ const abs = a => {
     let b = a >> 31;
     return (a + b) ^ b; // ( a ^ b ) - b
 }
-
-// --remote-debugging-port=9222
 
 ```
