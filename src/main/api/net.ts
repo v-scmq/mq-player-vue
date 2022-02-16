@@ -11,6 +11,8 @@ type RequestParam = {
     headers: IncomingHttpHeaders;
     /** 请求方式 */
     method?: 'get' | 'post';
+    /** get请求时的url参数(若提供了此选项, url参数中不能再包含?及参数) */
+    params?: Record<string, string | number | boolean>;
     /** 发送到服务器的数据 */
     data?: string | Record<string, any>;
     /** 是否模拟手机端请求 */
@@ -43,7 +45,7 @@ type HttpClient = ((options: RequestParam) => Promise<ResponseData>) & {
      * @param options 配置选项对象
      * @returns {Promise<ResponseData>} 异步对象Promise
      */
-    get(options: Omit<RequestParam, 'method'>): Promise<ResponseData>,
+    get(options: Omit<RequestParam, 'method' | 'data' | 'dataType'>): Promise<ResponseData>,
 
     /**
      * 发起post请求
@@ -51,7 +53,7 @@ type HttpClient = ((options: RequestParam) => Promise<ResponseData>) & {
      * @param options 配置选项对象
      * @returns {Promise<ResponseData>} 异步对象Promise
      */
-    post(options: Omit<RequestParam, 'method'>): Promise<ResponseData>,
+    post(options: Omit<RequestParam, 'method' | 'params'>): Promise<ResponseData>,
 }
 
 /**
@@ -66,9 +68,9 @@ const http: HttpClient = options => new Promise(resolve => {
 
     // 若没有提供UA信息,则提供默认的UA信息
     if (!options.headers['user-agent']) {
-        options.headers['user-agent'] = options.mobile ?
+        options.headers['user-agent'] = options.mobile
             // 用户代理 手机浏览器标识
-            'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36'
+            ? 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36'
             // 用户代理 PC浏览器标识
             : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36';
     }
@@ -80,10 +82,24 @@ const http: HttpClient = options => new Promise(resolve => {
 
     const method = options.method || 'get';
 
-    // 若有提交的数据,必须设置请求的中的内容类型
+    // 若有提交的数据,则设置请求的中的内容类型
     if (method === 'post' && options.data) {
-        options.headers['content-type'] = ((typeof options.data) === 'string') && options.dataType === 'form-data' ?
-            'application/x-www-form-urlencoded;charset=UTF-8' : 'application/json;charset=UTF-8';
+        options.headers['content-type'] = (typeof options.data === 'string') && options.dataType === 'form-data'
+            ? 'application/x-www-form-urlencoded;charset=UTF-8'
+            : 'application/json;charset=UTF-8';
+    }
+
+    // 若有url参数,则转换参数选项到url上
+    if (method === 'get' && options.params) {
+        const params: string[] = [];
+
+        for (const key in options.params) {
+            params.push(`${key}=${encodeURIComponent(options.params[key])}`);
+        }
+
+        if (params.length > 0) {
+            options.url = `${options.url}?${params.join('&')}`;
+        }
     }
 
     /**

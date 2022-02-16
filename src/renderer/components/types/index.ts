@@ -42,6 +42,12 @@ export type TableColumn = {
     width?: string;
     /** 单元格取值属性名称 */
     property?: string;
+    /**
+     * 单元格是否使用flex布局, 参见src/assets/css/base.css
+     * 若为true, 则单元格增加名为flex的class 实现所有直接子元素垂直居中 + 子元素实现文本溢出显示省略号;
+     * 若为false, 则单元格使用line-height + height 实现文本垂直居中 和 文本溢出显示省略号.
+     */
+    flex?: boolean;
 
     /**
      * 自定义单元格取值方法

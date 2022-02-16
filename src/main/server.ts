@@ -176,10 +176,17 @@ const handlePostRequest = (request: IncomingMessage, response: ServerResponse, c
  * @param response 服务器响应信息
  * @param url URL地址
  */
-const handleStreamRequest = (request: IncomingMessage, response: ServerResponse, url: string | null) => {
-    if (!url || url.length < 7) { // 7 => 'http://' ;  8 => 'https://'
+const handleStreamRequest = (request: IncomingMessage, response: ServerResponse, url: string) => {
+    let uri: URL;
+
+    try {
+        uri = new URL(url);
+
+    } catch (ignore) {
         // 拒绝访问
-        return response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'}).end('无效的URL');
+        response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
+            .end('无效的URL');
+        return;
     }
 
     /**
@@ -194,17 +201,37 @@ const handleStreamRequest = (request: IncomingMessage, response: ServerResponse,
         newResponse.pipe(response);
     };
 
-    // 请求配置选项
-    const options = {
-        /*method: 'get',*/
-        headers: {
-            referer: url,
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36'
+    // 发送到目标服务器的请求头
+    const headers: IncomingHttpHeaders = {};
+
+    // 获取浏览器发出的请求头
+    for (const key in request.headers) {
+        // "x-forwarded-host": "localhost:9080",
+        // "x-forwarded-proto": "http",
+        // "x-forwarded-port": "9080",
+        // "x-forwarded-for": "127.0.0.1",
+        if (key.startsWith('x-forwarded')) {
+            // 以上类似的请求头不使用
+            continue;
         }
-    };
+
+        // 例如 "range": "bytes=0-", 这样的请求头是非常关键的, 会影响服务器的处理
+        // 对于流媒体都有seek操作, 它必须依赖于请求头range 和 服务器的响应头 content-range、accept-ranges
+        headers[key] = request.headers[key];
+    }
+
+    // 替换主机请求头(非必须)
+    headers.host = uri.host;
+    // 替换referer请求头
+    headers.referer = url;
+    // 替换浏览器标识
+    headers['user-agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36';
+
+    // 请求配置选项
+    const options = {headers, method: request.method || 'get'};
 
     // 发出新的请求(不同的协议, 使用不同的请求处理器发送)
-    const newRequest = url.includes('https:')
+    const newRequest = uri.protocol == 'https:'
         ? httpsRequest(url, options, handler)
         : httpRequest(url, options, handler);
 
@@ -414,6 +441,76 @@ const RequestMappingHandler: RequestMappingHandler = {
         });
     },
 
+    '/api/like/songs'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.getLikeSongs(param.page)) : null;
+        });
+    },
+
+    '/api/like/albums'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.getLikeAlbums(param.page)) : null;
+        });
+    },
+
+    '/api/like/mvs'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.getLikeMvs(param.page)) : null;
+        });
+    },
+
+    '/api/like/specials'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.getLikeSpecials(param.page)) : null;
+        });
+    },
+
+    '/api/profile/specials'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.getProfileSpecials()) : null;
+        });
+    },
+
+    '/api/special/create'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.createSpecial(param.special)) : null;
+        });
+    },
+
+    '/api/special/update'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.updateSpecial(param.special)) : null;
+        });
+    },
+
+    '/api/special/remove'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.removeSpecial(param.special)) : null;
+        });
+    },
+
+    '/api/special/songs/add'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.addSpecialSong(param.songs, param.special)) : null;
+        });
+    },
+
+    '/api/special/songs/remove'(request, response) {
+        handlePostRequest(request, response, param => {
+            const dataSource = DATA_SOURCE_IMPL[param.platform];
+            return dataSource ? sleep().then(() => dataSource.removeSpecialSong(param.songs, param.special)) : null;
+        });
+    },
+
     /**
      * 获取歌词
      *
@@ -493,7 +590,7 @@ const RequestMappingHandler: RequestMappingHandler = {
             }
 
             dataSource.getSongUrl(id, mid, Math.min(Math.max(1, quality), 3))
-                .then(url => handleStreamRequest(request, response, url))
+                .then(url => handleStreamRequest(request, response, url || ''))
                 .catch(reason => response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
                     .end(reason.message));
 
@@ -527,7 +624,7 @@ const RequestMappingHandler: RequestMappingHandler = {
             }
 
             dataSource.getMvUrl(vid, Math.min(Math.max(1, quality), 4))
-                .then(url => handleStreamRequest(request, response, url))
+                .then(url => handleStreamRequest(request, response, url || ''))
                 .catch(reason => response.writeHead(403, {'content-type': 'text/plain; charset=utf-8'})
                     .end(reason.message));
 
@@ -552,7 +649,7 @@ const RequestMappingHandler: RequestMappingHandler = {
 
             // 若未指定uri参数 或 path部分和当前服务器中的当前路径相同(不考虑是否同源)
             // 则拒绝此次访问(通过指定以下方法的url参数为null)
-            handleStreamRequest(request, response, uri.pathname === '/api/stream' ? null : uriParam);
+            handleStreamRequest(request, response, uri.pathname === '/api/stream' ? '' : uriParam);
 
         } catch (e: any) {
             // 捕捉异常,在此处做出错误消息

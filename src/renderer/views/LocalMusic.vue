@@ -1,11 +1,10 @@
 <template>
   <div class='v-row' style='margin:0 8px 12px 0; gap:8px; flex-wrap:wrap;'>
-    <Button text='播放全部' @click='playSelect' prefixIcon='play-select' prefixIconSize='1.5em'/>
-    <Button text='批量操作' @click='onMultiple' prefixIconSize='1.5em'
-            :prefixIcon='multiple ? "exit-multiple" : "multiple" '/>
-    <Button text='增加列' @click='doAddColumn'/>
-    <Button text='删除列' @click='doDelColumn'/>
-    <Button text='修改列' @click='doUpdColumn'/>
+    <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em' @click='playSelect'/>
+    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+    <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
+    <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
+    <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
 
     <text-field v-model='inputKey' placeholder='搜索本地歌曲' @input='handleMusicFilter' style='margin:0 0 0 auto'/>
 
@@ -231,12 +230,7 @@ export default defineComponent({
         // 清除文件选择器(input元素)的值,解决重新选择不能回调change事件的问题
         inputElement.value = null as any;
         inputElement.click();
-      },
-
-      /********* 后期会删除的3个方法 **********/
-      doAddColumn: () => columns.push({title: '采样率', property: 'sampleRate'}),
-      doDelColumn: () => columns.splice(columns.length - 1),
-      doUpdColumn: () => columns[1].property = columns[1].property === 'size' ? 'title' : 'size',
+      }
     };
 
   }

@@ -25,11 +25,16 @@ import {
     AlbumSearchModuleData,
     SpecialSearchModuleData,
     MvSearchModuleData,
+    ProfileSpecialModuleData,
+    LikeSongModuleData,
+    LikeSpecialModuleData,
+    LikeAlbumModuleData,
+    LikeMvModuleData,
     LoginModuleData,
 } from '../../types';
 
 // 音乐平台id
-let platform = 0;
+let platform = 1;
 
 /** 设置当前使用的音乐平台 */
 export const setPlatform = (platformId: number) => platform = platformId;
@@ -187,6 +192,99 @@ export const searchMv = (page: Page, keyword: string) =>
     axios.post('/api/search/mvs', {platform, page, keyword})
         .then<MvSearchModuleData>(DataReducer);
 
+
+/**
+ * 创建歌单(必须登录)
+ *
+ * @param special 歌单名称
+ */
+export const createSpecial = (special: string) =>
+    axios.post('/api/special/create', {platform, name: special})
+        .then<Special>(DataReducer);
+
+/**
+ * 更新歌单信息(必须登录)
+ *
+ * @param special 歌单信息
+ */
+export const updateSpecial = (special: Special) =>
+    axios.post('/api/special/update', {platform, special})
+        .then<boolean>(DataReducer);
+
+/**
+ * 移除自建歌单(必须登录)
+ *
+ * @param special 歌单信息(包含关键的id和mid)
+ */
+export const removeSpecial = (special: Special) =>
+    axios.post('/api/special/remove', {platform, special})
+        .then<boolean>(DataReducer);
+
+/**
+ * 添加歌曲到歌单(必须登录)
+ *
+ * @param songs 歌曲信息列表(包含关键的id和mid)
+ * @param special 歌单信息(包含关键的id和mid)
+ */
+export const addSpecialSong = (songs: Song[], special: Special) =>
+    axios.post('/api/special/songs/add', {platform, songs, special})
+        .then<boolean>(DataReducer);
+
+/**
+ * 从自建歌单中移除歌曲(必须登录)
+ *
+ * @param songs 歌曲信息列表(包含关键的id和mid)
+ * @param special 歌单信息(包含关键的id和mid)
+ */
+export const removeSpecialSong = (songs: Song[], special: Special) =>
+    axios.post('/api/special/songs/remove', {platform, songs, special})
+        .then<boolean>(DataReducer);
+
+
+/**
+ * 获取自建歌单(包含收藏歌曲的歌曲)
+ */
+export const getProfileSpecials = () =>
+    axios.post('/api/profile/specials', {platform})
+        .then<ProfileSpecialModuleData>(DataReducer);
+
+/**
+ * 获取收藏歌曲列表(必须登录)
+ *
+ * @param page 分页信息
+ */
+export const getLikeSongs = (page: Page,) =>
+    axios.post('/api/like/songs', {platform, page})
+        .then<LikeSongModuleData>(DataReducer);
+
+/**
+ * 获取收藏歌单列表(必须登录)
+ *
+ * @param page 分页信息
+ */
+export const getLikeSpecials = (page: Page) =>
+    axios.post('/api/like/specials', {platform, page})
+        .then<LikeSpecialModuleData>(DataReducer);
+
+/**
+ * 获取收藏专辑列表(必须登录)
+ *
+ * @param page 分页信息
+ */
+export const getLikeAlbums = (page: Page) =>
+    axios.post('/api/like/albums', {platform, page})
+        .then<LikeAlbumModuleData>(DataReducer);
+
+/**
+ * 获取收藏的mv列表(必须登录)
+ *
+ * @param page 分页信息
+ */
+export const getLikeMvs = (page: Page) =>
+    axios.post('/api/like/mvs', {platform, page})
+        .then<LikeMvModuleData>(DataReducer);
+
+
 /**
  * 获取歌曲歌词
  *
@@ -220,7 +318,11 @@ export const getHotKeys = () => axios.post('/api/hot-keys').then<string[]>(DataR
  */
 export const login = (cookies: Electron.Cookie[] | null) =>
     axios.post('/api/user/login', {platform, cookies})
-        .then<LoginModuleData>(DataReducer);
+        .then<LoginModuleData>(DataReducer)
+        .catch((reason: any) => {
+            const {message, response: {data: {reason: msg = ''} = {}} = {}} = reason
+            return {reason: msg || message} as LoginModuleData;
+        });
 
 /**
  * 退出登录,并返回需要移除cookie的URL

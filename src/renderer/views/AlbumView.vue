@@ -13,9 +13,11 @@
       </div>
 
       <div class='v-row'>
-        <Button text='播放全部'/>
-        <Button text='播放全部'/>
-        <Button text='打印预览'/>
+        <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em'/>
+        <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+        <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
+        <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
+        <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em'/>
       </div>
     </div>
   </div>
@@ -26,6 +28,7 @@
                 @infinite-scroll='loadDataList'>
       <template v-slot:title='{item}'>
         <span class='cell-text'>{{ item.title }}</span>
+        <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
         <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
       </template>
 
@@ -52,7 +55,7 @@ import {getAlbumSongList} from '../api';
 
 import {Album, ComputedPage, Song} from '../../types';
 
-import {reactive, watch, defineComponent, PropType} from 'vue';
+import {reactive, watch, defineComponent, PropType, ref} from 'vue';
 import {TableColumn} from '../components/types';
 
 export default defineComponent({
@@ -67,11 +70,13 @@ export default defineComponent({
 
     const columns = reactive<TableColumn[]>([
       {type: 'index', width: '100px'},
-      {title: '歌曲', property: 'title'},
+      {title: '歌曲', property: 'title', flex: true},
       {title: '歌手', property: 'singer'},
       {title: '时长', property: 'duration', width: '100px'},
       {title: '大小', property: 'size', width: '100px'}
     ]);
+
+    const multiple = ref(false);
 
     watch(() => props.query, newQuery => {
       if (newQuery && album.mid !== newQuery.mid) {
@@ -91,7 +96,7 @@ export default defineComponent({
     }, {immediate: true});
 
     return {
-      songList, page, album, columns,
+      songList, page, album, columns, multiple,
 
       /**
        * 表格行单元格双击时的回调方法

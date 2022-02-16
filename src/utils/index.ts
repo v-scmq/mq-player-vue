@@ -176,6 +176,10 @@ export const getMediaInfo = (file: File, isElectron: boolean) => {
  * @return {Singer[]} 歌手信息列表
  */
 export const convertSinger = (value: string | Singer | Singer[], platform: number) => {
+    if (!value) {
+        return [];
+    }
+
     const list: Singer[] = value instanceof Array ? value :
         ((typeof value === 'string') ? [{name: value} as Singer] : [value]);
 

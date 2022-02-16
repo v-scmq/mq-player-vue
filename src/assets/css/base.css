@@ -202,13 +202,18 @@
 
 .table .table-cell {
     padding: 8px;
-    display: flex;
-    align-items: center;
     overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
     box-sizing: border-box;
+    height: var(--table-cell-height);
+    line-height: normal; /* 若行高是一个确定的px, 则不能指定上下内边距; */
+}
+
+.table .table-cell.flex {
+    display: flex;
+    align-items: center;
     line-height: 1;
-    min-height: var(--table-cell-height);
 }
 
 .table > .table-column-wrapper > .table-cell:not(.gutter) {
@@ -232,16 +237,10 @@
     background: var(--cell-fill-active);
 }
 
-.table .content-wrapper > .table-cell > .cell-text {
+.table .content-wrapper > .table-cell.flex > .cell-text {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-}
-
-.table .content-wrapper > .table-cell .link {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .table .content-wrapper > .table-cell .link:not(:last-child):after {

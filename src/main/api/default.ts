@@ -82,6 +82,96 @@ export const DefaultSource: DataSource = {
         return {page, list: [], httpInfo: {statusCode: 200, headers: {}}};
     },
 
+    /**
+     * 获取收藏的歌曲列表
+     *
+     * @param page 分页信息
+     */
+    async getLikeSongs(page) {
+        return {page, list: [], httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 获取收藏的专辑列表
+     *
+     * @param page 分页信息
+     */
+    async getLikeAlbums(page) {
+        return {page, list: [], httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 获取收藏的mv列表
+     *
+     * @param page 分页信息
+     */
+    async getLikeMvs(page) {
+        return {page, list: [], httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 获取收藏的歌单列表
+     *
+     * @param page 分页信息
+     */
+    async getLikeSpecials(page) {
+        return {page, list: [], httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 获取自建歌单(包含收藏歌曲的歌曲)
+     */
+    async getProfileSpecials() {
+        return {list: [], httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 创建歌单(必须登录)
+     *
+     * @param special 歌单信息
+     */
+    async createSpecial(special) {
+        return {state: false, message: '', httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 更新歌单信息
+     *
+     * @param special 歌单信息
+     */
+    async updateSpecial(special) {
+        return {state: false, message: '', httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 移除自建歌单
+     *
+     * @param special 歌单信息
+     */
+    async removeSpecial(special) {
+        return {state: false, message: '', httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 添加歌曲到歌单,当传入的歌单为null是默认指定为用户喜爱歌曲单
+     *
+     * @param songs 歌曲信息列表
+     * @param special 歌单信息
+     */
+    async addSpecialSong(songs, special) {
+        return {state: false, message: '', httpInfo: {statusCode: 403, headers: {}}};
+    },
+
+    /**
+     * 从自建歌单中移除歌曲,当传入的歌单为null是默认指定为用户喜爱歌曲单
+     *
+     * @param songs 歌曲信息列表
+     * @param special 歌单信息
+     */
+    async removeSpecialSong(songs, special) {
+        return {state: false, message: '', httpInfo: {statusCode: 403, headers: {}}};
+    },
+
     async getSongUrl(id, mid, quality) {
         return id && mid && quality ? '' : null;
     },

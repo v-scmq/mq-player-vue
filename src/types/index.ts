@@ -109,6 +109,10 @@ export type Song = {
     size?: string;
     /** 音质等级 */
     quality?: number;
+    /** vip 标识 */
+    vip?: boolean;
+    /** 付费专辑 标识 */
+    payAlbum?: boolean;
     /** 所属平台id */
     platform?: number;
 }
@@ -243,6 +247,12 @@ export type Special = {
     creator?: string;
     /** 用户id */
     userId?: string;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
+    /** 1:所有人可见; 2:仅自己可见 */
+    visible?: number | string;
     /** 所属平台id */
     platform?: number;
 }
@@ -512,11 +522,68 @@ export type SpecialSearchModuleData = {
 }
 
 /**
+ * 个人歌单(收藏歌曲和自建的歌单)模块
+ */
+export type ProfileSpecialModuleData = {
+    /** 歌单列表 */
+    list: Special[];
+    /** HTTP状态信息 */
+    httpInfo: HttpInfo;
+}
+
+export type LikeSongModuleData = {
+    /** 分页信息 */
+    page: Page;
+    /** 歌曲列表 */
+    list: Song[];
+    /** HTTP状态信息 */
+    httpInfo?: HttpInfo;
+}
+
+export type LikeSpecialModuleData = {
+    /** 分页信息 */
+    page: Page;
+    /** 歌单列表 */
+    list: Special[];
+    /** HTTP状态信息 */
+    httpInfo: HttpInfo;
+}
+
+export type LikeAlbumModuleData = {
+    /** 分页信息 */
+    page: Page;
+    /** 歌单列表 */
+    list: Album[];
+    /** HTTP状态信息 */
+    httpInfo: HttpInfo;
+}
+
+
+export type LikeMvModuleData = {
+    /** 分页信息 */
+    page: Page;
+    /** mv列表 */
+    list: Mv[];
+    /** HTTP状态信息 */
+    httpInfo: HttpInfo;
+}
+
+/**
+ * 歌单操作模块数据
+ */
+export type SpecialOperationModuleData = {
+    state: boolean;
+    message: string;
+    special?: Special;
+    httpInfo?: HttpInfo;
+}
+
+/**
  * 登录模块数据
  */
 export type LoginModuleData = {
     /** HTTP状态信息 */
-    httpInfo: HttpInfo;
+    httpInfo?: HttpInfo;
 
     /** 登录配置信息 */
     option?: ModalOpenOption;
@@ -659,6 +726,76 @@ export interface DataSource {
      * @return {Promise<SpecialSearchModuleData>} 歌单信息列表集合
      */
     specialSearch(keyword: string, page: Page): Promise<SpecialSearchModuleData>;
+
+    /**
+     * 获取收藏的歌曲列表
+     *
+     * @param page 分页信息
+     */
+    getLikeSongs(page: Page): Promise<LikeSongModuleData>;
+
+    /**
+     * 获取收藏的专辑列表
+     *
+     * @param page 分页信息
+     */
+    getLikeAlbums(page: Page): Promise<LikeAlbumModuleData>;
+
+    /**
+     * 获取收藏的mv列表
+     *
+     * @param page 分页信息
+     */
+    getLikeMvs(page: Page): Promise<LikeMvModuleData>;
+
+    /**
+     * 获取收藏的歌单列表
+     *
+     * @param page 分页信息
+     */
+    getLikeSpecials(page: Page): Promise<LikeSpecialModuleData>;
+
+    /**
+     * 获取自建歌单(包含收藏歌曲的歌曲)
+     */
+    getProfileSpecials(): Promise<ProfileSpecialModuleData>;
+
+    /**
+     * 创建歌单(必须登录)
+     *
+     * @param special 歌单信息
+     */
+    createSpecial(special: Special): Promise<SpecialOperationModuleData>;
+
+    /**
+     * 更新歌单信息
+     *
+     * @param special 歌单信息
+     */
+    updateSpecial(special: Special): Promise<SpecialOperationModuleData>;
+
+    /**
+     * 移除自建歌单
+     *
+     * @param special 歌单信息
+     */
+    removeSpecial(special: Special): Promise<SpecialOperationModuleData>;
+
+    /**
+     * 添加歌曲到歌单,当传入的歌单为null是默认指定为用户喜爱歌曲单
+     *
+     * @param songs 歌曲信息列表
+     * @param special 歌单信息
+     */
+    addSpecialSong(songs: Song[], special: Special | null): Promise<SpecialOperationModuleData>;
+
+    /**
+     * 从自建歌单中移除歌曲,当传入的歌单为null是默认指定为用户喜爱歌曲单
+     *
+     * @param songs 歌曲信息列表
+     * @param special 歌单信息
+     */
+    removeSpecialSong(songs: Song[], special: Special | null): Promise<SpecialOperationModuleData>;
 
     /**
      * 获取歌曲播放地址

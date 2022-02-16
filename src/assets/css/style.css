@@ -328,6 +328,14 @@ html, body, #app {
     cursor: pointer;
 }
 
+.table .table-cell > .icon.vip-icon {
+    flex: none;
+    fill: #eb5183;
+    margin: 0 0 0 0.25em;
+    width:  1.5em;
+    height: 1.5em;
+}
+
 /****************** 登录模态框 ***********************/
 #login-modal > .modal-content > .content > #qq-input {
     flex: 1;

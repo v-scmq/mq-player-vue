@@ -22,11 +22,11 @@
         <!-- 单元格 -->
         <template v-for='(item, row) in visibleData'>
           <div class='table-cell' :key='`${row}-${col}`' v-for='(column, col) in columns' :data-row='row'
-               :class='{selected: selectedItems[row + offsetIndex], hover:hoverRow ===row}'>
+               :class='{flex:column.flex, selected:selectedItems[row + offsetIndex], hover:hoverRow ===row}'>
             <check-box v-if="column.type==='checkbox'" v-model='selectedItems[row + offsetIndex]'
                        @update:modelValue='onItemCheckChanged(row)'/>
             <slot v-else :name='column.property' :item='item'>
-              <span class='cell-text'>{{ valueGetters[col](item, row, column) }}</span>
+              {{ valueGetters[col](item, row, column) }}
             </slot>
           </div>
         </template>

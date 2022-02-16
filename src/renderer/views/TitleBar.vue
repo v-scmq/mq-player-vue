@@ -107,7 +107,7 @@ export default defineComponent({
 
       try {
         /** @type {Electron.Cookie[]} */
-        let cookies;
+        let cookies, uin;
 
         if (event) {
           const data = await loginApi(null);
@@ -128,9 +128,10 @@ export default defineComponent({
           // 从数据库获取用户信息
           await db.open();
           const usersInfo = await db.queryAll(tables.user);
-          const [{uin = '', cookies: cookieArray = []} = {}] = usersInfo || [];
+          const [{uin: _uin = '', cookies: cookieArray = []} = {}] = usersInfo || [];
 
-          cookies = uin && cookieArray;
+          uin = _uin;
+          cookies = _uin && cookieArray;
 
           if (!cookies || cookies.length < 1) {
             // 中断且不提示任何消息
@@ -142,6 +143,12 @@ export default defineComponent({
         const {user: userInfo, reason} = data;
 
         if (!userInfo || !userInfo.uin) {
+          // 若是非网络未连接 导致登录失败, 则删除已存储的用户信息
+          if (!navigator.onLine) {
+            // 删除indexDB中存储的用户信息
+            await db.delete(tables.user, uin);
+          }
+
           return Message.error(reason || '未知错误！');
         }
 
