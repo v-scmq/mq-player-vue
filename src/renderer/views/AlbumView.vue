@@ -1,6 +1,6 @@
 <template>
   <div class='v-row data-container'>
-    <image-view v-model='album.cover' defaultValue='/icon/album.png'/>
+    <image-view v-model='album.cover' defaultValue='icon/album.png'/>
 
     <div class='v-column'>
       <div>{{ album.name || '-' }}</div>

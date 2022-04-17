@@ -1,6 +1,6 @@
 <template>
   <div class='v-row data-container' v-if='singer'>
-    <image-view v-model='singer.cover' defaultValue='/icon/singer.png'/>
+    <image-view v-model='singer.cover' defaultValue='icon/singer.png'/>
 
     <div class='v-column'>
       <div>{{ singer.name || '-' }}</div>
@@ -54,7 +54,7 @@
       <grid-view cell-widths='repeat(auto-fit, 13em)' v-show='tabMap.value===tabMap.ALBUM_TAB' :data='albumList'
                  @infinite-scroll='loadAlbumData' :cell-height='234' @cell-click='onAlbumItemClicked'>
         <template v-slot='{item}'>
-          <image-view v-model='item.cover' defaultValue='/icon/album.png'/>
+          <image-view v-model='item.cover' defaultValue='icon/album.png'/>
           <div class='name'>{{ item.name }}</div>
         </template>
       </grid-view>
@@ -62,7 +62,7 @@
       <grid-view class='arc-rect' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
                  :cell-height='206' @infinite-scroll='loadMvData' v-show='tabMap.value===tabMap.MV_TAB'>
         <template v-slot='{item}'>
-          <image-view v-model='item.cover' defaultValue='/icon/mv.png'/>
+          <image-view v-model='item.cover' defaultValue='icon/mv.png'/>
           <div>
             <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
               {{ singer.name }}
@@ -75,7 +75,7 @@
       <grid-view style='margin-top:1em' cell-widths='repeat(auto-fit, 13em)' :cell-height='234' :data='specialList'
                  v-show='tabMap.value===tabMap.SPECIAL_TAB' @infinite-scroll='loadSpecialData'>
         <template v-slot='{item}'>
-          <image-view v-model='item.cover' defaultValue='/icon/special.png'/>
+          <image-view v-model='item.cover' defaultValue='icon/special.png'/>
           <div class='name'>{{ item.name }}</div>
         </template>
       </grid-view>

@@ -8,7 +8,7 @@
   <grid-view class='arc-rect' style='margin-top:1em' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
              :cell-height='206' @infinite-scroll='loadData'>
     <template v-slot='{item}'>
-      <image-view v-model='item.cover' defaultValue='/icon/mv.png'/>
+      <image-view v-model='item.cover' defaultValue='icon/mv.png'/>
       <div>
         <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
             {{ singer.name }}

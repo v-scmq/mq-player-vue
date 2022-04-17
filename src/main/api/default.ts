@@ -13,7 +13,7 @@ export const DefaultSource: DataSource = {
             list.push({
                 mid: `mid-${index}`,
                 name: `-singer-${index}-name`,
-                cover: '/icon/default_cover.jpg',
+                cover: 'icon/default_cover.jpg',
                 platform
             })
         }

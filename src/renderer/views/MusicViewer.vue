@@ -1,6 +1,6 @@
 <template>
   <div class='v-column music-viewer'>
-    <image-view class='effect-cover' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
+    <image-view class='effect-cover' :model-value='cover' defaultValue='icon/default_cover.jpg'/>
 
     <window-state-bar viewer style='flex:none;'>
       <!-- 关闭播放详情视图 -->
@@ -8,7 +8,7 @@
     </window-state-bar>
 
     <div class='v-row' style='flex:1; align-items:stretch; overflow:hidden; margin:20px 0;'>
-      <image-view class='cover--rect-inner' :model-value='cover' defaultValue='/icon/default_cover.jpg'/>
+      <image-view class='cover--rect-inner' :model-value='cover' defaultValue='icon/default_cover.jpg'/>
 
       <div class='v-column' style='flex:1'>
         <slot name='song'></slot>

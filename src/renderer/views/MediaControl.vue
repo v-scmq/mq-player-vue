@@ -17,7 +17,7 @@
         </div>
 
         <div class='v-row' style='flex:1' v-else>
-          <image-view class='album-icon' v-model='media.cover' defaultValue='/icon/default_cover.jpg'
+          <image-view class='album-icon' v-model='media.cover' defaultValue='icon/default_cover.jpg'
                       @click='openViewer'/>
 
           <div class='v-column'>
