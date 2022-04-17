@@ -255,26 +255,45 @@ html, body, #app {
     fill: var(--icon-fill-base);
 }
 
+/* [属性名^='值'] 匹配开始的值,   [属性名$='值'] 匹配结束的值   [属性名*='值'] 匹配包含的值 */
+/*.popover[class*='-control']*/
+.popover.volume-control, .popover.speed-control, .popover.mode-control {
+    align-items: center;
+    justify-content: center;
+    background: var(--popover-inner-fill);
+    color: var(--text-active);
+    border-radius: 0.5em;
+    padding: 1em 0;
+    /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
+    /* transition: visibility 1s ease; visibility: collapse; */
+}
+
 /* 音量弹出式面板 */
-.media-control .popup-pane.volume, .popup-pane.speed {
+.popover.volume-control {
     height: 10.5em;
     width: 4.5em;
-    padding: 1em 0;
+}
+
+.popover.speed-control {
+    height: 10.5em;
+    width: 4.5em;
+    align-items: stretch;
 }
 
 /* 播放模式弹出式面板 */
-.media-control .popup-pane.mode {
+.popover.mode-control {
     width: 8em;
+    padding: 0.5em 0;
     white-space: nowrap;
     fill: var(--fill-base);
 }
 
-.media-control .popup-pane.mode .title {
+.popover.mode-control > .v-row > .title {
     margin: 0 0 0 0.5em;
     font-size: 0.875em;
 }
 
-.media-control .popup-pane.mode .v-row {
+.popover.mode-control > .v-row {
     width: 100%;
     cursor: pointer;
     padding: 0.5em 0.25em;
@@ -282,12 +301,52 @@ html, body, #app {
     justify-content: center;
 }
 
-.media-control .popup-pane.mode .v-row:not(:last-child) {
-    border-bottom: 1px solid var(--fill-popup-mode-border);
+.popover.mode-control > .v-row:not(:last-child) {
+    border-bottom: 1px solid var(--popover-mode-border-fill);
 }
 
-.media-control .popup-pane.mode .v-row:hover {
-    background: var(--fill-popup-mode-hover);
+.popover.mode-control > .v-row:hover {
+    background: var(--popover-mode-fill-hover);
+}
+
+.popover.play-queue {
+    /*position: absolute;*/
+    top: 4px;
+    right: 0;
+    bottom: 4px;
+    width: 40vw;
+    gap: 8px;
+    padding: 1em 0 0 1em;
+    /*background: var(--popover-inner-fill);*/
+    /*--text-base: white;*/
+
+    opacity: 1;
+    transition: transform .3s ease-in-out;
+    transform: translate3d(100%, 0, 0);
+}
+
+.popover.play-queue.expand {
+    transform: translate3d(0, 0, 0);
+}
+
+.popover.play-queue > .v-row {
+    padding: 0.5em;
+}
+
+.popover.play-queue > .title {
+    justify-content: space-between;
+    /* 弹出层中的图标填充色 */
+    --icon-fill-base: #f56c6c;
+}
+
+.popover.play-queue > .option-bar {
+    /* 弹出层中的图标填充色 */
+    --icon-fill-base: white;
+    gap: 8px;
+}
+
+.popover.play-queue > .option-bar > .song-count-label {
+    flex: 1;
 }
 
 
@@ -332,7 +391,7 @@ html, body, #app {
     flex: none;
     fill: #eb5183;
     margin: 0 0 0 0.25em;
-    width:  1.5em;
+    width: 1.5em;
     height: 1.5em;
 }
 

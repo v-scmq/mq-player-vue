@@ -24,7 +24,7 @@
 
   <div class='v-row' style='margin:1em 0 0 0;flex:auto;overflow:hidden;align-items:stretch;'>
 
-    <table-view style='flex:auto;' :columns='columns' :data='songList' @row-dblclick='onCellClick'
+    <table-view style='flex:auto;' :columns='columns' :data='songList' @row-dblclick='playMediaList'
                 @infinite-scroll='loadDataList'>
       <template v-slot:title='{item}'>
         <span class='cell-text'>{{ item.title }}</span>
@@ -49,8 +49,8 @@
 </template>
 
 <script lang='ts'>
-import player from '../player';
 import Spinner from '../components/Spinner';
+import {playMediaList} from '../player/hooks';
 import {getAlbumSongList} from '../api';
 
 import {Album, ComputedPage, Song} from '../../types';
@@ -98,12 +98,7 @@ export default defineComponent({
     return {
       songList, page, album, columns, multiple,
 
-      /**
-       * 表格行单元格双击时的回调方法
-       *
-       * @param {number} row 行单元格索引
-       */
-      onCellClick: (row: number) => player.playMediaList(songList, row),
+      playMediaList,
 
       /** 加载歌曲数据到表格视图中 */
       loadDataList() {

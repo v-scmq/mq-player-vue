@@ -54,10 +54,10 @@
     --cell-fill-hover: rgba(228, 228, 228, 0.5);
     --cell-fill-active: rgba(228, 228, 228, 0.7);
 
-    --fill-popup-pane: rgb(30, 31, 35);
-    --fill-popup-inner-icon: rgb(176, 158, 143);
-    --fill-popup-mode-hover: rgb(43, 44, 47);
-    --fill-popup-mode-border: rgb(113, 110, 110);
+    --popover-inner-fill: rgb(30, 31, 35);
+    --popover-inner-icon-fill: rgb(176, 158, 143);
+    --popover-mode-fill-hover: rgb(43, 44, 47);
+    --popover-mode-border-fill: rgb(113, 110, 110);
 }
 
 
@@ -338,6 +338,10 @@
 .text-field > .icon {
     width: .75em;
     height: .75em;
+}
+
+.icon {
+    flex: none;
 }
 
 /*====================== Accordion ==================*/
@@ -739,48 +743,77 @@
     padding: 0 0 2px 0;
 }
 
-
-/*====================== PopupPane ==================*/
-.popup-container {
+/*====================== Popover ==================*/
+.popover-trigger {
     display: flex;
-    justify-content: center;
-    position: relative;
 }
 
-.popup-container:not(:hover) > .popup-pane {
-    display: none;
-}
-
-.popup-container > .popup-pane {
-    bottom: 3em;
-    position: absolute;
-    align-items: center;
-    justify-content: center;
-    background: var(--fill-popup-pane);
-    color: var(--text-active);
-    border-radius: 0.5em;
-    padding: 0.25em;
+.popover {
+    position: fixed;
+    padding: 8px 0;
+    z-index: 9;
+    background: white;
+    border-radius: 4px;
+    /*box-shadow: 0 0 10px 0 hsl(0deg 0% 72% / 65%);*/
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+    /*border: 1px solid #bfbfbf;*/
     outline: none;
+    color: var(--text-base);
 
-    /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
-    /* transition: visibility 1s ease; visibility: collapse; */
+    opacity: 0;
+    transform: scale3d(0, 0, 0);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1);
+
+    /* https://github.com/electron/electron/issues/1354 */
+    -webkit-app-region: none;
 }
 
-.popup-container > .popup-pane:before, .popup-container > .popup-pane:after {
+.popover[data-placement ^= 'top'] {
+    transform-origin: center bottom;
+}
+
+.popover[data-placement ^= 'bottom'] {
+    transform-origin: center top;
+}
+
+.popover[data-placement ^= 'right'] {
+    transform-origin: right center;
+}
+
+.popover[data-placement ^= 'left'] {
+    transform-origin: left center;
+}
+
+.popover.expand {
+    transform: scale3d(1, 1, 1);
+    opacity: 1;
+}
+
+.popover.arrow.expand::after {
     content: '';
-    bottom: 0;
     position: absolute;
+    bottom: 0;
     transform: translate(0, 100%);
-}
-
-.popup-container > .popup-pane:before {
-    width: 100%;
-    height: 50%;
-}
-
-.popup-container > .popup-pane:after {
     border-width: 12px 8px 0;
     border-style: solid;
-    border-color: var(--fill-popup-pane) transparent transparent;
-    /* width: 1em; height: 0.75em; background: var(--fill-popup-pane); clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0); */
+    border-color: var(--popover-inner-fill) transparent transparent;
+    /* width: 1em; height: 0.75em; background: var(--popover-inner-fill); clip-path: polygon(100% 0, 50% 100%, 50% 100%, 0 0); */
+}
+
+.popover .--popover-close * {
+    pointer-events: none;
+}
+
+.popover .dropdown-item {
+    padding: 0.5em;
+    cursor: pointer;
+}
+
+.popover .dropdown-item.separator {
+    border-bottom: 1px solid #f0f0f0;
+    margin: 0 0 8px 0;
+}
+
+.popover .dropdown-item:hover {
+    background: rgb(245 247 250);
 }

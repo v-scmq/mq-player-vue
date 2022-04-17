@@ -33,7 +33,7 @@
     </div>
 
     <div class='tab-content v-column'>
-      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
+      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='playMediaList'
                   v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
         <template v-slot:title='{item}'>
           <span class='cell-text'>{{ item.title }}</span>
@@ -84,7 +84,7 @@
 </template>
 
 <script lang='ts'>
-import player from '../player';
+import {playMediaList} from '../player/hooks';
 import Spinner from '../components/Spinner';
 
 import {TableColumn} from '../components/types';
@@ -235,12 +235,7 @@ export default defineComponent({
     return {
       tabMap, singer, columns, songList, albumList, mvList, specialList, multiple,
 
-      /**
-       * 表格行单元格双击时的回调方法
-       *
-       * @param {number} rowIndex 行单元格索引
-       */
-      onCellClick: (rowIndex: number) => player.playMediaList(songList, rowIndex),
+      playMediaList,
 
       /**
        * 当专辑列表项点击时,跳转到专辑视图

@@ -9,7 +9,7 @@
 
   <div class='v-row' style='flex:1;align-items:stretch;overflow:hidden;'>
     <!-- 在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
-    <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
+    <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='playMediaList'
                 @infinite-scroll='loadDataList'>
       <template v-slot:title='{item}'>
         <span class='cell-text'>{{ item.title }}</span>
@@ -34,7 +34,7 @@
 
 <script lang='ts'>
 import {defineComponent, reactive, ref} from 'vue';
-import player from '../player';
+import {playMediaList} from '../player/hooks';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
 
@@ -96,12 +96,7 @@ export default defineComponent({
         }).finally(Spinner.close);
       },
 
-      /**
-       * 表格行单元格双击时的回调方法
-       *
-       * @param {number} row 行单元格索引
-       */
-      onCellClick: (row: number) => player.playMediaList(songList, row),
+      playMediaList,
 
       /** 开始或结束批量操作 */
       onMultiple() {

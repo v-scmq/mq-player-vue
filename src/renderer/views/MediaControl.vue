@@ -38,10 +38,10 @@
         <!-- 中间部分 -->
         <div class='v-row' style='gap:8px;'>
           <!-- 播放模式 -->
-          <div class='popup-container'>
+          <popover class='v-column mode-control arrow' closeable :gap='16'>
             <icon id='mode' width='2em' height='2em' :name='modeIcon'/>
 
-            <div class='v-column popup-pane mode'>
+            <template v-slot:content>
               <div class='v-row' @click="modeIcon = 'list-loop' ">
                 <icon width='2em' height='2em' name='list-loop'/>
                 <span class='title'>列表循环</span>
@@ -58,8 +58,8 @@
                 <icon width='2em' height='2em' name='random'/>
                 <span class='title'>随机播放</span>
               </div>
-            </div>
-          </div>
+            </template>
+          </popover>
 
           <!-- 上一首 -->
           <icon width='2em' height='2em' name='previous' @click='play(getIndex(false),false)'/>
@@ -69,27 +69,27 @@
           <icon width='2em' height='2em' name='next' @click='play(getIndex(true),false)'/>
 
           <!-- 音量 -->
-          <div class='popup-container'>
+          <popover class='v-column volume-control arrow' :gap='16' @wheel='onVolumeScroll'>
             <icon id='volume' width='2em' height='2em' :name="volume === 0 ? 'mute' : 'volume' "/>
-            <div class='v-column popup-pane volume' @wheel='onVolumeScroll'>
+            <template v-slot:content>
               <slider vertical v-model='volume' style='flex:1' @change='handleVolumeChange'/>
               <span>{{ (volume * 100).toFixed(0) }}%</span>
-            </div>
-          </div>
+            </template>
+          </popover>
         </div>
 
         <!--  右侧部分 -->
         <div class='v-row' style='flex:1;justify-content:flex-end;gap:8px;padding:0 8px 0 0'>
-          <div class='popup-container'>
+          <popover class='v-row speed-control arrow' :gap='16' @wheel='onSpeedPaneScroll'>
             <!-- 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」-->
-            <div class='stroke-icon speed-icon'>{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
-            <div class='v-row popup-pane speed' @wheel='onSpeedPaneScroll'>
-              <slider vertical v-model='speed' style='height:100%' @change='handleSpeedChange'/>
-              <div class='v-column' style='height:100%;justify-content:space-between;line-height:0.5'>
+            <div class='stroke-icon'>{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
+            <template v-slot:content>
+              <slider vertical v-model='speed' @change='handleSpeedChange'/>
+              <div class='v-column' style='justify-content:space-between;'>
                 <span>2.0</span><span>1.5</span><span>1.0</span><span>0.5</span>
               </div>
-            </div>
-          </div>
+            </template>
+          </popover>
 
           <template v-if='viewer'>
             <div class='stroke-icon'>写真</div>
@@ -102,7 +102,45 @@
             <icon name='download' width='2em' height='2em'/>
           </template>
 
-          <icon name='playlist' width='2em' height='2em'/>
+          <popover class='v-column play-queue' placement='right'>
+            <icon name='playlist' width='2em' height='2em'/>
+            <template v-slot:content>
+              <div class='v-row title'>
+                <span>播放队列</span>
+                <icon name='close' class='--popover-close' width='1.4em' height='1.4em'/>
+              </div>
+
+              <div class='v-row option-bar'>
+                <template v-if='multiple'>
+                  <popover>
+                    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+                    <template v-slot:content>
+                      <div class='dropdown-item separator first'>我的收藏</div>
+                      <div class='dropdown-item last'>添加到新歌单</div>
+                    </template>
+                  </popover>
+
+                  <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
+                  <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
+
+                  <Button text='退出批量操作' prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
+                </template>
+
+                <template v-else>
+                  <Button text="清空" prefixIcon='trash' prefixIconSize='1.5em' v-if='!multiple'/>
+                  <Button text='批量操作' prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
+                </template>
+              </div>
+
+              <table-view :columns='columns' :data='playList' style='flex:1;margin:0 0 0 8px'>
+                <template v-slot:title='{item}'>
+                  <span class='cell-text'>{{ item.title }}</span>
+                  <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
+                  <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
+                </template>
+              </table-view>
+            </template>
+          </popover>
         </div>
       </div>
 
@@ -127,7 +165,8 @@
 <script lang='ts'>
 import {getLyric} from '../api';
 import {db, tables} from '../database';
-import player, {Status} from '../player';
+import {Status} from '../player';
+import {useMediaPlayer} from '../player/hooks';
 import Message from '../components/Message';
 import {secondToString, sleep} from '../../utils';
 
@@ -136,6 +175,7 @@ import MusicViewer from './MusicViewer.vue';
 import {defineComponent, reactive, ref, nextTick, readonly, provide, onBeforeUnmount} from 'vue';
 
 import {LyricLine} from '../../types';
+import {TableColumn} from '../components/types';
 
 export default defineComponent({
   name: 'MediaControl',
@@ -170,11 +210,22 @@ export default defineComponent({
     // 进度Slider
     const progressSlider = ref(null as any);
 
+    const multiple = ref(false);
+
+    const columns = reactive<TableColumn[]>([
+      {type: 'index', width: '80px'},
+      {title: '歌曲', property: 'title', width: '1.6fr', flex: true},
+      {title: '歌手', property: 'singerName'},
+      {title: '时长', property: 'duration', width: '80px'}
+    ]);
+
     // 歌词信息
     const lyrics = reactive({list: [] as LyricLine[], playedTime: 0});
 
     // 提供给LyricView组件所使用的歌词信息
     provide('lyrics', readonly(lyrics));
+
+    const [player, playIndex, playList] = useMediaPlayer();
 
     // 设置音量
     player.setVolume(volume.value);
@@ -186,7 +237,7 @@ export default defineComponent({
      * @return {number} 新的播放索引. 若返回{@code -1},则表示没有播放数据源,若返回{@code -2},则表示顺序播放结束
      */
     const getIndex = (next: boolean) => {
-      let index = player.index, size = player.playList.length;
+      let index = playIndex.value, size = playList.length;
 
       // 列表循环
       if (modeIcon.value === 'list-loop') {
@@ -217,7 +268,7 @@ export default defineComponent({
      * @param playNext 指定遇到错误时是否继续播放下一首
      */
     const play = (index: number, playNext: boolean) => {
-      let list = player.playList;
+      let list = playList;
       // 暂停当前播放的媒体
       player.pause();
 
@@ -226,7 +277,7 @@ export default defineComponent({
         return;
       }
 
-      player.index = index;
+      playIndex.value = index;
 
       // 若index==-2,则是列表播放模式,且列表播放已完成,不播放下一首,
       // 可以不处理,因为index==-2在下面的执行中无法通过
@@ -357,7 +408,7 @@ export default defineComponent({
 
     return {
       media: currentMedia, isPlaying, volume, speed, modeIcon, progressSlider,
-      viewer, notTeleported, getIndex, play,
+      viewer, notTeleported, multiple, columns, playIndex, playList, getIndex, play,
 
       openViewer() {
         viewer.value = true;
@@ -386,7 +437,7 @@ export default defineComponent({
       togglePlay() {
         player.isPlayable()
             ? (player.isPlaying() ? player.pause() : player.play())
-            : play(player.index, false);
+            : play(playIndex.value, false);
       },
 
       /**
@@ -433,7 +484,15 @@ export default defineComponent({
         currentMedia.time = secondToString(lyrics.playedTime = value);
         // 若未在拖动滑动条, 则跳到指定时间播放
         seek && player.status !== Status.UNKNOWN && player.seek(value);
-      }
+      },
+
+      /** 开始或结束批量操作 */
+      onMultiple: () => {
+        const column = columns[0];
+        column.type = column.type === 'index' ? 'checkbox' : 'index';
+        multiple.value = !multiple.value;
+      },
+
     };
   }
 

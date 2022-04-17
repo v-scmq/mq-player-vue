@@ -11,12 +11,24 @@
     <div class='tab-content v-column'>
       <div class='v-row' style='gap:8px;margin:0 0 1em 0' v-show='tabMap.value===tabMap.SONG_TAB'>
         <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em'/>
-        <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+
+        <popover content-class='dropdown'>
+          <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em' @click='loadProfileSpecial'/>
+          <template v-slot:content>
+            <div class='dropdown-item separator first'>我的收藏</div>
+            <div class='dropdown-item' :class='{separator: index + 1 === userSpecials.length}'
+                 :data-index='index' v-for='(item, index) in userSpecials' :key='index'>
+              {{ item.name }}
+            </div>
+            <div class='dropdown-item last'>添加到新歌单</div>
+          </template>
+        </popover>
+
         <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
         <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
         <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
       </div>
-      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='onCellClick'
+      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='playMediaList'
                   v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
         <template v-slot:title='{item}'>
           <span class='cell-text'>{{ item.title }}</span>
@@ -67,12 +79,12 @@
 </template>
 
 <script lang='ts'>
-import player from '../player';
+import {playMediaList} from '../player/hooks';
 import Spinner from '../components/Spinner';
 
 import {TableColumn} from '../components/types';
 import {Album, Mv, Song, ComputedPage, Special} from '../../types';
-import {getLikeSongs, getLikeAlbums, getLikeMvs, getLikeSpecials} from '../api';
+import {getLikeSongs, getLikeAlbums, getLikeMvs, getLikeSpecials, getProfileSpecials} from '../api';
 
 import {reactive, watch, defineComponent, ref} from 'vue';
 import {useRouter} from 'vue-router';
@@ -114,6 +126,9 @@ export default defineComponent({
     ]);
 
     const multiple = ref(false);
+
+    // 当前登录的用户歌单
+    const userSpecials = reactive<Special[]>([]);
 
     const router = useRouter();
 
@@ -188,14 +203,9 @@ export default defineComponent({
     handleTabChanged(tabMap.SONG_TAB);
 
     return {
-      tabMap, columns, songList, albumList, mvList, specialList, multiple,
+      tabMap, columns, songList, albumList, mvList, specialList, multiple, userSpecials,
 
-      /**
-       * 表格行单元格双击时的回调方法
-       *
-       * @param {number} rowIndex 行单元格索引
-       */
-      onCellClick: (rowIndex: number) => player.playMediaList(songList, rowIndex),
+      playMediaList,
 
       /** 开始或结束批量操作 */
       onMultiple: () => {
@@ -300,6 +310,24 @@ export default defineComponent({
             specialList.push(...data.list);
           }).catch(() => --page.current).finally(Spinner.close);
         }
+      },
+
+      loadProfileSpecial() {
+        const updatable = userSpecials as any;
+
+        const millis = new Date().getTime();
+        // 若时间差不到15秒, 则不获取更新
+        if ((millis - (updatable.$time || 0)) < 15000) {
+          return;
+        }
+
+        updatable.$time = millis;
+
+        Spinner.open();
+
+        getProfileSpecials()
+            .then(data => void (data && userSpecials.push(...data.list)))
+            .finally(Spinner.close);
       }
 
     };

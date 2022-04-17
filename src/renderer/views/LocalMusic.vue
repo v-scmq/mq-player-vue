@@ -1,7 +1,24 @@
 <template>
   <div class='v-row' style='margin:0 8px 12px 0; gap:8px; flex-wrap:wrap;'>
     <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em' @click='playSelect'/>
-    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+    <popover closeable>
+      <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+      <template v-slot:content>
+        <div class='dropdown-item separator first'>我的收藏</div>
+        <div class='dropdown-item last'>添加到新歌单</div>
+        <div class='dropdown-item separator first'>我的收藏</div>
+        <div class='dropdown-item last'>添加到新歌单</div>
+        <div class='dropdown-item separator first'>我的收藏</div>
+        <div class='dropdown-item last'>添加到新歌单</div>
+        <div class='dropdown-item separator first'>我的收藏</div>
+        <div class='dropdown-item last'>添加到新歌单</div>
+        <div class='dropdown-item separator first'>我的收藏</div>
+        <div class='dropdown-item last'>添加到新歌单</div>
+        <div class='dropdown-item separator first'>我的收藏</div>
+        <div class='dropdown-item last'>添加到新歌单</div>
+      </template>
+    </popover>
+    <!--    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>-->
     <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
     <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
     <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
@@ -13,14 +30,14 @@
     <Button text='排序方式' prefixIcon='sort' prefixIconSize='1.2em'/>
   </div>
 
-  <table-view :columns='columns' :data='list' style='flex:auto;' @row-dblclick='onCellClick'/>
+  <table-view :columns='columns' :data='list' style='flex:auto;' @row-dblclick='playMediaList'/>
 </template>
 
 <script lang='ts'>
-import player from '../player';
 import {db, tables} from '../database';
 import Message from '../components/Message';
 import Spinner from '../components/Spinner';
+import {playMediaList} from '../player/hooks';
 
 import {reactive, ref, onBeforeUnmount, defineComponent} from 'vue';
 import {getFileURL, secondToString, resolveFileName, getMediaInfo, toFileSize} from '../../utils';
@@ -146,15 +163,6 @@ export default defineComponent({
       handleMusicFilter.$timer = setTimeout(handleMusicFilter.$method, 500);
     };
 
-    /**
-     * 表格行单元格双击时的回调方法
-     *
-     * @param rowIndex 行单元格索引
-     */
-    const onCellClick = (rowIndex: number) => {
-      player.playMediaList(list, rowIndex);
-    };
-
     /** 导入音乐信息 */
     const addMusic = async (event: Event) => {
       let files = (event.target as HTMLInputElement).files;
@@ -215,13 +223,13 @@ export default defineComponent({
 
     return {
       columns, list, multiple, inputKey, fileChooser,
-      playSelect, handleMusicFilter, onCellClick, addMusic,
+      playSelect, handleMusicFilter, playMediaList, addMusic,
 
       /** 开始或结束批量操作 */
       onMultiple: () => {
-        let column = columns[0];
+        const column = columns[0];
         column.type = column.type === 'index' ? 'checkbox' : 'index';
-        multiple.value = !multiple.value
+        multiple.value = !multiple.value;
       },
 
       /** 导入歌曲按钮被点击时,弹出文件选择框 */

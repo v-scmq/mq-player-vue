@@ -1,5 +1,5 @@
 <template>
-  <div class='button'>
+  <div tabindex='0' class='button'>
     <icon :name='prefixIcon' v-if='prefixIcon' :width="prefixIconSize || '1em' "
           :height="prefixIconSize || '1em' "/>
     {{ text }}

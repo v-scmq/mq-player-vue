@@ -101,15 +101,14 @@ export default defineComponent({
      * @param {PointerEvent} e 指针事件
      */
     const onDragging = (e: PointerEvent) => {
-      let total = props.vertical ? el.value.clientHeight : el.value.clientWidth;
+      // 当节点display:none时, 取值会为0, 为防止除以0错误, 赋其默认值为1
+      let total = (props.vertical ? el.value.clientHeight : el.value.clientWidth) || 1;
 
       // 增量 = 现在的e.clientX|e.clientY - 鼠标按下时的e.clientX|e.clientY(即offsetX)
-      let value = props.vertical ? e.clientY : e.clientX;
-      value = value - offsetX + offsetLeft;
-      value = value < 0 ? 0 : value > total ? total : value;
+      let value = (props.vertical ? e.clientY : e.clientX) - offsetX + offsetLeft;
 
       // 计算新的值,此时保留3为有效数字,然后检测值是否变化,才提交值(虽然提交相同值不会触发value改变)
-      value = Number((value / total).toFixed(3));
+      value = Number((Math.max(Math.min(value, total), 0) / total).toFixed(3));
       value = props.vertical ? 1 - value : value;
 
       if (props.modelValue !== value) {

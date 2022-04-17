@@ -350,7 +350,7 @@ export default defineComponent({
 
         // 若是单击
         if (count === 1) {
-          emit('row-click', index);
+          emit('row-click', props.data, index);
           let map = selectedItems;
 
           // --------若是多选模式(启用表头复选框时,即是多选模式)-------
@@ -378,7 +378,7 @@ export default defineComponent({
           map[index] = true;
 
         } else if (count === 2) {
-          emit('row-dblclick', index);
+          emit('row-dblclick', props.data, index);
         }
       },
 
