@@ -20,7 +20,7 @@
   "dependencies": {
     "axios": "^0.26.1",
     "electron": "^18.0.3",
-    "music-metadata": "^7.12.2",
+    "music-metadata": "^7.12.3",
     "vue": "^3.2.31",
     "vue-router": "^4.0.14"
   },
