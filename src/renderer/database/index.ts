@@ -34,36 +34,50 @@ export const tables = {
     lyrics: {name: 'lyrics', keyPath: 'mid', autoIncrement: false} as DataTable
 } as const;
 
+/**
+ * 打开indexDB的请求队列
+ */
+type OpenQueueResolvers = { locked?: boolean } & ((value: void | PromiseLike<void>) => void)[];
+
 /** 数据库连接实例 */
 let database: IDBDatabase | null = null;
 /** 打开数据库连接的队列 */
-let openQueue: (<T>(value: T | PromiseLike<T>) => void)[] | null = null;
+const openQueue: OpenQueueResolvers = [];
+
+/**
+ * 将队列中的resolve方法依次调用, 从而promise的状态从pending 变成 resolved
+ */
+const resolveQueue = () => {
+    // 移除请求队列的锁定状态
+    delete openQueue.locked;
+    const queue = openQueue.splice(0);
+
+    // 循环resolve其他请求
+    for (const resolver of queue) {
+        resolver();
+    }
+};
 
 export const db = {
     /** 异步打开indexedDB */
     open() {
         return new Promise(resolve => {
-            // 若数据库已经打卡成功
+            // 将resolve方法放入请求队列中
+            openQueue.push(resolve);
+
+            // 若数据库已经打开成功
             if (database) {
-                // 使用局部引用变量
-                const queue = openQueue;
-                // 将全局变量移除
-                openQueue = null;
-
-                // 立刻resolve第一次打开数据库请求
-                resolve(null);
-                // 循环resolve其他请求
-                return queue && queue.forEach(resolve => resolve(null));
+                return resolveQueue();
             }
 
-            // 检测是否不是第一次调用
-            const isNotFirst = !!openQueue;
-            openQueue = openQueue || [];
-
-            // 若不是第一次调用,则追加到请求队列中,并立刻结束当前方法执行
-            if (isNotFirst) {
-                return openQueue.push(resolve);
+            // 若请求队列已被标记为锁住状态
+            if (openQueue.locked) {
+                // 则不执行后续操作
+                return;
             }
+
+            // 将请求队列标记为锁住状态
+            openQueue.locked = true;
 
             const dbFactory: IDBFactory = window.indexedDB;
             const request: IDBOpenDBRequest = dbFactory.open('data.db', 1);
@@ -72,25 +86,15 @@ export const db = {
             request.onsuccess = () => {
                 // 初始化indexDB数据库实例
                 database = request.result;
-                // 使用局部引用变量
-                const queue = openQueue;
-                // 将全局变量置为null
-                openQueue = null;
 
-                // 立刻resolve第一次打开数据库请求
-                resolve(null);
-
-                // 循环resolve其他请求
-                if (queue && queue.length > 0) {
-                    queue.forEach(resolve => resolve(null));
-                }
+                resolveQueue();
             };
 
             // 数据库打开失败
-            request.onerror = () => resolve(null);
+            request.onerror = () => resolveQueue();
 
             // 数据库打开被阻塞
-            request.onblocked = () => resolve(null);
+            request.onblocked = () => resolveQueue();
 
             // 数据库版本更新回调
             request.onupgradeneeded = () => {
