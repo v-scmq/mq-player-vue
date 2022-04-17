@@ -95,6 +95,8 @@ export type Song = {
     title?: string;
     /** 歌手信息 */
     singer?: string | Singer | Singer[];
+    /** 歌手名称 */
+    singerName?: string;
     /** 专辑信息 */
     album?: string | Album | null;
     /** 播放时长 */
