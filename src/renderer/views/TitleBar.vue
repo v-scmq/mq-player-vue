@@ -143,8 +143,8 @@ export default defineComponent({
         const {user: userInfo, reason} = data;
 
         if (!userInfo || !userInfo.uin) {
-          // 若是非网络未连接 导致登录失败, 则删除已存储的用户信息
-          if (!navigator.onLine) {
+          // 若网络连接正常情况下, 仍然登录失败, 则删除已存储的用户信息
+          if (navigator.onLine) {
             // 删除indexDB中存储的用户信息
             await db.delete(tables.user, uin);
           }
