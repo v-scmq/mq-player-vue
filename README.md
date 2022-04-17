@@ -1,10 +1,10 @@
-# mq-player-vue [![](https://img.shields.io/badge/Github-green.svg)](https://github.com/v-scmq/mq-player-vue) [![](https://img.shields.io/badge/Gitee-blue.svg)](https://gitee.com/scmq/mq-player)
+# mq-player-vue [![](https://img.shields.io/badge/Github-green.svg)](https://github.com/v-scmq/mq-player-vue) [![](https://img.shields.io/badge/Gitee-blue.svg)](https://gitee.com/scmq/mq-player-vue)
 
 MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ### 项目技术栈
 
-![](https://img.shields.io/badge/Electron-16-success.svg)
+![](https://img.shields.io/badge/Electron-18-success.svg)
 ![](https://img.shields.io/badge/Vue-3-success.svg)
 ![](https://img.shields.io/badge/NodeJS-16-blue.svg)
 ![](https://img.shields.io/badge/TypeScript-4.5-blue.svg)
@@ -18,7 +18,7 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 4. 良好的架构模式和代码风格
 5. 提供支持主流的第三方音乐平台
 
-### 效果预览
+### 效果预览 ([在线预览](https://v-scmq.github.io/mq-player-vue))
 
 + 本地音乐
 
