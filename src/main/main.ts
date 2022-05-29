@@ -14,8 +14,8 @@ if (isProduction && !app.requestSingleInstanceLock()) {
 
 } else {
     // 强制锁定DPI缩放为1, 参见 https://github.com/electron/electron/issues/6571
-    app.commandLine.appendSwitch('high-dpi-support', '1');
-    app.commandLine.appendSwitch('force-device-scale-factor', '1');
+    // app.commandLine.appendSwitch('high-dpi-support', '1');
+    // app.commandLine.appendSwitch('force-device-scale-factor', '1');
 
     /****************************************************************
      *  应用程序就绪之前,获取环境配置以及注册自定义协议和设置程序资源路径 *
@@ -53,12 +53,12 @@ if (isProduction && !app.requestSingleInstanceLock()) {
     app.on('ready', () => {
         // 创建浏览器主窗口
         mainWindow = new BrowserWindow({
-            width: 1000,
-            height: 800,
+            width: 800,
+            height: 600,
             show: false,
             frame: false,
             backgroundColor: 'rgb(236, 236, 236)',
-            webPreferences: {preload: `${__dirname}/preload.js`, nativeWindowOpen: true}
+            webPreferences: {preload: `${__dirname}/preload.js`}
             // webPreferences: {
             //     nodeIntegration: false,             // 关闭NodeJS集成
             //     contextIsolation: true,             // 开启上下文隔离限制(从版本12.0开始默认为true)
@@ -197,7 +197,7 @@ if (isProduction && !app.requestSingleInstanceLock()) {
         modal = new BrowserWindow({
             width: option.width, height: option.height, parent: mainWindow, modal: true,
             show: false, resizable: false, frame: false, transparent: true,
-            webPreferences: {webSecurity: false, preload, nativeWindowOpen: true}
+            webPreferences: {webSecurity: false, preload}
         });
 
         // 加载指定的URL

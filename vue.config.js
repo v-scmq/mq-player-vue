@@ -92,7 +92,7 @@ module.exports = {
             customFileProtocol: '/',                // 自定义文件协议(使用/表示在服务器上的根路径), 默认是 'app://./'
             builderOptions: {
                 win: {
-                    // icon: 'src/assets/icons/icon.ico',
+                    icon: 'public/icon/icon.ico',
                     // 图标路径 windows系统中icon需要256*256的ico格式图片，更换应用图标亦在此处
                     target: [{
                         // 打包成一个独立的 exe 安装程序
@@ -119,11 +119,11 @@ module.exports = {
                     // 允许修改安装目录，建议为 true，是否允许用户改变安装目录，默认是不允许
                     allowToChangeInstallationDirectory: true,
                     // // 安装图标
-                    installerIcon: 'src/assets/icons/icon.ico',
+                    installerIcon: 'public/icon/icon.ico',
                     // // 卸载图标
-                    uninstallerIcon: 'src/assets/icons/icon.ico',
+                    uninstallerIcon: 'public/icon/icon.ico',
                     // // 安装时头部图标
-                    installerHeaderIcon: 'src/assets/icons/icon.ico',
+                    installerHeaderIcon: 'public/icon/icon.ico',
                     // 创建桌面图标
                     createDesktopShortcut: true,
                     // 创建开始菜单图标
