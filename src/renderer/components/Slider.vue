@@ -1,17 +1,18 @@
 <template>
   <div class='slider' ref='el' :class='{vertical}' @click='onSliderClicked'>
-    <div class='track'/>
-    <div class='buffer' v-if='buffering >= 0' :style='{width:`${buffering * 100}%`}'/>
+    <div class='track'>
+      <div class='buffer' v-if='buffering >= 0' :style='{width:`${buffering * 100}%`}'/>
 
-    <template v-if='vertical'>
-      <div class='filler' :style='{height: `${value}%`}'/>
-      <div class='thumb' ref='thumb' :style='{top: `${100 - value}%`}' @pointerdown='onDragStart'/>
-    </template>
+      <template v-if='vertical'>
+        <div class='filler' :style='{height: `${value}%`}'/>
+        <div class='thumb' ref='thumb' :style='{top: `${100 - value}%`}' @pointerdown='onDragStart'/>
+      </template>
 
-    <template v-else>
-      <div class='filler' :style='{width: `${value}%`}'/>
-      <div class='thumb' ref='thumb' :style='{left: `${value}%`}' @pointerdown='onDragStart'/>
-    </template>
+      <template v-else>
+        <div class='filler' :style='{width: `${value}%`}'/>
+        <div class='thumb' ref='thumb' :style='{left: `${value}%`}' @pointerdown='onDragStart'/>
+      </template>
+    </div>
 
   </div>
 </template>
