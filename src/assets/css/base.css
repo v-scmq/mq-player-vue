@@ -134,65 +134,55 @@
 
 /*====================== Slider ===================*/
 .slider {
-    /*width: 12px;*/
-    margin: 4px 10px;
-    /*padding: 6px 0; !** height: 8px; *!*/
-    position: relative;
+    margin: 4px 6px;
+    padding: 4px 0;
     cursor: pointer;
 
-    /*display: flex;*/
-    /*align-items: center;*/
-    flex: none;
-    box-sizing: border-box;
-    background: red;
+    --slider-inner-size: 3px;
+    --slider-thumb-size: 12px;
 }
 
 .slider.vertical {
-    /*padding: 0 6px;*/
-    margin: 6px 8px;
-    flex-direction: column;
+    margin: 6px 4px;
+    padding: 0 4px;
 }
 
 .slider .track {
     width: 100%;
-    height: 3px;
+    height: var(--slider-inner-size);
     position: relative;
-    box-sizing: border-box;
 }
 
 .slider.vertical .track {
-    width: 3px;
+    width: var(--slider-inner-size);
     height: 100%;
 }
 
 .slider .filler, .slider .buffer {
-    width: 100%;
-    height: 3px;
+    height: var(--slider-inner-size);
     position: absolute;
     pointer-events: none;
 }
 
 .slider.vertical .filler, .slider.vertical .buffer {
-    width: 100%;
+    width: var(--slider-inner-size);
     height: 100%;
     bottom: 0;
 }
 
 .slider .thumb {
+    top: 50%;
     position: absolute;
     border-radius: 50%;
-    height: 12px;
-    width: 12px;
+    height: var(--slider-thumb-size);
+    width: var(--slider-thumb-size);
     background: var(--slider-thumb-fill);
     transform: translate3d(-50%, -50%, 0); /* 水平左移 相对于自身宽度的一半,方便后续计算位置*/
 }
 
-.slider:not(.vertical) .thumb {
-    top: 50%;
-}
-
 .slider.vertical .thumb {
     left: 50%;
+    top: unset;
 }
 
 .slider .track {
