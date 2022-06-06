@@ -22,6 +22,7 @@ html, body, #app {
 /****************** Header-TitleBar ***********************/
 .title-bar {
     -webkit-app-region: drag;
+    font-size: 14px;
 }
 
 .title-bar .icon, .title-bar .user-name, .title-bar .text-field {
@@ -37,6 +38,7 @@ html, body, #app {
 }
 
 .window-state-bar.viewer {
+    font-size: 14px;
     -webkit-app-region: drag;
 
     --icon-fill-base: rgb(210, 210, 210);
@@ -82,15 +84,15 @@ html, body, #app {
 /*.title-bar.un-maximized { margin: 2px 2px 0 2px;}*/
 
 .title-bar .user-icon.cover {
-    width: 3em;
-    height: 3em;
+    width: 40px;
+    height: 40px;
     background: none;
     border-radius: 50%;
 }
 
 .title-bar .user-icon.icon {
-    width: 3em;
-    height: 3em;
+    width: 40px;
+    height: 40px;
     background: white;
     border-radius: 50%;
     fill: rgb(188, 191, 193);
@@ -101,6 +103,7 @@ html, body, #app {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    font-size: 13px;
 }
 
 .title-bar .icon.disabled {
@@ -140,13 +143,13 @@ html, body, #app {
     display: flex;
     padding: 10px 20px;
     align-items: center;
+    gap: 0 12px;
     cursor: pointer;
-    font-size: 1.125em;
+    font-size: 15px;
     color: var(--tab-text-base);
 }
 
 .tab-pane .tab > .icon {
-    margin: 0 12px 0 0;
     fill: var(--tab-text-base);
 }
 
@@ -213,6 +216,7 @@ html, body, #app {
 
 /********************* MediaControl(Footer) **********************/
 .media-control {
+    font-size: 14px;
     --icon-fill-base: var(--fill-base);
     --stroke-icon-fill-base: var(--fill-base);
 
@@ -262,41 +266,41 @@ html, body, #app {
     justify-content: center;
     background: var(--popover-inner-fill);
     color: var(--text-active);
-    border-radius: 0.5em;
-    padding: 1em 0;
+    border-radius: 8px;
+    padding: 16px 0;
     /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
     /* transition: visibility 1s ease; visibility: collapse; */
 }
 
 /* 音量弹出式面板 */
 .popover.volume-control {
-    height: 10.5em;
-    width: 4.5em;
+    height: 132px;
+    width: 58px;
 }
 
 .popover.speed-control {
-    height: 10.5em;
-    width: 4.5em;
+    height: 132px;
+    width: 58px;
     align-items: stretch;
 }
 
 /* 播放模式弹出式面板 */
 .popover.mode-control {
-    width: 8em;
-    padding: 0.5em 0;
+    width: 102px;
+    padding: 8px 0;
     white-space: nowrap;
     fill: var(--fill-base);
 }
 
 .popover.mode-control > .v-row > .title {
-    margin: 0 0 0 0.5em;
-    font-size: 0.875em;
+    margin: 0 0 0 8px;
+    font-size: 12px;
 }
 
 .popover.mode-control > .v-row {
     width: 100%;
     cursor: pointer;
-    padding: 0.5em 0.25em;
+    padding: 8px 4px;
     box-sizing: border-box;
     justify-content: center;
 }
@@ -316,7 +320,7 @@ html, body, #app {
     bottom: 4px;
     width: 40vw;
     gap: 8px;
-    padding: 1em 0 0 1em;
+    padding: 16px 0 0 16px;
     /*background: var(--popover-inner-fill);*/
     /*--text-base: white;*/
 
@@ -330,7 +334,7 @@ html, body, #app {
 }
 
 .popover.play-queue > .v-row {
-    padding: 0.5em;
+    padding: 8px;
 }
 
 .popover.play-queue > .title {
@@ -467,7 +471,7 @@ html, body, #app {
 .lyric-view.empty::after {
     color: white;
     padding: 12px;
-    font-size: 28px;
+    font-size: 22px;
     /* CSS表达式 attr() 用来获取选择到的元素的某一HTML属性值, 并用于其样式 */
     content: attr(data-placeholder);
 }
@@ -519,7 +523,7 @@ html, body, #app {
 
 .music-viewer .data-media {
     color: white;
-    font-size: 20px;
+    font-size: 16px;
     justify-content: center;
     margin: 0 0 1em 0;
     gap: 8px;

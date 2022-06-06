@@ -50,7 +50,7 @@
 
     --accordion-scroll-wrapper-height: 0;
 
-    --table-cell-height: 40px;
+    --table-cell-height: 36px;
     --cell-fill-hover: rgba(228, 228, 228, 0.5);
     --cell-fill-active: rgba(228, 228, 228, 0.7);
 
@@ -66,18 +66,17 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0 4px;
 
-    padding: 0.375rem 0.75rem;
+    padding: 8px 12px;
     box-sizing: border-box;
-    font-size: 0.875em;
+    font-size: 13px;
     white-space: nowrap;
     cursor: pointer;
     border-radius: 4px;
+    height: 32px;
 
-    /*border: 1px solid #c6e2ff;*/
-    /*background: #ecf5ff;*/
     background: var(--button-fill-base);
-    /*color: #409eff;*/
     color: var(--button-text-base);
     outline: none;
 }
@@ -89,13 +88,12 @@
 
 .button > .icon {
     fill: var(--button-text-base);
-    margin: 0 4px 0 0;
 }
 
 /*====================== CheckBox ===================*/
 .check-box {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     padding: 1px;
     display: flex;
     align-items: center;
@@ -105,7 +103,6 @@
 }
 
 .check-box > .icon {
-    margin: 0;
     width: 100%;
     height: 100%;
     box-sizing: border-box;
@@ -177,7 +174,7 @@
     height: var(--slider-thumb-size);
     width: var(--slider-thumb-size);
     background: var(--slider-thumb-fill);
-    transform: translate3d(-50%, -50%, 0); /* 水平左移 相对于自身宽度的一半,方便后续计算位置*/
+    transform: translate3d(-50%, -50%, 0);
 }
 
 .slider.vertical .thumb {
@@ -200,10 +197,12 @@
 /*====================== Table ==================*/
 .table {
     display: flex;
-    overflow: hidden;
     flex-direction: column;
-    color: var(--text-base);
     outline: none;
+    font-size: 14px;
+    overflow: hidden;
+    color: var(--text-base);
+    line-height: var(--table-cell-height);
 }
 
 .table > .table-column-wrapper {
@@ -211,13 +210,12 @@
 }
 
 .table .table-cell {
-    padding: 8px;
+    padding: 0 8px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     box-sizing: border-box;
     height: var(--table-cell-height);
-    line-height: normal; /* 若行高是一个确定的px, 则不能指定上下内边距; */
 }
 
 .table .table-cell.flex {
@@ -234,7 +232,7 @@
     flex: none;
     padding: 0;
     display: flex;
-    font-size: 20px;
+    font-size: 16px;
     align-items: center;
     justify-content: center;
 }
@@ -554,19 +552,20 @@
 }
 
 .modal .titled-pane {
-    padding: 1em;
+    padding: 8px;
     color: var(--text-base);
     border-bottom: 1px solid rgb(222, 223, 224);
 }
 
 .modal .titled-pane .close-icon {
-    width: 1em;
-    height: 1em;
-    padding: 0.5em;
+    width: 16px;
+    height: 16px;
+    padding: 8px;
     cursor: pointer;
     stroke-width: 2px;
     stroke: rgb(145, 147, 153);
     margin: 0 0 0 auto;
+    transform: scale(0.8);
 }
 
 .modal .titled-pane .close-icon:hover {
@@ -576,13 +575,13 @@
 
 .modal > .modal-content > .content {
     flex: 1;
-    padding: 1em;
+    padding: 14px;
     overflow: hidden auto;
     align-items: center;
 }
 
 .label {
-    font-size: 1.125em;
+    font-size: 15px;
     white-space: pre-line;
     overflow: hidden auto;
     color: var(--text-base);
@@ -594,11 +593,13 @@
     top: 20px;
     left: 50%;
     z-index: 9999;
-    padding: 1em;
-    min-width: 380px;
+    padding: 12px;
+    min-width: 300px;
+    border-radius: 4px;
 
     display: flex;
     align-items: center;
+    gap: 10px;
 
     box-sizing: border-box;
     border: 1px solid #ebeef5;
@@ -627,7 +628,7 @@
 .message .content {
     flex: auto;
     padding: 0;
-    font-size: 0.875em; /** 1em = 16px => 0.875em = 14px */
+    font-size: 12px;
     line-height: 1;
     display: flex;
 }
@@ -665,15 +666,13 @@
 
 .message-icon {
     flex: none;
-    margin: 0 0.625em 0 0;
 }
 
 .message .close-icon {
     flex: none;
     fill: #c0c4cc;
     cursor: pointer;
-    margin: 0 0 0 0.1em;
-    font-size: 1.6em;
+    font-size: 26px;
 }
 
 .message .close-icon:hover {
