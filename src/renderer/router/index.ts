@@ -94,14 +94,19 @@ export default createRouter({
         {
             path: '/component-list',
             component: () => import('../views/doc/ComponentList.vue'),
-            redirect: '/component-list/Pagination',
+            redirect: '/component-list/slider',
             meta: {
                 title: '组件示例',
                 icon: 'box'
             },
             children: [
                 {
-                    path: '/component-list/Pagination',
+                    path: '/component-list/slider',
+                    meta: {title: '滑动条'},
+                    component: () => import('../views/doc/SliderDemo.vue')
+                },
+                {
+                    path: '/component-list/pagination',
                     meta: {title: '分页'},
                     component: () => import('../views/doc/PaginationDemo.vue')
                 },
