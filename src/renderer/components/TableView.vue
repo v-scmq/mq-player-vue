@@ -2,7 +2,7 @@
   <div class='table' tabindex='0' @keydown='onKeydown' :style='{"--table-cell-height":`${cellHeight}px`}'>
     <!-- 表格列信息 -->
     <div class='table-column-wrapper' :style='{gridTemplateColumns:`${columnWidths} ${gutterWidth}`}'>
-      <div class='table-cell' v-for='(column,index) in columns' :key='index'>
+      <div class='table-cell' :class="{flex: column.flex}" v-for='(column,index) in columns' :key='index'>
         <check-box v-if="column.type === 'checkbox' " v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
         <template v-else>{{ column.type === 'index' ? data.length : column.title }}</template>
       </div>
@@ -11,22 +11,34 @@
     </div>
 
     <!-- 表格内容虚拟滚动部分 -->
-    <div ref='scrollWrapper' style='flex:auto;overflow:hidden auto;position:relative' @scroll='updateVisibleData'>
-      <div style='position:absolute;left:0;right:0;z-index:-1;' :style='{minHeight: `${maxScrollHeight}px`}'/>
+    <div ref='scrollWrapper'
+         style='flex:auto;overflow:hidden auto;position:relative'
+         @scroll='updateVisibleData'>
+      <div style='position:absolute;left:0;right:0;z-index:-1;'
+           :style='{minHeight: `${maxScrollHeight}px`}'/>
       <!-- 表格内容部分  -->
-      <div class='content-wrapper' style='display:grid;position:sticky;top:0' @click='onTableCellClick'
-           :style='{gridTemplateColumns: columnWidths, paddingRight: hasScrollbar ? null : gutterWidth}'
-           @pointermove='onHover' @pointerleave='hoverRow = -1' @touchend='infiniteScrollEmitter'
-           @wheel='infiniteScrollEmitter'>
+      <div class='content-wrapper'
+           style='display:grid;position:sticky;top:0'
+           @click='onTableCellClick'
+           @pointermove='onHover'
+           @pointerleave='hoverRow = -1'
+           @touchend='infiniteScrollEmitter'
+           @wheel='infiniteScrollEmitter'
+           :style='{gridTemplateColumns: columnWidths, paddingRight: hasScrollbar ? null : gutterWidth}'>
 
         <!-- 单元格 -->
-        <template v-for='(item, row) in visibleData'>
-          <div class='table-cell' :key='`${row}-${col}`' v-for='(column, col) in columns' :data-row='row'
-               :class='{flex:column.flex, selected:selectedItems[row + offsetIndex], hover:hoverRow ===row}'>
-            <check-box v-if="column.type==='checkbox'" v-model='selectedItems[row + offsetIndex]'
-                       @update:modelValue='onItemCheckChanged(row)'/>
-            <slot v-else :name='column.property' :item='item'>
-              {{ valueGetters[col](item, row, column) }}
+        <template v-for='(row, rowIndex) in visibleData'>
+          <div class='table-cell'
+               :key='`${rowIndex}-${columnIndex}`'
+               :data-row='rowIndex'
+               v-for='(column, columnIndex) in columns'
+               :class='{flex:column.flex, selected:selectedItems[rowIndex + offsetIndex], hover:hoverRow === rowIndex}'>
+
+            <check-box v-if="column.type==='checkbox'"
+                       v-model='selectedItems[rowIndex + offsetIndex]'
+                       @update:modelValue='onItemCheckChanged(rowIndex)'/>
+            <slot v-else :name='column.property' :item='row'>
+              {{ valueGetters[columnIndex](row, rowIndex, column) }}
             </slot>
           </div>
         </template>
@@ -45,17 +57,19 @@ export default defineComponent({
 
   props: {
     /* 表格内容部分的行单元格高度 */
-    cellHeight: {type: Number, default: 40},
+    cellHeight: {type: Number, default: 36},
     /* 表格列信息 */
     columns: {type: Array as PropType<TableColumn[]>, required: true},
     /* 表格数据 */
-    data: {type: Array as PropType<TableRow[]>, required: true}
+    data: {type: Array as PropType<TableRow[]>, required: true},
+    /* 是否开启表格复选框 */
+    selection: {type: Boolean, default: false}
   },
 
   emits: [
     /** 行单元格点击事件 */ 'row-click',
     /** 行单元格双击事件 */ 'row-dblclick',
-    /** 无限滚动 */ 'infinite-scroll'
+    /** 无限滚动 */ 'infinite-scroll',
   ],
 
   setup(props, {emit}) {
@@ -101,6 +115,9 @@ export default defineComponent({
     let resizeObserve: ResizeObserver | null;
     // 无限滚动计时器
     let infiniteScrollTimer: number | null = null;
+
+    // 当打开表格的复选框时, 用来存储之前的列信息(通常是第一列, 若没有则添加一列),以便恢复
+    let columnRestore: TableColumn | null;
 
     /**
      * 获取序号列单元格值
@@ -224,7 +241,35 @@ export default defineComponent({
       headerCheckChange(isSelectAll.value = false);
     };
 
+    /**
+     * 监听selection属性的变化.
+     *
+     * @param newValue 若为true,则开启表格复选框; 否则关闭表格复选框
+     */
+    const onSelectionChange = (newValue: boolean) => {
+      const {columns} = props;
+
+      if (newValue) {
+        columnRestore = columns[0];
+        const width = columnRestore ? columnRestore.width : '100px';
+        const checkboxTableColumn: TableColumn = {type: 'checkbox', flex: true, width};
+
+        columns.splice(0, 1, checkboxTableColumn);
+
+      } else {
+        columnRestore
+            ? columns.splice(0, 1, columnRestore)
+            : columns.splice(0, 1);
+        columnRestore = null;
+      }
+    };
+
     onMounted(() => {
+      // 存储为第一列信息
+      columnRestore = props.columns[0];
+      // 主动调用方法处理列信息,以便检查是否需要开启表格复选框
+      onSelectionChange(props.selection);
+
       const element = scrollWrapper.value;
 
       // 计算滚动条宽度
@@ -275,6 +320,8 @@ export default defineComponent({
 
     // 监听表格数据变化, 更新可视区域数据
     watch(props.data, updateVisibleData);
+    // 观察selection属性变化, 以便开启或关闭表格复选框
+    watch(() => props.selection, onSelectionChange);
 
     return {
       // 滚动元素引用

@@ -21,7 +21,8 @@
     <!--    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>-->
     <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
     <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
-    <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
+    <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em'
+            @click='multiple = !multiple'/>
 
     <text-field v-model='inputKey' placeholder='搜索本地歌曲' @input='handleMusicFilter' style='margin:0 0 0 auto'/>
 
@@ -30,7 +31,7 @@
     <Button text='排序方式' prefixIcon='sort' prefixIconSize='1.2em'/>
   </div>
 
-  <table-view :columns='columns' :data='list' style='flex:auto;' @row-dblclick='playMediaList'/>
+  <table-view style='flex:auto;' :columns='columns' :data='list' :selection="multiple" @row-dblclick='playMediaList'/>
 </template>
 
 <script lang='ts'>
@@ -224,13 +225,6 @@ export default defineComponent({
     return {
       columns, list, multiple, inputKey, fileChooser,
       playSelect, handleMusicFilter, playMediaList, addMusic,
-
-      /** 开始或结束批量操作 */
-      onMultiple: () => {
-        const column = columns[0];
-        column.type = column.type === 'index' ? 'checkbox' : 'index';
-        multiple.value = !multiple.value;
-      },
 
       /** 导入歌曲按钮被点击时,弹出文件选择框 */
       onImportButtonClicked: () => {

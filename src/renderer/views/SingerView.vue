@@ -17,7 +17,8 @@
         <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
         <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
         <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
-        <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em'/>
+        <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em'
+                @click="multiple = !multiple"/>
       </div>
     </div>
   </div>
@@ -33,8 +34,9 @@
 
     <div class='tab-content v-column'>
 
-      <table-view style='flex:auto;' :columns='columns' :data='songList' @row-dblclick='playMediaList'
-                  v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
+      <table-view style='flex:auto;' :selection="multiple" :columns='columns' :data='songList'
+                  v-show='tabMap.value===tabMap.SONG_TAB'
+                  @row-dblclick='playMediaList' @infinite-scroll='loadDataList'>
         <template v-slot:title='{item}'>
           <span class='cell-text'>{{ item.title }}</span>
           <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
