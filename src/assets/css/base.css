@@ -131,26 +131,33 @@
 
 /*====================== Slider ===================*/
 .slider {
-    margin: 4px 6px;
-    padding: 4px 0;
     cursor: pointer;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    height: var(--slider-thumb-size);
 
     --slider-inner-size: 3px;
     --slider-thumb-size: 12px;
 }
 
 .slider.vertical {
-    margin: 6px 4px;
-    padding: 0 4px;
+    padding: 6px 4px;
+    height: unset;
+    width: var(--slider-thumb-size);
 }
 
 .slider .track {
+    position: relative;
+    top: 50%;
+    transform: translate3d(0, -50%, 0);
     width: 100%;
     height: var(--slider-inner-size);
-    position: relative;
 }
 
 .slider.vertical .track {
+    top: unset;
+    left: 50%;
+    transform: translate3d(-50%, 0, 0);
     width: var(--slider-inner-size);
     height: 100%;
 }

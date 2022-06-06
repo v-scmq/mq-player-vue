@@ -266,21 +266,23 @@ html, body, #app {
     justify-content: center;
     background: var(--popover-inner-fill);
     color: var(--text-active);
-    border-radius: 8px;
-    padding: 16px 0;
+    border-radius: 6px;
+    padding: 12px 8px;
+    box-sizing: border-box;
     /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
     /* transition: visibility 1s ease; visibility: collapse; */
 }
 
 /* 音量弹出式面板 */
 .popover.volume-control {
-    height: 132px;
-    width: 58px;
+    height: 150px;
+    width: 54px;
 }
 
 .popover.speed-control {
-    height: 132px;
-    width: 58px;
+    height: 150px;
+    width: 54px;
+    gap: 8px;
     align-items: stretch;
 }
 
