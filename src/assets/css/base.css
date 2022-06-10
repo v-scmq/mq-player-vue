@@ -133,18 +133,19 @@
 .slider {
     --slider-inner-size: 4px;
     --slider-thumb-size: 16px;
+    --gap: calc(var(--slider-thumb-size) / 2);
 
     cursor: pointer;
     position: relative;
     box-sizing: border-box;
     min-height: var(--slider-thumb-size);
-    margin: 4px calc(var(--slider-thumb-size) / 2);
+    margin: 4px var(--gap);
 }
 
 .slider.vertical {
     min-height: unset;
     min-width: var(--slider-thumb-size);
-    margin: calc(var(--slider-thumb-size) / 2) 4px;
+    margin: var(--gap) 4px;
 }
 
 .slider .track {
