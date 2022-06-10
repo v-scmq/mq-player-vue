@@ -1,19 +1,18 @@
 <template>
   <div class='slider' ref='el' :class='{vertical}' @click='onSliderClicked'>
-    <div class='track'>
+    <div class='track'></div>
 
-      <template v-if='vertical'>
-        <div class='buffer' v-if="bufferNodeVisible" :style='{height:`${buffering * 100}%`}'/>
-        <div class='filler' :style='{height: `${value}%`}'/>
-        <div class='thumb' ref='thumb' :style='{top: `${100 - value}%`}' @pointerdown='onDragStart'/>
-      </template>
+    <template v-if='vertical'>
+      <div class='buffer' v-if="bufferNodeVisible" :style='{height:`${buffering * 100}%`}'/>
+      <div class='filler' :style='{height: `${value}%`}'/>
+      <div class='thumb' ref='thumb' :style='{top: `${100 - value}%`}' @pointerdown='onDragStart'/>
+    </template>
 
-      <template v-else>
-        <div class='buffer' v-if="bufferNodeVisible" :style='{width:`${buffering * 100}%`}'/>
-        <div class='filler' :style='{width: `${value}%`}'/>
-        <div class='thumb' ref='thumb' :style='{left: `${value}%`}' @pointerdown='onDragStart'/>
-      </template>
-    </div>
+    <template v-else>
+      <div class='buffer' v-if="bufferNodeVisible" :style='{width:`${buffering * 100}%`}'/>
+      <div class='filler' :style='{width: `${value}%`}'/>
+      <div class='thumb' ref='thumb' :style='{left: `${value}%`}' @pointerdown='onDragStart'/>
+    </template>
 
   </div>
 </template>
@@ -31,7 +30,7 @@
  *
  * @author SCMQ
  * @date 2020-12-13
- * @update 2021-09-02、2022-06-03
+ * @update 2021-09-02、2022-06-03、2022-06-10
  */
 
 import {computed, ref, watch, defineComponent} from 'vue';
@@ -142,9 +141,9 @@ export default defineComponent({
        * 滑动条被点击时触发,随着先后触发input事件和change事件
        * 触发change事件并传出第二个参数值true 以方便侦测滑动条的值是人为改变
        *
-       * @param {PointerEvent} e 指针事件
+       * @param {PointerEvent | MouseEvent} e 指针事件
        */
-      onSliderClicked(e: PointerEvent) {
+      onSliderClicked(e: PointerEvent | MouseEvent) {
         if (e.target === thumb.value) {
           return;
         }

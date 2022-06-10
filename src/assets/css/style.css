@@ -282,21 +282,15 @@ html, body, #app {
 .popover.speed-control {
     height: 150px;
     width: 54px;
-    gap: 8px;
     align-items: stretch;
 }
 
 /* 播放模式弹出式面板 */
 .popover.mode-control {
     width: 102px;
-    padding: 8px 0;
+    padding: 2px 0;
     white-space: nowrap;
     fill: var(--fill-base);
-}
-
-.popover.mode-control > .v-row > .title {
-    margin: 0 0 0 8px;
-    font-size: 12px;
 }
 
 .popover.mode-control > .v-row {
@@ -305,6 +299,8 @@ html, body, #app {
     padding: 8px 4px;
     box-sizing: border-box;
     justify-content: center;
+    font-size: 12px;
+    gap: 8px;
 }
 
 .popover.mode-control > .v-row:not(:last-child) {

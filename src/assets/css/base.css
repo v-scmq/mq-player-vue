@@ -131,62 +131,57 @@
 
 /*====================== Slider ===================*/
 .slider {
-    cursor: pointer;
-    padding: 4px 6px;
-    box-sizing: border-box;
-    height: var(--slider-thumb-size);
+    --slider-inner-size: 4px;
+    --slider-thumb-size: 16px;
 
-    --slider-inner-size: 3px;
-    --slider-thumb-size: 12px;
+    cursor: pointer;
+    position: relative;
+    box-sizing: border-box;
+    min-height: var(--slider-thumb-size);
+    margin: 4px calc(var(--slider-thumb-size) / 2);
 }
 
 .slider.vertical {
-    padding: 6px 4px;
-    height: unset;
-    width: var(--slider-thumb-size);
+    min-height: unset;
+    min-width: var(--slider-thumb-size);
+    margin: calc(var(--slider-thumb-size) / 2) 4px;
 }
 
 .slider .track {
-    position: relative;
-    top: 50%;
-    transform: translate3d(0, -50%, 0);
     width: 100%;
-    height: var(--slider-inner-size);
 }
 
 .slider.vertical .track {
-    top: unset;
-    left: 50%;
-    transform: translate3d(-50%, 0, 0);
-    width: var(--slider-inner-size);
     height: 100%;
 }
 
-.slider .filler, .slider .buffer {
-    height: var(--slider-inner-size);
+.slider .track, .slider .filler, .slider .buffer {
+    top: 50%;
     position: absolute;
+    height: var(--slider-inner-size);
+    transform: translate3d(0, -50%, 0);
     pointer-events: none;
 }
 
-.slider.vertical .filler, .slider.vertical .buffer {
-    width: var(--slider-inner-size);
-    height: 100%;
+.slider.vertical .track, .slider.vertical .filler, .slider.vertical .buffer {
+    top: unset;
     bottom: 0;
+    left: 50%;
+    width: var(--slider-inner-size);
+    transform: translate3d(-50%, 0, 0);
 }
 
 .slider .thumb {
-    top: 50%;
     position: absolute;
     border-radius: 50%;
     height: var(--slider-thumb-size);
     width: var(--slider-thumb-size);
     background: var(--slider-thumb-fill);
-    transform: translate3d(-50%, -50%, 0);
+    transform: translate3d(-50%, 0, 0);
 }
 
 .slider.vertical .thumb {
-    left: 50%;
-    top: unset;
+    transform: translate3d(0, -50%, 0);
 }
 
 .slider .track {
