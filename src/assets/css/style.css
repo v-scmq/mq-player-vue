@@ -318,7 +318,7 @@ html, body, #app {
     bottom: 4px;
     width: 40vw;
     gap: 8px;
-    padding: 16px 0 0 16px;
+    padding: 8px;
     /*background: var(--popover-inner-fill);*/
     /*--text-base: white;*/
 
