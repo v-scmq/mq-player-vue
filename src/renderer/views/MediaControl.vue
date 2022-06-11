@@ -132,7 +132,7 @@
                 </template>
               </div>
 
-              <table-view :columns='columns' :data='playList' style='flex:1;margin:0 0 0 8px'>
+              <table-view style='flex:1;margin:0 0 0 8px' :columns='columns' :data='playList' :selection="multiple">
                 <template v-slot:title='{item}'>
                   <span class='cell-text'>{{ item.title }}</span>
                   <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
@@ -487,11 +487,7 @@ export default defineComponent({
       },
 
       /** 开始或结束批量操作 */
-      onMultiple: () => {
-        const column = columns[0];
-        column.type = column.type === 'index' ? 'checkbox' : 'index';
-        multiple.value = !multiple.value;
-      },
+      onMultiple: () => void (multiple.value = !multiple.value),
 
     };
   }
