@@ -69,15 +69,17 @@ export default defineComponent({
     watch(() => props.modelValue, newValue => emit('change', newValue));
 
     /**
-     * 滑块被拖动时触发.在此过程中,只会提交input事件以修改value属性值
-     * @param {PointerEvent} e 指针事件
+     * 滑块被拖动时触发.在此过程中,只会提交update事件以修改value属性值
+     * @param {PointerEvent | TouchEvent} e 指针事件或移动设备触摸事件
      */
-    const onDragging = (e: PointerEvent) => {
+    const onDragging = (e: PointerEvent | TouchEvent) => {
+      const {clientY, clientX} = e instanceof TouchEvent ? e.touches[0] : e;
+
       // 当节点display:none时, 取值会为0, 为防止除以0错误, 赋其默认值为1
       let total = (props.vertical ? el.value.clientHeight : el.value.clientWidth) || 1;
 
       // 增量 = 现在的e.clientX|e.clientY - 鼠标按下时的e.clientX|e.clientY(即offsetX)
-      let value = (props.vertical ? e.clientY : e.clientX) - offsetX + offsetLeft;
+      let value = (props.vertical ? clientY : clientX) - offsetX + offsetLeft;
 
       // 计算新的值,此时保留3为有效数字,然后检测值是否变化,才提交值(虽然提交相同值不会触发value改变)
       value = Number((Math.max(Math.min(value, total), 0) / total).toFixed(3));
@@ -103,7 +105,8 @@ export default defineComponent({
       }
 
       dragged = offsetX = offsetLeft = null as any;
-      document.onpointermove = document.onpointerup = null;
+      document.onpointermove = document.ontouchmove =
+          document.onpointerup = document.ontouchend = null;
     };
 
     return {
@@ -133,8 +136,8 @@ export default defineComponent({
         const value = props.vertical;
         offsetX = value ? event.clientY : event.clientX;
         offsetLeft = value ? thumb.value.offsetTop : thumb.value.offsetLeft;
-        document.onpointermove = onDragging;
-        document.onpointerup = onDragEnd;
+        document.onpointermove = document.ontouchmove = onDragging;
+        document.onpointerup = document.ontouchend = onDragEnd;
       },
 
       /**

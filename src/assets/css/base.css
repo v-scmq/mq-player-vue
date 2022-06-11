@@ -148,6 +148,13 @@
     margin: var(--gap) 4px;
 }
 
+@media screen and (max-width: 1800px) {
+    .slider {
+        --slider-inner-size: 3px;
+        --slider-thumb-size: 12px;
+    }
+}
+
 .slider .track {
     width: 100%;
 }
@@ -179,6 +186,7 @@
     width: var(--slider-thumb-size);
     background: var(--slider-thumb-fill);
     transform: translate3d(-50%, 0, 0);
+    cursor: grab;
 }
 
 .slider.vertical .thumb {
@@ -441,6 +449,13 @@
 
     box-sizing: border-box;
     background-color: rgba(0, 0, 0, .5);
+    font-size: 16px;
+}
+
+@media screen and (max-width: 1600px) {
+    .spinner {
+        zoom: 0.8;
+    }
 }
 
 .arc-container {
