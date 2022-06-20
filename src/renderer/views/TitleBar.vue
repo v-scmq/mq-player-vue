@@ -33,21 +33,19 @@
     </window-state-bar>
 
     <modal title='QQ登录' id='login-modal' width='600px' height='400px' v-model:visible='loginModal'>
-      <template v-slot:content>
-        <div class='v-column' style='color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;'>
-          <div>账号：{{ user.uin }}</div>
-          <div>昵称：{{ user.nickName }}</div>
-          <template v-if='user.level'>
-            <div class='v-row'>
-              VIP等级：<img alt class='cover' style='margin:-0.5em 0 0 0;' :src='user.levelIconURI'/>
-            </div>
-            <span>会员开通时间：{{ user.startTime }}</span>
-            <span>会员到期时间：{{ user.endTime }}</span>
-            <span v-if='user.autoPay'>已开启自动续费</span>
-          </template>
-        </div>
-        <Button text='退出' @click='logout'/>
-      </template>
+      <div class='v-column' style='color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;'>
+        <div>账号：{{ user.uin }}</div>
+        <div>昵称：{{ user.nickName }}</div>
+        <template v-if='user.level'>
+          <div class='v-row'>
+            VIP等级：<img alt class='cover' style='margin:-0.5em 0 0 0;' :src='user.levelIconURI'/>
+          </div>
+          <span>会员开通时间：{{ user.startTime }}</span>
+          <span>会员到期时间：{{ user.endTime }}</span>
+          <span v-if='user.autoPay'>已开启自动续费</span>
+        </template>
+      </div>
+      <hl-button @click='logout'>退出</hl-button>
     </modal>
   </div>
 </template>
@@ -83,8 +81,8 @@ export default defineComponent({
 
     let navigation: boolean | null = null;
 
-    router.afterEach((to, from) => {
-      if (from.path === '/' || !navigation) {
+    router.afterEach((/*to, from*/) => {
+      if (!navigation) {
         navigation = true;
         return;
       }

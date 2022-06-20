@@ -1,37 +1,35 @@
 <template>
   <div class="v-row" style="margin:20px;">
-    <Button text="定时设置" @click='timerModal = true'/>
+    <hl-button @click='timerModal = true'>定时设置</hl-button>
   </div>
 
   <modal width="50%" height="50%" title="定时设置" id='timer-modal' v-model:visible='timerModal'>
-    <template v-slot:content>
-      <div class='v-column' style="justify-content:space-evenly;flex:1;text-indent:4px" v-if='data.option === -1'>
-        <div class='v-row'>
-          定时退出：
-          <check-box v-model="dataOfExit.checked" @update:modelValue='checkChanged(0)'/>
-          <text-field type='number' v-model='dataOfExit.hour'/>
-          时
-          <text-field type='number' v-model='dataOfExit.minute'/>
-          分
-        </div>
-
-        <div class='v-row'>
-          定时关机：
-          <check-box v-model="dataOfShutdown.checked" @update:modelValue='checkChanged(1)'/>
-          <text-field type='number' v-model='dataOfShutdown.hour'/>
-          时
-          <text-field type='number' v-model='dataOfShutdown.minute'/>
-          分&nbsp;&nbsp;&nbsp;&nbsp;强制关机：
-          <check-box v-model="dataOfShutdown.force"/>
-        </div>
+    <div class='v-column' style="justify-content:space-evenly;flex:1;text-indent:4px" v-if='data.option === -1'>
+      <div class='v-row'>
+        定时退出：
+        <check-box v-model="dataOfExit.checked" @update:modelValue='checkChanged(0)'/>
+        <text-field type='number' v-model='dataOfExit.hour'/>
+        时
+        <text-field type='number' v-model='dataOfExit.minute'/>
+        分
       </div>
 
-      <div style='display:flex;align-items:center;flex:1;' v-else>
-        将在 {{ data.hour }} 时{{ data.minute }} 分 {{ data.second }} 秒后{{ data.option === 0 ? '退出' : '关机' }}
+      <div class='v-row'>
+        定时关机：
+        <check-box v-model="dataOfShutdown.checked" @update:modelValue='checkChanged(1)'/>
+        <text-field type='number' v-model='dataOfShutdown.hour'/>
+        时
+        <text-field type='number' v-model='dataOfShutdown.minute'/>
+        分&nbsp;&nbsp;&nbsp;&nbsp;强制关机：
+        <check-box v-model="dataOfShutdown.force"/>
       </div>
+    </div>
 
-      <Button :text="data.option === -1 ? '确定': '取消'" @click='handleConfirm'/>
-    </template>
+    <div style='display:flex;align-items:center;flex:1;' v-else>
+      将在 {{ data.hour }} 时{{ data.minute }} 分 {{ data.second }} 秒后{{ data.option === 0 ? '退出' : '关机' }}
+    </div>
+
+    <hl-button @click='handleConfirm'>{{ data.option === -1 ? '确定' : '取消' }}</hl-button>
   </modal>
 </template>
 

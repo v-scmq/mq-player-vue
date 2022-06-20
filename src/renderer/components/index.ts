@@ -1,10 +1,11 @@
 import {App} from 'vue';
 
 import Accordion from './Accordion.vue';
-import Button from './Button.vue';
+import HlButton from './Button.vue';
 import CheckBox from './CheckBox.vue';
 import TableView from './TableView.vue';
 import TextField from './TextField.vue';
+import TabPane from './TabPane.vue';
 import Slider from './Slider.vue';
 import Modal from './Modal.vue';
 import Pagination from './Pagination.vue';
@@ -21,10 +22,11 @@ export default {
     install(app: App) {
         const Vue = app;
         // 注册组件
-        Vue.component(Button.name, Button);
+        Vue.component(HlButton.name, HlButton);
         Vue.component(CheckBox.name, CheckBox);
         Vue.component(TableView.name, TableView);
         Vue.component(TextField.name, TextField);
+        Vue.component(TabPane.name, TabPane);
         Vue.component(Slider.name, Slider);
         Vue.component(Accordion.name, Accordion);
         Vue.component(Modal.name, Modal);

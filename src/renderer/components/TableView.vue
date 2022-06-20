@@ -2,9 +2,12 @@
   <div class='table' tabindex='0' @keydown='onKeydown' :style='{"--table-cell-height":`${cellHeight}px`}'>
     <!-- 表格列信息 -->
     <div class='table-column-wrapper' :style='{gridTemplateColumns:`${columnWidths} ${gutterWidth}`}'>
+      <div class='table-cell flex selection' v-if="selection">
+        <check-box v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
+      </div>
+
       <div class='table-cell' :class="{flex: column.flex}" v-for='(column,index) in columns' :key='index'>
-        <check-box v-if="column.type === 'checkbox' " v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
-        <template v-else>{{ column.type === 'index' ? data.length : column.title }}</template>
+        {{ column.type === 'index' ? data.length : column.title }}
       </div>
 
       <div class='table-cell gutter'>+</div>
@@ -14,8 +17,10 @@
     <div ref='scrollWrapper'
          style='flex:auto;overflow:hidden auto;position:relative'
          @scroll='updateVisibleData'>
+
       <div style='position:absolute;left:0;right:0;z-index:-1;'
            :style='{minHeight: `${maxScrollHeight}px`}'/>
+
       <!-- 表格内容部分  -->
       <div class='content-wrapper'
            style='display:grid;position:sticky;top:0'
@@ -27,19 +32,20 @@
            :style='{gridTemplateColumns: columnWidths, paddingRight: hasScrollbar ? null : gutterWidth}'>
 
         <!-- 单元格 -->
-        <template v-for='(row, rowIndex) in visibleData'>
+        <template v-for='(row, rowIndex) in visibleData' :key="rowIndex">
+
+          <div class='table-cell flex selection' v-if="selection" :data-row='rowIndex'
+               :class='{selected:selectedItems[rowIndex + offsetIndex], hover:hoverRow === rowIndex}'>
+            <check-box v-model='selectedItems[rowIndex + offsetIndex]'
+                       @update:modelValue='onItemCheckChanged(rowIndex)'/>
+          </div>
+
           <div class='table-cell'
-               :key='`${rowIndex}-${columnIndex}`'
                :data-row='rowIndex'
+               :key='`${rowIndex}-${columnIndex}`'
                v-for='(column, columnIndex) in columns'
                :class='{flex:column.flex, selected:selectedItems[rowIndex + offsetIndex], hover:hoverRow === rowIndex}'>
-
-            <check-box v-if="column.type==='checkbox'"
-                       v-model='selectedItems[rowIndex + offsetIndex]'
-                       @update:modelValue='onItemCheckChanged(rowIndex)'/>
-            <slot v-else :name='column.property' :item='row'>
-              {{ valueGetters[columnIndex](row, rowIndex, column) }}
-            </slot>
+            <slot :name='column.property' :item='row'>{{ valueGetters[columnIndex](row, rowIndex, column) }}</slot>
           </div>
         </template>
       </div>
@@ -85,21 +91,24 @@ export default defineComponent({
     const selectedItems = reactive<{ [key: string]: boolean }>({});
     // 正处于指针设备悬浮上的行索引
     const hoverRow = ref(-1);
-    // 是否全选
+    // 是否全选(表头中的checkbox)
     const isSelectAll = ref(false);
 
     // 计算虚拟滚动部分撑开表格内容而出现滚动条的最大高度
     const maxScrollHeight = computed(() => props.data.length * props.cellHeight);
-    // 检测是否是多选模式
-    const isMultipleSelect = computed(() => props.columns.some(column => column.type === 'checkbox'));
+
     // 列宽 => grid-template-columns: minmax(100px, 1fr) 100px 1fr ;
-    const columnWidths = computed(() => props.columns.map(column => column.width || '1fr').join(' '));
+    const columnWidths = computed(() => {
+      const {selection, columns} = props;
+      const width = columns.map(column => column.width || '1fr').join(' ');
+      // 复选框列默认为40px
+      return selection ? `40px ${width}` : width;
+    });
 
     // 获取单元格值的getter. 已废弃深度获取值, 如 column:{property: 'singer.name'},
     //                      推荐使用 column:{ valueGetter: item => item.singer?.name)
     const valueGetters = computed<CellValueGetter[]>(() => props.columns.map(column =>
-        column.valueGetter || (column.type === 'checkbox' ? null as unknown as CellValueGetter :
-            column.type === 'index' ? getSequenceValue : getPropertyValue)
+        column.valueGetter || (column.type === 'index' ? getSequenceValue : getPropertyValue)
     ));
 
     // 组件内部滚动元素引用 (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
@@ -115,9 +124,6 @@ export default defineComponent({
     let resizeObserve: ResizeObserver | null;
     // 无限滚动计时器
     let infiniteScrollTimer: number | null = null;
-
-    // 当打开表格的复选框时, 用来存储之前的列信息(通常是第一列, 若没有则添加一列),以便恢复
-    let columnRestore: TableColumn | null;
 
     /**
      * 获取序号列单元格值
@@ -231,9 +237,8 @@ export default defineComponent({
 
     /** 选择所有单元格 */
     const selectAll = () => {
-      if (props.data.length && isMultipleSelect.value) {
-        headerCheckChange(isSelectAll.value = true);
-      }
+      props.data.length && props.selection &&
+      headerCheckChange(isSelectAll.value = true);
     };
 
     /** 清除所有选择 */
@@ -241,35 +246,7 @@ export default defineComponent({
       headerCheckChange(isSelectAll.value = false);
     };
 
-    /**
-     * 监听selection属性的变化.
-     *
-     * @param newValue 若为true,则开启表格复选框; 否则关闭表格复选框
-     */
-    const onSelectionChange = (newValue: boolean) => {
-      const {columns} = props;
-
-      if (newValue) {
-        columnRestore = columns[0];
-        const width = columnRestore ? columnRestore.width : '100px';
-        const checkboxTableColumn: TableColumn = {type: 'checkbox', flex: true, width};
-
-        columns.splice(0, 1, checkboxTableColumn);
-
-      } else {
-        columnRestore
-            ? columns.splice(0, 1, columnRestore)
-            : columns.splice(0, 1);
-        columnRestore = null;
-      }
-    };
-
     onMounted(() => {
-      // 存储为第一列信息
-      columnRestore = props.columns[0];
-      // 主动调用方法处理列信息,以便检查是否需要开启表格复选框
-      onSelectionChange(props.selection);
-
       const element = scrollWrapper.value;
 
       // 计算滚动条宽度
@@ -320,8 +297,8 @@ export default defineComponent({
 
     // 监听表格数据变化, 更新可视区域数据
     watch(props.data, updateVisibleData);
-    // 观察selection属性变化, 以便开启或关闭表格复选框
-    watch(() => props.selection, onSelectionChange);
+    // 观察selection属性变化, 无论是开启或关闭都清除所选
+    watch(() => props.selection, clearSelection);
 
     return {
       // 滚动元素引用
@@ -340,8 +317,6 @@ export default defineComponent({
       // 是否全选
       isSelectAll,
 
-      /** 检测是否是多选模式 */
-      isMultipleSelect,
       /** 计算虚拟滚动部分撑开表格内容而出现滚动条的最大高度 */
       maxScrollHeight,
       // 是否有垂直滚动条
@@ -401,7 +376,7 @@ export default defineComponent({
           let map = selectedItems;
 
           // --------若是多选模式(启用表头复选框时,即是多选模式)-------
-          if (isMultipleSelect.value) {
+          if (props.selection) {
             // 若选中则取消选中(移除索引)
             if (map[index]) {
               delete map[index];

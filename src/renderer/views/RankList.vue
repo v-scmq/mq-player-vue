@@ -1,16 +1,16 @@
 <template>
-  <div class='v-row' style='gap:8px;margin:0 0 1em 0'>
-    <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em'/>
-    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
-    <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
-    <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
-    <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
+  <div class='v-row' style='gap:8px;margin:0 0 1em 0;--button-icon-size: 1.5em'>
+    <hl-button icon='play-select'>播放全部</hl-button>
+    <hl-button icon='plus'>添加到</hl-button>
+    <hl-button icon='my-download'>下载</hl-button>
+    <hl-button icon='trash'>删除</hl-button>
+    <hl-button icon='multiple' @click='multiple = !multiple'>{{ multiple ? '退出批量操作' : '批量操作' }}</hl-button>
   </div>
 
   <div class='v-row' style='flex:1;align-items:stretch;overflow:hidden;'>
     <!-- 在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
-    <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='playMediaList'
-                @infinite-scroll='loadDataList'>
+    <table-view style='flex:auto;' :selection='multiple' :columns='columns' :data='songList'
+                @row-dblclick='playMediaList' @infinite-scroll='loadDataList'>
       <template v-slot:title='{item}'>
         <span class='cell-text'>{{ item.title }}</span>
         <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
@@ -52,13 +52,13 @@ export default defineComponent({
     const songList = reactive<Song[]>([]);
     const page = {current: 1, size: 30} as ComputedPage;
 
-    const columns = reactive<TableColumn[]>([
+    const columns: TableColumn[] = [
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title', flex: true},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
       {title: '时长', property: 'duration', width: '100px'},
-    ]);
+    ];
 
     const multiple = ref(false);
 
@@ -97,13 +97,6 @@ export default defineComponent({
       },
 
       playMediaList,
-
-      /** 开始或结束批量操作 */
-      onMultiple() {
-        let column = columns[0];
-        column.type = column.type === 'index' ? 'checkbox' : 'index';
-        multiple.value = !multiple.value
-      },
 
       /** 加载歌曲数据到表格视图中 */
       loadDataList() {

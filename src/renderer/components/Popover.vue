@@ -198,8 +198,8 @@ export default defineComponent({
       }
     };
 
-    window.addEventListener('blur', eventHandler);
-    window.addEventListener('resize', eventHandler);
+    // window.addEventListener('blur', eventHandler);
+    // window.addEventListener('resize', eventHandler);
     document.addEventListener('pointerdown', eventHandler);
 
     onBeforeUnmount(() => {

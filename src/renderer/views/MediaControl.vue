@@ -110,25 +110,24 @@
                 <icon name='close' class='--popover-close' width='1.4em' height='1.4em'/>
               </div>
 
-              <div class='v-row option-bar'>
+              <div class='v-row option-bar' style="--button-icon-size: 1.5em">
                 <template v-if='multiple'>
                   <popover>
-                    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+                    <hl-button icon='plus'>添加到</hl-button>
                     <template v-slot:content>
                       <div class='dropdown-item separator first'>我的收藏</div>
                       <div class='dropdown-item last'>添加到新歌单</div>
                     </template>
                   </popover>
 
-                  <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
-                  <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
-
-                  <Button text='退出批量操作' prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
+                  <hl-button icon='my-download'>下载</hl-button>
+                  <hl-button icon='trash'>删除</hl-button>
+                  <hl-button icon='multiple' @click='onMultiple'>退出批量操作</hl-button>
                 </template>
 
                 <template v-else>
-                  <Button text="清空" prefixIcon='trash' prefixIconSize='1.5em' v-if='!multiple'/>
-                  <Button text='批量操作' prefixIcon='multiple' prefixIconSize='1.5em' @click='onMultiple'/>
+                  <hl-button icon='trash' v-if='!multiple'>清空</hl-button>
+                  <hl-button icon='multiple' @click='onMultiple'>批量操作</hl-button>
                 </template>
               </div>
 
@@ -212,12 +211,12 @@ export default defineComponent({
 
     const multiple = ref(false);
 
-    const columns = reactive<TableColumn[]>([
+    const columns: TableColumn[] = [
       {type: 'index', width: '80px'},
       {title: '歌曲', property: 'title', width: '1.6fr', flex: true},
       {title: '歌手', property: 'singerName'},
       {title: '时长', property: 'duration', width: '80px'}
-    ]);
+    ];
 
     // 歌词信息
     const lyrics = reactive({list: [] as LyricLine[], playedTime: 0});

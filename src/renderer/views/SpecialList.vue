@@ -15,15 +15,13 @@
   </grid-view>
 
   <modal modality title='全部分类' width='70%' height='60%' v-model:visible='tagModal'>
-    <template v-slot:content>
-      <template v-for='(item, _index) in tags' :key='_index'>
-        {{ item.title }}
-        <div class='v-row list-view' @click='onListViewClicked'>
-          <div class='item' v-for='(tag, index) in item.items' :key='index' :data-id='tag.id'
-               :class='{active: specialTagParam.id === tag.id}'>{{ tag.name }}
-          </div>
+    <template v-for='(item, _index) in tags' :key='_index'>
+      {{ item.title }}
+      <div class='v-row list-view' @click='onListViewClicked'>
+        <div class='item' v-for='(tag, index) in item.items' :key='index' :data-id='tag.id'
+             :class='{active: specialTagParam.id === tag.id}'>{{ tag.name }}
         </div>
-      </template>
+      </div>
     </template>
   </modal>
 </template>

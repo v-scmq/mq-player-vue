@@ -12,7 +12,7 @@
         </div>
 
         <div class='v-column content'>
-          <slot name='content'></slot>
+          <slot></slot>
         </div>
       </div>
     </div>

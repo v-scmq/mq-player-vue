@@ -1,30 +1,19 @@
 <template>
-  <div tabindex='0' class='button'>
-    <icon :name='prefixIcon' v-if='prefixIcon' :width="prefixIconSize || '1em' "
-          :height="prefixIconSize || '1em' "/>
-    {{ text }}
-    <icon :name='suffixIcon' v-if='suffixIcon' :width="suffixIconSize || '1em' "
-          :height="suffixIconSize || '1em' "/>
-  </div>
+  <button class='button'>
+    <icon :name='icon' v-if='icon'/>
+    <slot></slot>
+  </button>
 </template>
 
 <script lang='ts'>
 import {defineComponent} from 'vue';
 
 export default defineComponent({
-  name: 'Button',
+  name: 'HlButton',
 
   props: {
-    /** 按钮文本 */
-    text: String,
     /** 前缀图标 */
-    prefixIcon: String,
-    /** 前缀图标大小 */
-    prefixIconSize: String,
-    /** 后缀图标 */
-    suffixIcon: String,
-    /** 后缀图标大小 */
-    suffixIconSize: String,
+    icon: String,
   }
 });
 </script>

@@ -7,6 +7,9 @@ html, body, #app {
     user-select: none;
     white-space: nowrap;
     background: rgb(236, 236, 236);
+    font-size: 14px;
+    -webkit-text-size-adjust: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .v-row {
@@ -122,96 +125,14 @@ html, body, #app {
     background: rgba(210, 212, 216, 0.8);
 }
 
-.fixed-left-bar {
-    flex: none;
-    width: 200px;
+.fixed-left-bar, #app > .tab-pane > .tab-container {
+    flex: 0 0 200px;
     /*
         border-box :元素实际部分为指定的宽高 (内容部分 = 指定的为实际宽高 - 边框 - 内边距)
         content-box:元素内容部分为指定的宽高 (实际部分 = 指定的为内容宽高 + 边框 + 内边距)
      */
     box-sizing: border-box;
     background: rgb(241, 241, 241);
-}
-
-.tab-pane {
-    flex: auto;
-    display: flex;
-    overflow: hidden;
-}
-
-.tab-pane .tab {
-    display: flex;
-    padding: 10px 20px;
-    align-items: center;
-    gap: 0 12px;
-    cursor: pointer;
-    font-size: 15px;
-    color: var(--tab-text-base);
-}
-
-.tab-pane .tab > .icon {
-    fill: var(--tab-text-base);
-}
-
-.tab-pane .tab:hover {
-    background: var(--tab-fill-hover);
-}
-
-.tab-pane .tab.active {
-    color: var(--tab-text-active);
-    background: var(--tab-fill-active);
-}
-
-.tab-pane .tab.active > .icon {
-    fill: var(--tab-text-active);
-}
-
-.tab-pane > .tab-content {
-    flex: auto;
-    overflow: hidden;
-    box-sizing: border-box;
-    padding: 20px 0 0 16px;
-}
-
-.tab-pane.v-column .tab-content {
-    padding: 1em 0 0 0;
-}
-
-.tab-pane.v-column .tab-container .tab {
-    padding: 0;
-    height: 2em;
-    width: 4.5em;
-    background: none;
-    flex-direction: column;
-    color: var(--tab-horizontal-text-base);
-}
-
-.tab-pane.v-column .tab-container .tab:not(:last-child) {
-    margin: 0 2.5em 0 0;
-}
-
-.tab-pane.v-column .tab-container .tab:after {
-    content: '';
-    height: 3px;
-    width: 100%;
-    display: block;
-    transform: scaleX(0);
-    margin: 0.25em 0 0 0;
-    background: var(--tab-horizontal-fill-base);
-    transition: transform 0.3s ease-in-out;
-}
-
-.tab-pane.v-column .tab-container .tab:hover:after {
-    transform: scaleX(1);
-}
-
-.tab-pane.v-column .tab-container .tab.active {
-    color: var(--tab-horizontal-text-active);
-}
-
-.tab-pane.v-column .tab-container .tab.active:after {
-    transform: none;
-    transition: none;
 }
 
 /********************* MediaControl(Footer) **********************/

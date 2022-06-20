@@ -1,8 +1,10 @@
 <template>
-  <div class='v-row' style='margin:0 8px 12px 0; gap:8px; flex-wrap:wrap;'>
-    <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em' @click='playSelect'/>
+  <div class='v-row' style='margin:0 8px 12px 0; gap:8px; flex-wrap:wrap;--button-icon-size: 1.5em;'>
+    <hl-button icon="play-select" @click="playSelect">播放全部</hl-button>
+
     <popover closeable>
-      <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
+      <hl-button icon="plus">添加到</hl-button>
+
       <template v-slot:content>
         <div class='dropdown-item separator first'>我的收藏</div>
         <div class='dropdown-item last'>添加到新歌单</div>
@@ -18,17 +20,16 @@
         <div class='dropdown-item last'>添加到新歌单</div>
       </template>
     </popover>
-    <!--    <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>-->
-    <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
-    <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
-    <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em'
-            @click='multiple = !multiple'/>
+
+    <hl-button icon="my-download">下载</hl-button>
+    <hl-button icon='trash' icon-size='1.5em'>删除</hl-button>
+    <hl-button icon="multiple" @click="multiple = !multiple">{{ multiple ? '退出批量操作' : '批量操作' }}</hl-button>
 
     <text-field v-model='inputKey' placeholder='搜索本地歌曲' @input='handleMusicFilter' style='margin:0 0 0 auto'/>
 
-    <Button text='导入歌曲' @click='onImportButtonClicked' prefixIcon='import' prefixIconSize='1.5em'/>
+    <hl-button icon='import' @click='onImportButtonClicked'>导入歌曲</hl-button>
     <input type='file' style='display:none' ref='fileChooser' multiple accept='audio/*' @change='addMusic'/>
-    <Button text='排序方式' prefixIcon='sort' prefixIconSize='1.2em'/>
+    <hl-button icon="sort" style="--button-icon-size: 1.2em">排序方式</hl-button>
   </div>
 
   <table-view style='flex:auto;' :columns='columns' :data='list' :selection="multiple" @row-dblclick='playMediaList'/>
@@ -53,14 +54,14 @@ export default defineComponent({
     const multiple = ref(false);
     const list = reactive<Song[]>([]);
 
-    const columns = reactive<TableColumn[]>([
+    const columns: TableColumn[] = [
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title'},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
       {title: '时长', property: 'duration', width: '100px'},
       {title: '大小', property: 'size', width: '100px'}
-    ]);
+    ];
 
     const fileChooser = ref(null as unknown as HTMLInputElement);
 

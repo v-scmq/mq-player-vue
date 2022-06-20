@@ -12,55 +12,50 @@
         <span class='statistic-item'>粉丝：{{ singer.fansCount || '-' }}</span>
       </div>
 
-      <div class='v-row'>
-        <Button text='播放全部' prefixIcon='play-select' prefixIconSize='1.5em'/>
-        <Button text="添加到" prefixIcon='plus' prefixIconSize='1.5em'/>
-        <Button text="下载" prefixIcon='my-download' prefixIconSize='1.5em'/>
-
-        <Button text="删除" prefixIcon='trash' prefixIconSize='1.5em'/>
-        <Button :text="multiple ? '退出批量操作':'批量操作'" prefixIcon='multiple' prefixIconSize='1.5em'/>
+      <div class='v-row' style="--button-icon-size: 1.5em">
+        <hl-button icon='play-select'>播放全部</hl-button>
+        <hl-button icon='plus'>添加到</hl-button>
+        <hl-button icon='my-download'>下载</hl-button>
+        <hl-button icon='trash'>删除</hl-button>
+        <hl-button icon='multiple' @click='multiple = !multiple'>{{ multiple ? '退出批量操作' : '批量操作' }}</hl-button>
       </div>
     </div>
   </div>
 
-  <div class='tab-pane v-column'>
-    <div class='v-row tab-container' style='justify-content:center;'>
-
-      <div class='tab' v-for='(tab,index) in tabMap.tabList' :key='index'
-           :class='{active: tabMap.value === tab}' @click='tabMap.value = tab'>
-        {{ tab.title }}
-      </div>
-    </div>
-
-    <div class='tab-content v-column'>
-      <table-view :columns='columns' :data='songList' style='flex:auto;' @row-dblclick='playMediaList'
-                  v-show='tabMap.value===tabMap.SONG_TAB' @infinite-scroll='loadDataList'>
-        <template v-slot:title='{item}'>
+  <tab-pane :tabs="tabs" :activeTabName="activeTabName" @tabChange="handleTabChanged">
+    <template #song>
+      <table-view style='flex:auto;' :selection='multiple' :columns='columns' :data='songList'
+                  @row-dblclick='playMediaList' @infinite-scroll='loadDataList'>
+        <template #title='{item}'>
           <span class='cell-text'>{{ item.title }}</span>
           <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
           <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
         </template>
 
-        <template v-slot:singer='{item:{singer:singers = []}}'>
+        <template #singer='{item:{singer:singers = []}}'>
         <span class='link cell-text' v-for='(singer, index) in singers' :key='index'
               :data-mid='singer.mid'>{{ singer.name }}</span>
         </template>
 
-        <template v-slot:album='{item:{album}}'>
+        <template #album='{item:{album}}'>
           <span class='link cell-text' :data-mid='album.mid' v-if='album'>{{ album.name }}</span>
         </template>
       </table-view>
+    </template>
 
-      <grid-view cell-widths='repeat(auto-fit, 13em)' v-show='tabMap.value===tabMap.ALBUM_TAB' :data='albumList'
-                 @infinite-scroll='loadAlbumData' :cell-height='234' @cell-click='onAlbumItemClicked'>
+    <template #album>
+      <grid-view cell-widths='repeat(auto-fit, 13em)' :data='albumList' :cell-height='234'
+                 @infinite-scroll='loadAlbumData' @cell-click='onAlbumItemClicked'>
         <template v-slot='{item}'>
           <image-view v-model='item.cover' defaultValue='icon/album.png'/>
           <div class='name'>{{ item.name }}</div>
         </template>
       </grid-view>
+    </template>
 
+    <template #mv>
       <grid-view class='arc-rect' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
-                 :cell-height='206' @infinite-scroll='loadMvData' v-show='tabMap.value===tabMap.MV_TAB'>
+                 :cell-height='206' @infinite-scroll='loadMvData'>
         <template v-slot='{item}'>
           <image-view v-model='item.cover' defaultValue='icon/mv.png'/>
           <div>
@@ -71,16 +66,18 @@
           </div>
         </template>
       </grid-view>
+    </template>
 
+    <template #special>
       <grid-view style='margin-top:1em' cell-widths='repeat(auto-fit, 13em)' :cell-height='234' :data='specialList'
-                 v-show='tabMap.value===tabMap.SPECIAL_TAB' @infinite-scroll='loadSpecialData'>
+                 @infinite-scroll='loadSpecialData'>
         <template v-slot='{item}'>
           <image-view v-model='item.cover' defaultValue='icon/special.png'/>
           <div class='name'>{{ item.name }}</div>
         </template>
       </grid-view>
-    </div>
-  </div>
+    </template>
+  </tab-pane>
 </template>
 
 <script lang='ts'>
@@ -94,12 +91,15 @@ import {searchAlbum, searchMv, searchSinger, searchSong, searchSpecial} from '..
 import {PropType, reactive, watch, defineComponent, ref} from 'vue';
 import {useRouter} from 'vue-router';
 
+type TabName = 'song' | 'album' | 'mv' | 'special';
+
 /**
  * 选项卡信息
  */
 type Tab = {
   /** 选项卡标题 */
   title: string;
+  name: TabName;
   /** 数据是否需要更新 */
   update: boolean;
   /** 选项卡对应的视图是分页信息 */
@@ -120,20 +120,21 @@ export default defineComponent({
     const albumList = reactive<Album[]>([]);
     const specialList = reactive<Special[]>([]);
 
-    const MV_TAB: Tab = {title: 'MV', update: true, page: {current: 1, size: 30} as ComputedPage};
-    const SONG_TAB: Tab = {title: '歌曲', update: true, page: {current: 1, size: 30} as ComputedPage};
-    const ALBUM_TAB: Tab = {title: '专辑', update: true, page: {current: 1, size: 30} as ComputedPage};
-    const SPECIAL_TAB: Tab = {title: '歌单', update: true, page: {current: 1, size: 30} as ComputedPage};
-    const tabList = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
-    const tabMap = reactive({value: SONG_TAB, tabList, SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB});
+    const MV_TAB = {title: 'MV', name: 'mv', update: true, page: {current: 1, size: 30}} as Tab;
+    const SONG_TAB = {title: '歌曲', name: 'song', update: true, page: {current: 1, size: 30}} as Tab;
+    const ALBUM_TAB = {title: '专辑', name: 'album', update: true, page: {current: 1, size: 30}} as Tab;
+    const SPECIAL_TAB = {title: '歌单', name: 'special', update: true, page: {current: 1, size: 30}} as Tab;
 
-    const columns = reactive<TableColumn[]>([
+    const tabs = [SONG_TAB, ALBUM_TAB, MV_TAB, SPECIAL_TAB];
+    const activeTabName = ref<TabName>('song');
+
+    const columns: TableColumn[] = [
       {type: 'index', width: '100px'},
       {title: '歌曲', property: 'title', flex: true},
       {title: '歌手', property: 'singer'},
       {title: '专辑', property: 'album'},
       {title: '时长', property: 'duration', width: '100px'}
-    ]);
+    ];
 
     const multiple = ref(false);
 
@@ -147,59 +148,64 @@ export default defineComponent({
      * @param newTab 新选定的选项卡
      */
     const handleTabChanged = (newTab: Tab) => {
+      activeTabName.value = newTab.name;
+
       // 若未选定任何一个选项卡 或 当前选项卡无需更新数据, 则什么也不做
-      if (!newTab || !newTab.update) return;
+      if (!newTab.update) {
+        return;
+      }
+
+      // 打开进度指示器
+      Spinner.open();
+
       // 立刻重置为无需更新状态
       newTab.update = false;
 
-      // 若选定歌曲选项卡
-      if (newTab === tabMap.SONG_TAB) {
-        // 打开进度指示器
-        Spinner.open();
+      // 分页信息
+      const page = newTab.page as ComputedPage;
 
+      // 若选定歌曲选项卡
+      if (newTab.name === SONG_TAB.name) {
         // 搜索歌手 => 处理并展示歌手基本数据 => 歌曲搜索 => 显示歌曲数据 => 关闭进度指示器
         searchSinger($query).then(data => {
           const [singerInfo] = data.list || [];
           singerInfo && Object.assign(singer, singerInfo);
 
-          return searchSong(newTab.page, $query);
+          return searchSong(page, $query);
 
         }).then(data => {
           // 修改分页信息
-          data.page && Object.assign(newTab.page, data.page);
+          data.page && Object.assign(page, data.page);
           // 添加歌曲
           songList.splice(0, songList.length, ...data.list);
 
         }).catch(() => newTab.update = true).finally(Spinner.close);
 
-      } else if (newTab === tabMap.ALBUM_TAB) {
+      } else if (newTab.name === ALBUM_TAB.name) {
         Spinner.open();
 
-        searchAlbum(newTab.page, $query).then(data => {
+        searchAlbum(page, $query).then(data => {
           // 修改分页信息
-          data.page && Object.assign(newTab.page, data.page);
+          data.page && Object.assign(page, data.page);
           // 添加专辑
           albumList.splice(0, albumList.length, ...data.list);
 
         }).finally(Spinner.close);
 
-      } else if (newTab === tabMap.MV_TAB) {
-        Spinner.open();
-        searchMv(newTab.page, $query).then(data => {
+      } else if (newTab.name === MV_TAB.name) {
+        searchMv(page, $query).then(data => {
           // 修改分页信息
-          data.page && Object.assign(newTab.page, data.page);
+          data.page && Object.assign(page, data.page);
 
           // 添加Mv
           mvList.splice(0, mvList.length, ...data.list);
 
         }).catch(() => newTab.update = true).finally(Spinner.close);
 
-      } else if (newTab === tabMap.SPECIAL_TAB) {
-        // 打开进度指示器
-        Spinner.open();
-        searchSpecial(newTab.page, $query).then(data => {
+      } else if (newTab.name === SPECIAL_TAB.name) {
+        searchSpecial(page, $query).then(data => {
           // 修改分页信息
-          data.page && Object.assign(newTab.page, data.page);
+          data.page && Object.assign(page, data.page);
 
           // 添加歌单
           specialList.splice(0, specialList.length, ...data.list);
@@ -208,13 +214,11 @@ export default defineComponent({
       }
     };
 
-    watch(() => tabMap.value, handleTabChanged);
-
     watch(() => props.query, newQuery => {
       // 若不相等 且 新的查询参数是有效的(不能null或undefined)
       if (newQuery.value && $query !== newQuery.value) {
         $query = newQuery.value;
-        tabMap.tabList.forEach(tab => {
+        tabs.forEach(tab => {
           tab.update = true;
           // 清除分页数据
           tab.page.total = 0;
@@ -222,18 +226,14 @@ export default defineComponent({
           tab.page.pageCount = 0;
         });
 
-        // 若当前是歌曲选项卡,则手动调用handleChange方法处理
-        if (tabMap.value === tabMap.SONG_TAB) {
-          handleTabChanged(tabMap.SONG_TAB);
-        } else {
-          // 否则通过改变选项卡 触发handleChange方法
-          tabMap.value = tabMap.SONG_TAB;
-        }
+        handleTabChanged(SONG_TAB);
       }
     }, {immediate: true});
 
     return {
-      tabMap, singer, columns, songList, albumList, mvList, specialList, multiple,
+      tabs, activeTabName, singer, columns, songList, albumList, mvList, specialList, multiple,
+
+      handleTabChanged,
 
       playMediaList,
 
@@ -256,7 +256,7 @@ export default defineComponent({
       },
 
       loadDataList() {
-        const page = tabMap.SONG_TAB.page;
+        const page = SONG_TAB.page;
 
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
@@ -275,7 +275,7 @@ export default defineComponent({
 
       /** 加载数据到视图上(无限滚动触发点) */
       loadAlbumData() {
-        const page = tabMap.MV_TAB.page;
+        const page = MV_TAB.page;
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
           Spinner.open();
@@ -294,7 +294,7 @@ export default defineComponent({
 
       /** 加载数据到视图上(无限滚动触发点) */
       loadMvData() {
-        const page = tabMap.MV_TAB.page;
+        const page = MV_TAB.page;
 
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
@@ -315,7 +315,7 @@ export default defineComponent({
 
       /** 加载数据到视图上(无限滚动触发点) */
       loadSpecialData() {
-        const page = tabMap.SPECIAL_TAB.page;
+        const page = SPECIAL_TAB.page;
 
         // 若还有数据, 则发起网络请求加载歌曲数据列表
         if (page.current >= 1 && page.current < page.pageCount) {
