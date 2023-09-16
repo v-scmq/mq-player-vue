@@ -1,191 +1,215 @@
 <template>
-  <teleport :to="notTeleported ? 'body' : '.music-viewer' " :disabled='notTeleported'>
-    <div class='v-column media-control' :class='{viewer}'>
-      <slider v-model='media.timeValue' ref='progressSlider' :buffering='media.buffered' @change='valueChanged'/>
+  <teleport :to="notTeleported ? 'body' : '.music-viewer'" :disabled="notTeleported">
+    <div class="v-column media-control" :class="{ viewer }">
+      <slider v-model="media.timeValue" ref="progressSlider" :buffering="media.buffered" @change="valueChanged" />
 
-      <div class='v-row' style='justify-content:space-between;'>
+      <div class="v-row" style="justify-content: space-between">
         <!-- 左侧部分 -->
-        <div class='v-row' style='flex:1;gap:8px;padding:0 0 0 8px;' v-if='viewer'>
-          <icon name='heart' width='2em' height='2em'/>
-          <icon name='download' width='2em' height='2em'/>
-          <icon name='more' width='1.8em' height='1.8em'/>
-          <icon name='comment-fill' width='1.8em' height='1.8em'/>
+        <div class="v-row" style="flex: 1; gap: 8px; padding: 0 0 0 8px" v-if="viewer">
+          <icon name="heart" width="2em" height="2em" />
+          <icon name="download" width="2em" height="2em" />
+          <icon name="more" width="1.8em" height="1.8em" />
+          <icon name="comment-fill" width="1.8em" height="1.8em" />
 
           <span>{{ media.time }}</span>
           <span>/</span>
           <span>{{ media.duration }}</span>
         </div>
 
-        <div class='v-row' style='flex:1' v-else>
-          <image-view class='album-icon' v-model='media.cover' defaultValue='icon/default_cover.jpg'
-                      @click='openViewer'/>
+        <div class="v-row" style="flex: 1" v-else>
+          <image-view
+            class="album-icon"
+            v-model="media.cover"
+            defaultValue="icon/default_cover.jpg"
+            @click="openViewer"
+          />
 
-          <div class='v-column'>
-            <div class='v-row data-media' style='gap:8px'>
-              <span class='link'>{{ media.singer }}</span>
-              <span v-if='media.hasLine'>-</span>
-              <span class='link'>{{ media.title }}</span>
+          <div class="v-column">
+            <div class="v-row data-media" style="gap: 8px">
+              <span class="link">{{ media.singer }}</span>
+              <span v-if="media.hasLine">-</span>
+              <span class="link">{{ media.title }}</span>
             </div>
 
-            <div class='v-row'>
+            <div class="v-row">
               <span>{{ media.time }}</span>
-              <span style='margin:0 4px;'>/</span>
+              <span style="margin: 0 4px">/</span>
               <span>{{ media.duration }}</span>
             </div>
           </div>
         </div>
 
         <!-- 中间部分 -->
-        <div class='v-row' style='gap:8px;'>
+        <div class="v-row" style="gap: 8px">
           <!-- 播放模式 -->
-          <popover class='v-column mode-control arrow' closeable :gap='16'>
-            <icon id='mode' width='2em' height='2em' :name='modeIcon'/>
+          <popover class="v-column mode-control arrow" closeable :gap="16">
+            <icon id="mode" width="2em" height="2em" :name="modeIcon" />
 
             <template v-slot:content>
-              <div class='v-row' @click="modeIcon = 'list-loop' ">
-                <icon width='2em' height='2em' name='list-loop'/>
-                <span class='title'>列表循环</span>
+              <div class="v-row" @click="modeIcon = 'list-loop'">
+                <icon width="2em" height="2em" name="list-loop" />
+                <span class="title">列表循环</span>
               </div>
-              <div class='v-row' @click="modeIcon = 'order' ">
-                <icon width='2em' height='2em' name='order'/>
-                <span class='title'>顺序播放</span>
+              <div class="v-row" @click="modeIcon = 'order'">
+                <icon width="2em" height="2em" name="order" />
+                <span class="title">顺序播放</span>
               </div>
-              <div class='v-row' @click="modeIcon = 'single-loop' ">
-                <icon width='2em' height='2em' name='single-loop'/>
-                <span class='title'>单曲循环</span>
+              <div class="v-row" @click="modeIcon = 'single-loop'">
+                <icon width="2em" height="2em" name="single-loop" />
+                <span class="title">单曲循环</span>
               </div>
-              <div class='v-row' @click="modeIcon = 'random' ">
-                <icon width='2em' height='2em' name='random'/>
-                <span class='title'>随机播放</span>
+              <div class="v-row" @click="modeIcon = 'random'">
+                <icon width="2em" height="2em" name="random" />
+                <span class="title">随机播放</span>
               </div>
             </template>
           </popover>
 
           <!-- 上一首 -->
-          <icon width='2em' height='2em' name='previous' @click='play(getIndex(false),false)'/>
+          <icon width="2em" height="2em" name="previous" @click="play(getIndex(false), false)" />
           <!-- 播放或暂停 -->
-          <icon width='3em' height='3em' :name="isPlaying ? 'pause' : 'play' " @click='togglePlay'/>
+          <icon width="3em" height="3em" :name="isPlaying ? 'pause' : 'play'" @click="togglePlay" />
           <!-- 下一首 -->
-          <icon width='2em' height='2em' name='next' @click='play(getIndex(true),false)'/>
+          <icon width="2em" height="2em" name="next" @click="play(getIndex(true), false)" />
 
           <!-- 音量 -->
-          <popover class='v-column volume-control arrow' :gap='16' @wheel='onVolumeScroll'>
-            <icon id='volume' width='2em' height='2em' :name="volume === 0 ? 'mute' : 'volume' "/>
+          <popover class="v-column volume-control arrow" :gap="16" @wheel="onVolumeScroll">
+            <icon id="volume" width="2em" height="2em" :name="volume === 0 ? 'mute' : 'volume'" />
             <template v-slot:content>
-              <slider vertical v-model='volume' style='flex:1' @change='handleVolumeChange'/>
+              <slider vertical v-model="volume" style="flex: 1" @change="handleVolumeChange" />
               <span>{{ (volume * 100).toFixed(0) }}%</span>
             </template>
           </popover>
         </div>
 
         <!--  右侧部分 -->
-        <div class='v-row' style='flex:1;justify-content:flex-end;gap:8px;padding:0 8px 0 0'>
-          <popover class='v-row speed-control arrow' :gap='16' @wheel='onSpeedPaneScroll'>
+        <div class="v-row" style="flex: 1; justify-content: flex-end; gap: 8px; padding: 0 8px 0 0">
+          <popover class="v-row speed-control arrow" :gap="16" @wheel="onSpeedPaneScroll">
             <!-- 「设 y = ax + b, 由 0.5 = 0a + b 且 2.0 = 1a + b」 => 「y = 1.5x + 0.5」-->
-            <div class='stroke-icon'>{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
+            <div class="stroke-icon">{{ (1.5 * speed + 0.5).toFixed(1) }}X</div>
             <template v-slot:content>
-              <slider vertical v-model='speed' @change='handleSpeedChange'/>
-              <div class='v-column' style='justify-content:space-between;'>
+              <slider vertical v-model="speed" @change="handleSpeedChange" />
+              <div class="v-column" style="justify-content: space-between">
                 <span>2.0</span><span>1.5</span><span>1.0</span><span>0.5</span>
               </div>
             </template>
           </popover>
 
-          <template v-if='viewer'>
-            <div class='stroke-icon'>写真</div>
-            <div class='stroke-icon'>音质</div>
-            <div class='stroke-icon'>音效</div>
+          <template v-if="viewer">
+            <div class="stroke-icon">写真</div>
+            <div class="stroke-icon">音质</div>
+            <div class="stroke-icon">音效</div>
           </template>
 
           <template v-else>
-            <icon name='heart' width='2em' height='2em'/>
-            <icon name='download' width='2em' height='2em'/>
+            <icon name="heart" width="2em" height="2em" />
+            <icon name="download" width="2em" height="2em" />
           </template>
 
-          <popover class='v-column play-queue' placement='right'>
-            <icon name='playlist' width='2em' height='2em'/>
+          <popover class="v-column play-queue" placement="right">
+            <icon name="playlist" width="2em" height="2em" />
             <template v-slot:content>
-              <div class='v-row title'>
+              <div class="v-row title">
                 <span>播放队列</span>
-                <icon name='close' class='--popover-close' width='1.4em' height='1.4em'/>
+                <icon name="close" class="--popover-close" width="1.4em" height="1.4em" />
               </div>
 
-              <div class='v-row option-bar' style="--button-icon-size: 1.5em">
-                <template v-if='multiple'>
+              <div class="v-row option-bar" style="--button-icon-size: 1.5em">
+                <template v-if="multiple">
                   <popover>
-                    <hl-button icon='plus'>添加到</hl-button>
+                    <hl-button icon="plus">添加到</hl-button>
                     <template v-slot:content>
-                      <div class='dropdown-item separator first'>我的收藏</div>
-                      <div class='dropdown-item last'>添加到新歌单</div>
+                      <div class="dropdown-item separator first">我的收藏</div>
+                      <div class="dropdown-item last">添加到新歌单</div>
                     </template>
                   </popover>
 
-                  <hl-button icon='my-download'>下载</hl-button>
-                  <hl-button icon='trash'>删除</hl-button>
-                  <hl-button icon='multiple' @click='onMultiple'>退出批量操作</hl-button>
+                  <hl-button icon="my-download">下载</hl-button>
+                  <hl-button icon="trash">删除</hl-button>
+                  <hl-button icon="multiple" @click="onMultiple">退出批量操作</hl-button>
                 </template>
 
                 <template v-else>
-                  <hl-button icon='trash' v-if='!multiple'>清空</hl-button>
-                  <hl-button icon='multiple' @click='onMultiple'>批量操作</hl-button>
+                  <hl-button icon="trash" v-if="!multiple">清空</hl-button>
+                  <hl-button icon="multiple" @click="onMultiple">批量操作</hl-button>
                 </template>
               </div>
 
-              <table-view style='flex:1;margin:0 0 0 8px' :columns='columns' :data='playList' :selection="multiple">
-                <template v-slot:title='{item}'>
-                  <span class='cell-text'>{{ item.title }}</span>
-                  <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
-                  <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
+              <table-view :columns="columns" :data="playList" :selection="multiple">
+                <template #title="{ item }">
+                  <span class="cell-text">{{ item.title }}</span>
+                  <icon class="vip-icon" name="vip" width="1em" height="1em" v-if="item.vip" />
+                  <icon class="mv-icon" name="mv" width="1em" height="1em" v-if="item.vid" />
+                </template>
+
+                <template #singer="{ item: { singer: singers } }">
+                  <span class="link cell-text" v-if="!Array.isArray(singers)">
+                    {{ singers }}
+                  </span>
+
+                  <span
+                    class="link cell-text"
+                    v-else
+                    v-for="(singer, index) in singers"
+                    :key="index"
+                    :data-mid="singer.mid"
+                    >{{ singer.name }}</span
+                  >
                 </template>
               </table-view>
             </template>
           </popover>
         </div>
       </div>
-
     </div>
   </teleport>
 
-  <teleport to='body' v-if='viewer'>
-    <music-viewer :cover='media.cover' @close='closeViewer'>
+  <teleport to="body" v-if="viewer">
+    <music-viewer :cover="media.cover" @close="closeViewer">
       <template v-slot:song>
-        <div class='v-row data-media'>
-          <span class='link'>{{ media.singer }}</span>
-          <span v-if='media.hasLine'>-</span>
-          <span class='link'>{{ media.title }}</span>
-          <icon class='mv-icon link' name='mv' v-if='media.vid'/>
+        <div class="v-row data-media">
+          <span class="link">{{ media.singer }}</span>
+          <span v-if="media.hasLine">-</span>
+          <span class="link">{{ media.title }}</span>
+          <icon class="mv-icon link" name="mv" v-if="media.vid" />
         </div>
       </template>
     </music-viewer>
   </teleport>
-
 </template>
 
-<script lang='ts'>
-import {getLyric} from '../api';
-import {db, tables} from '../database';
-import {Status} from '../player';
-import {useMediaPlayer} from '../player/hooks';
-import Message from '../components/Message';
-import {secondToString, sleep} from '../../utils';
+<script lang="ts">
+import { getLyric } from '@/api';
+import { db, tables } from '@/database';
+import { Status } from '@/player';
+import { useMediaPlayer } from '@/player/hooks';
+import {Message} from '@/components/Message';
+import { secondToString, sleep } from '@/utils';
 
 import MusicViewer from './MusicViewer.vue';
 
-import {defineComponent, reactive, ref, nextTick, readonly, provide, onBeforeUnmount} from 'vue';
+import { defineComponent, reactive, ref, nextTick, readonly, provide, onBeforeUnmount } from 'vue';
 
-import {LyricLine} from '../../types';
-import {TableColumn} from '../components/types';
+import { LyricLine } from '@/types';
+import { TableColumn } from '@/components/types';
 
 export default defineComponent({
   name: 'MediaControl',
 
-  components: {MusicViewer},
+  components: { MusicViewer },
 
   setup() {
     const currentMedia = reactive({
-      timeValue: 0, buffered: 0, time: '00:00', duration: '00:00',
-      singer: 'MQ音乐', title: '聆听世界', album: '未知', cover: '', vid: 1,
-      hasLine: false,
+      timeValue: 0,
+      buffered: 0,
+      time: '00:00',
+      duration: '00:00',
+      singer: 'MQ音乐',
+      title: '聆听世界',
+      album: '未知',
+      cover: '',
+      vid: 1,
+      hasLine: false
     });
 
     // 是否正在播放
@@ -212,14 +236,14 @@ export default defineComponent({
     const multiple = ref(false);
 
     const columns: TableColumn[] = [
-      {type: 'index', width: '80px'},
-      {title: '歌曲', property: 'title', width: '1.6fr', flex: true},
-      {title: '歌手', property: 'singerName'},
-      {title: '时长', property: 'duration', width: '80px'}
+      { type: 'index', width: '80px' },
+      { title: '歌曲', property: 'title', width: '1.6fr', flex: true },
+      { title: '歌手', property: 'singer' },
+      { title: '时长', property: 'duration', width: '80px' }
     ];
 
     // 歌词信息
-    const lyrics = reactive({list: [] as LyricLine[], playedTime: 0});
+    const lyrics = reactive({ list: [] as LyricLine[], playedTime: 0 });
 
     // 提供给LyricView组件所使用的歌词信息
     provide('lyrics', readonly(lyrics));
@@ -233,21 +257,21 @@ export default defineComponent({
      * 获取播放器媒体播放索引
      *
      * @param next true:生成下一个索引,false:生成上一个索引
-     * @return {number} 新的播放索引. 若返回{@code -1},则表示没有播放数据源,若返回{@code -2},则表示顺序播放结束
      */
     const getIndex = (next: boolean) => {
-      let index = playIndex.value, size = playList.length;
+      let index = playIndex.value,
+        size = playList.length;
 
       // 列表循环
       if (modeIcon.value === 'list-loop') {
-        return next ? (++index >= size ? 0 : index) : (--index < 0 ? --size : index);
+        return next ? (++index >= size ? 0 : index) : --index < 0 ? --size : index;
       }
 
       // 顺序播放
       if (modeIcon.value === 'order') {
         // 若生成下一个索引,则直接增加;
         // 若生成上一个且生成的索引小于0时返回不等于-1且小于0的整数,表示列表播放完毕
-        return next ? (++index >= size ? -2 : index) : (--index < 0 ? -2 : index);
+        return next ? (++index >= size ? -2 : index) : --index < 0 ? -2 : index;
       }
 
       // 随机播放
@@ -327,15 +351,19 @@ export default defineComponent({
       mediaChanged(media) {
         currentMedia.title = media.title;
 
-        let singer = media.singer, album = media.album;
+        let singer = media.singer,
+          album = media.album;
 
-        currentMedia.singer = ((singer instanceof Array)
-            ? singer.map(item => item.name).join('/')
-            : (singer instanceof Object ? singer.name : singer)) || '未知';
+        currentMedia.singer =
+          (singer instanceof Array
+            ? singer.map((item) => item.name).join('/')
+            : singer instanceof Object
+            ? singer.name
+            : singer) || '未知';
 
         currentMedia.hasLine = true;
 
-        currentMedia.cover = (album instanceof Object) ? album.cover : media.cover;
+        currentMedia.cover = album instanceof Object ? album.cover : media.cover;
 
         currentMedia.vid = media.vid;
 
@@ -344,10 +372,10 @@ export default defineComponent({
         list.length > 0 && list.splice(0, list.length);
 
         type LyricRowData = {
-          id: string | number,
-          mid: string | number,
-          list: LyricLine[],
-          [key: string]: any,
+          id: string | number;
+          mid: string | number;
+          list: LyricLine[];
+          [key: string]: any;
         };
 
         // 使否来自数据源接口
@@ -355,36 +383,40 @@ export default defineComponent({
 
         // 先尝试从indexedDB中获取歌词
         const promise = fromDataSource
-            // 若是网络资源
-            ? db.queryOfFilter<LyricRowData>(tables.lyrics, data =>
-                data.id === media.id && data.mid === media.mid)
+          ? // 若是网络资源
+            db.queryOfFilter<LyricRowData>(tables.lyrics, (data) => data.id === media.id && data.mid === media.mid)
+          : // 若是本地资源
+            db.queryOfFilter<LyricRowData>(
+              tables.lyrics,
+              (data) => data.title === currentMedia.title && data.singer === currentMedia.singer
+            );
 
-            // 若是本地资源
-            : db.queryOfFilter<LyricRowData>(tables.lyrics, data =>
-                data.title === currentMedia.title && data.singer === currentMedia.singer);
+        promise
+          .then((data) => {
+            // 若存在歌词, 添加到歌词列表
+            if (data && data.length > 0) {
+              list.push(...data[0].list);
+            }
+          })
+          .finally(() => {
+            // 若未找到歌词 且 来自数据源接口
+            if (list.length < 1 && fromDataSource) {
+              // 从数据源api获取歌词
+              getLyric(media).then((data) => {
+                if (data.length > 0) {
+                  list.push(...data);
 
-        promise.then(data => {
-          // 若存在歌词, 添加到歌词列表
-          if (data && data.length > 0) {
-            list.push(...data[0].list);
-          }
-
-        }).finally(() => {
-          // 若未找到歌词 且 来自数据源接口
-          if (list.length < 1 && fromDataSource) {
-            // 从数据源api获取歌词
-            getLyric(media).then(data => {
-              if (data.length > 0) {
-                list.push(...data);
-
-                db.insert<LyricRowData>(tables.lyrics, {
-                  id: media.id, mid: media.mid, list: data,
-                  title: currentMedia.title, singer: currentMedia.singer
-                });
-              }
-            });
-          }
-        });
+                  db.insert<LyricRowData>(tables.lyrics, {
+                    id: media.id,
+                    mid: media.mid,
+                    list: data,
+                    title: currentMedia.title,
+                    singer: currentMedia.singer
+                  });
+                }
+              });
+            }
+          });
       },
 
       bufferChanged(value) {
@@ -406,8 +438,20 @@ export default defineComponent({
     onBeforeUnmount(() => player.release());
 
     return {
-      media: currentMedia, isPlaying, volume, speed, modeIcon, progressSlider,
-      viewer, notTeleported, multiple, columns, playIndex, playList, getIndex, play,
+      media: currentMedia,
+      isPlaying,
+      volume,
+      speed,
+      modeIcon,
+      progressSlider,
+      viewer,
+      notTeleported,
+      multiple,
+      columns,
+      playIndex,
+      playList,
+      getIndex,
+      play,
 
       openViewer() {
         viewer.value = true;
@@ -429,14 +473,11 @@ export default defineComponent({
         volume.value = value < 0 ? 0 : value > 1 ? 1 : value;
       },
 
-
       /**
        * 播放或暂停
        */
       togglePlay() {
-        player.isPlayable()
-            ? (player.isPlaying() ? player.pause() : player.play())
-            : play(playIndex.value, false);
+        player.isPlayable() ? (player.isPlaying() ? player.pause() : player.play()) : play(playIndex.value, false);
       },
 
       /**
@@ -480,16 +521,14 @@ export default defineComponent({
         const value = newValue * player.getDuration();
 
         // 重设歌词播放时间点
-        currentMedia.time = secondToString(lyrics.playedTime = value);
+        currentMedia.time = secondToString((lyrics.playedTime = value));
         // 若未在拖动滑动条, 则跳到指定时间播放
         seek && player.status !== Status.UNKNOWN && player.seek(value);
       },
 
       /** 开始或结束批量操作 */
-      onMultiple: () => void (multiple.value = !multiple.value),
-
+      onMultiple: () => void (multiple.value = !multiple.value)
     };
   }
-
 });
 </script>

@@ -1,27 +1,35 @@
 <template>
-  <div class='popover-trigger' ref='el'>
+  <div class="popover-trigger" ref="el">
     <slot></slot>
 
-    <div v-bind='$attrs' ref='popover' class='popover' :class='{expand}' :style='style' v-if='visible'
-         :data-placement='placementRef' @click='onClick' @transitionend='onAnimationEnd'>
-      <slot name='content'></slot>
+    <div
+      v-bind="$attrs"
+      ref="popover"
+      class="popover"
+      :class="{ expand }"
+      :style="style"
+      v-if="visible"
+      :data-placement="placementRef"
+      @click="onClick"
+      @transitionend="onAnimationEnd"
+    >
+      <slot name="content"></slot>
     </div>
   </div>
 </template>
 
-<script lang='ts'>
-import {defineComponent, nextTick, ref, onBeforeUnmount, PropType} from 'vue';
+<script lang="ts">
+import { defineComponent, nextTick, ref, onBeforeUnmount, PropType } from 'vue';
 
 /**
  * 弹出层的定位样式.
  */
 type PositionStyle = {
-  top?: string,
-  right?: string,
-  bottom?: string,
-  left?: string
-}
-
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
+};
 
 /**
  * 弹出层相对于触发源节点的方位.
@@ -37,10 +45,18 @@ type PositionStyle = {
  * </pre>
  */
 type Placement =
-    'top-start' | 'top' | 'top-end' |
-    'right-start' | 'right' | 'right-end' |
-    'bottom-start' | 'bottom' | 'bottom-end' |
-    'left-start' | 'left' | 'left-end';
+  | 'top-start'
+  | 'top'
+  | 'top-end'
+  | 'right-start'
+  | 'right'
+  | 'right-end'
+  | 'bottom-start'
+  | 'bottom'
+  | 'bottom-end'
+  | 'left-start'
+  | 'left'
+  | 'left-end';
 
 export default defineComponent({
   name: 'Popover',
@@ -52,9 +68,9 @@ export default defineComponent({
     /** 弹出层被点击后是否可关闭 */
     closeable: Boolean,
     /** 弹出层元素 和 触发元素 的间距 */
-    gap: {type: Number, default: 8},
+    gap: { type: Number, default: 8 },
     /** 弹出层相对于触发源节点的方位 */
-    placement: {type: String as PropType<Placement>}
+    placement: { type: String as PropType<Placement> }
   },
 
   setup(props) {
@@ -77,11 +93,11 @@ export default defineComponent({
     const computePosition = () => {
       const gap = props.gap;
 
-      const {top, left: x2, bottom, right, width: w2} = el.value.getBoundingClientRect();
+      const { top, left: x2, bottom, right, width: w2 } = el.value.getBoundingClientRect();
 
-      const {clientWidth: maxWidth, clientHeight: maxHeight} = document.body;
+      const { clientWidth: maxWidth, clientHeight: maxHeight } = document.body;
 
-      const {offsetWidth: w1, offsetHeight: h1} = popover.value;
+      const { offsetWidth: w1, offsetHeight: h1 } = popover.value;
 
       const styleValue: PositionStyle = {};
 
@@ -96,9 +112,8 @@ export default defineComponent({
       // 若能显示 或 在下方的高度大于在上方的高度
       if (value < maxHeight || top < bottomSpace) {
         styleValue.top = `${bottom + gap}px`;
-
       } else {
-        styleValue.bottom = `${(maxHeight - top) + gap}px`;
+        styleValue.bottom = `${maxHeight - top + gap}px`;
       }
 
       // 在目标元素的右边到可视窗口的宽度 => maxWidth - right
@@ -110,8 +125,7 @@ export default defineComponent({
 
       // 检测在目标元素的水平中央是否能够显示
       if (x2 > rightSpace) {
-        styleValue.right = `${(value += w1) >= maxWidth ? w1 : (maxWidth - value)}px`;
-
+        styleValue.right = `${(value += w1) >= maxWidth ? w1 : maxWidth - value}px`;
       } else {
         styleValue.left = `${Math.max(0, value)}px`;
       }
@@ -155,8 +169,7 @@ export default defineComponent({
       // 4.若弹出层已被展开 ;
       //   若不是鼠标设备的主按钮所点击 ;
       //   若点击的不是触发源节点 或是其子节点 .
-      if (expand.value /*|| (event as PointerEvent).button !== 0*/
-          || !el.value || !el.value.contains(element)) {
+      if (expand.value /*|| (event as PointerEvent).button !== 0*/ || !el.value || !el.value.contains(element)) {
         // 关闭弹出层
         return void (expand.value = false);
       }
@@ -168,7 +181,6 @@ export default defineComponent({
       // 若未指定弹出层的位置, 则计算后得到定位样式和placement
       if (!props.placement) {
         nextTick(computePosition);
-
       } else {
         // 否则弹出层的位置由指定prop决定
         placementRef.value = props.placement || 'bottom';
@@ -182,7 +194,7 @@ export default defineComponent({
      *
      * @param event 指针设备点击事件
      */
-    const onClick = (event: PointerEvent) => {
+    const onClick = (event: PointerEvent | MouseEvent) => {
       if (props.closeable) {
         event.stopPropagation();
         expand.value = false;
@@ -208,8 +220,7 @@ export default defineComponent({
       window.removeEventListener('blur', eventHandler);
     });
 
-    return {el, popover, visible, expand, style, placementRef, onClick, onAnimationEnd};
+    return { el, popover, visible, expand, style, placementRef, onClick, onAnimationEnd };
   }
-
 });
 </script>

@@ -1,34 +1,44 @@
 <template>
-  <div class='accordion v-column' ref='el' :style="{'--accordion-scroll-wrapper-height':`${scrollWrapperHeight}px`}">
-    <div class='list-view v-column' v-for='(data, groupIndex) in list' @click='onClick($event, data, groupIndex)'
-         :class='{expand: expandedIndex === groupIndex}' :key='groupIndex'>
+  <div class="accordion v-column" ref="el" :style="{ '--accordion-scroll-wrapper-height': `${scrollWrapperHeight}px` }">
+    <div
+      class="list-view v-column"
+      v-for="(data, groupIndex) in list"
+      @click="onClick($event, data, groupIndex)"
+      :class="{ expand: expandedIndex === groupIndex }"
+      :key="groupIndex"
+    >
+      <div class="v-row titled-pane">{{ data.title }}</div>
 
-      <div class='v-row titled-pane'>{{ data.title }}</div>
-
-      <div class='v-column scroll-wrapper'>
-        <div class='item' v-for='(item, index) in data.items' :key='index' :data-index='index'
-             :class='{selected: selectedId === `${groupIndex}-${index}`}'>{{ item.name }}
+      <div class="v-column scroll-wrapper">
+        <div
+          class="item"
+          v-for="(item, index) in data.items"
+          :key="index"
+          :data-index="index"
+          :class="{ selected: selectedId === `${groupIndex}-${index}` }"
+        >
+          {{ item.name }}
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script lang='ts'>
-import {ref, defineComponent, onBeforeUnmount, onMounted, PropType} from 'vue';
+<script lang="ts">
+import { ref, defineComponent, onBeforeUnmount, onMounted, PropType } from 'vue';
 
-import {AccordionDataGroup} from './types';
+import { AccordionDataGroup } from './types';
 
 export default defineComponent({
   name: 'Accordion',
 
   props: {
-    list: {type: Array as PropType<AccordionDataGroup[]>, required: true}
+    list: { type: Array as PropType<AccordionDataGroup[]>, required: true }
   },
 
   emits: ['change'],
 
-  setup(props, {emit}) {
+  setup(_, { emit }) {
     // 组件高度
     const scrollWrapperHeight = ref(0);
     // 主列表项已展开的索引
@@ -44,11 +54,12 @@ export default defineComponent({
       // 当根元素宽高发生变化时,回调此方法以计算滚动盒子内部高度
       resizeObserver = new ResizeObserver(([entry]) => {
         // 获取组件根节点 和 组件根节点的高度
-        let node = entry.target as HTMLElement, height = node.offsetHeight;
+        let node = entry.target as HTMLElement,
+          height = node.offsetHeight;
         // 获取所有标题层子节点
         let nodes = node.querySelectorAll<HTMLElement>('.list-view .titled-pane');
         // 滚动高度 = 根节点高度 - 所有标题层子节点高度
-        nodes.forEach(node => height -= node.offsetHeight);
+        nodes.forEach(node => (height -= node.offsetHeight));
         // 设置滚动高度
         scrollWrapperHeight.value = height;
       });
@@ -66,7 +77,10 @@ export default defineComponent({
     });
 
     return {
-      el, scrollWrapperHeight, expandedIndex, selectedId,
+      el,
+      scrollWrapperHeight,
+      expandedIndex,
+      selectedId,
 
       /**
        * ListView被点击时触发
@@ -75,7 +89,7 @@ export default defineComponent({
        * @param data 所点击对应的数据项
        * @param index 所点击对应的数据项索引
        */
-      onClick: (event: PointerEvent, data: AccordionDataGroup, index: number) => {
+      onClick: (event: PointerEvent | MouseEvent, data: AccordionDataGroup, index: number) => {
         event.stopPropagation();
 
         const node = event.target as HTMLElement;
@@ -89,13 +103,11 @@ export default defineComponent({
             selectedId.value = newId;
             emit('change', data.items[itemIndex], data, index);
           }
-
         } else {
           // 若当前分类组已被展开,那么折叠它, 否则展开它
           expandedIndex.value = expandedIndex.value === index ? -1 : index;
         }
       }
-
     };
   }
 });

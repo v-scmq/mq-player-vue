@@ -91,7 +91,7 @@ export type Tab = {
     name: string;
 
     /* 若是router模式,则必须指定 */
-    path?: string;
+    path: string;
     /* 图标 */
     icon?: string;
 

@@ -102,3 +102,6 @@ src/renderer/api
 
 # 忽略public目录中的js文件
 public/*.js
+dist
+dist-electron
+release

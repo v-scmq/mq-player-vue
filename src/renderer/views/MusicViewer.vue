@@ -4,7 +4,7 @@
 
     <window-state-bar viewer style='flex:none;'>
       <!-- 关闭播放详情视图 -->
-      <icon name='arrow-down' style='margin:0 auto 0 0.5em;' @click='$emit("close")'/>
+      <icon name='arrow-down' style='margin:0 auto 0 0.5em;' @click='closeViewer'/>
     </window-state-bar>
 
     <div class='v-row' style='flex:1; align-items:stretch; overflow:hidden; margin:20px 0;'>
@@ -38,7 +38,7 @@ export default defineComponent({
 
   emits: ['close'],
 
-  setup() {
+  setup(props, {emit}) {
     // null值
     const nullValue: any = null;
     // canvas元素引用
@@ -77,18 +77,30 @@ export default defineComponent({
 
       const width = canvasWidth >> 1;
       const height = canvasHeight - 1;
-      // => length:1024 / 128 = 8
-      const step = dataArray.length >> 7;
-      const max = 128;// 1 << 7;
+      const step = dataArray.length >> 7; // => length:1024 / 128 = 8
+      const rectWidth = 6;
+      const gapWidth = 4;
 
-      for (let i = 1; i <= max; ++i) {
+      let leftX = width - (rectWidth >> 1);
+      let rightX = leftX;
+
+      for (let i = 1; leftX >= 8; ++i) {
         // => -dataArray[step * i] + 1
-        const h = ~dataArray[step * i] + 2;
+        const rectHeight = ~dataArray[step * i] + 2;
 
-        // 绘制左边的矩形
-        canvasContext.fillRect(width - (i - 1) * 10, height, 8, h);
-        // 绘制右边的矩形
-        canvasContext.fillRect(i * 10 + width, height, 8, h);
+        if (i === 1) {
+          // 绘制最中央的矩形
+          canvasContext.fillRect(leftX, height, rectWidth, rectHeight);
+
+        } else {
+          // 绘制左边的矩形
+          canvasContext.fillRect(leftX, height, rectWidth, rectHeight);
+          // 绘制右边的矩形
+          canvasContext.fillRect(rightX, height, rectWidth, rectHeight);
+        }
+
+        leftX -= gapWidth + rectWidth;
+        rightX += gapWidth + rectWidth;
       }
     };
 
@@ -222,7 +234,14 @@ export default defineComponent({
       canvasResizeObserver = color = canvasContext = canvasWidth = canvasHeight = nullValue;
     });
 
-    return {canvasRef};
+    return {
+      canvasRef,
+
+      closeViewer() {
+        document.fullscreenElement && document.exitFullscreen();
+        emit('close');
+      }
+    };
   }
 
 });

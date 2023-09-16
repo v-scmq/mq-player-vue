@@ -1,65 +1,84 @@
 <template>
-  <div class='v-row data-container'>
-    <image-view v-model='singer.cover' defaultValue='icon/singer.png'/>
+  <div class="v-row data-container">
+    <image-view v-model="singer.cover" defaultValue="icon/singer.png" />
 
-    <div class='v-column'>
+    <div class="v-column">
       <div>{{ singer.name || '-' }}</div>
 
-      <div class='v-row data-statistic'>
-        <span class='statistic-item'>单曲：{{ singer.songCount || '-' }}</span>
-        <span class='statistic-item'>专辑：{{ singer.albumCount || '-' }}</span>
-        <span class='statistic-item'>MV：{{ singer.mvCount || '-' }}</span>
-        <span class='statistic-item'>粉丝：{{ singer.fansCount || '-' }}</span>
+      <div class="v-row data-statistic">
+        <span class="statistic-item">单曲：{{ singer.songCount || '-' }}</span>
+        <span class="statistic-item">专辑：{{ singer.albumCount || '-' }}</span>
+        <span class="statistic-item">MV：{{ singer.mvCount || '-' }}</span>
+        <span class="statistic-item">粉丝：{{ singer.fansCount || '-' }}</span>
       </div>
 
-      <div class='v-row' style="--button-icon-size: 1.5em">
-        <hl-button icon='play-select'>播放全部</hl-button>
-        <hl-button icon='plus'>添加到</hl-button>
-        <hl-button icon='my-download'>下载</hl-button>
-        <hl-button icon='trash'>删除</hl-button>
-        <hl-button icon='multiple' @click="multiple = !multiple">{{ multiple ? '退出批量操作' : '批量操作' }}</hl-button>
+      <div class="v-row" style="--button-icon-size: 1.5em">
+        <hl-button icon="play-select">播放全部</hl-button>
+        <hl-button icon="plus">添加到</hl-button>
+        <hl-button icon="my-download">下载</hl-button>
+        <hl-button icon="trash">删除</hl-button>
+        <hl-button icon="multiple" @click="multiple = !multiple">{{
+          multiple ? '退出批量操作' : '批量操作'
+        }}</hl-button>
       </div>
     </div>
   </div>
 
   <tab-pane :tabs="tabs" :activeTabName="activeTabName" @tabChange="handleTabChanged">
     <template #song>
-      <table-view style='flex:auto;' :selection="multiple" :columns='columns' :data='songList'
-                  @row-dblclick='playMediaList' @infinite-scroll='loadDataList'>
-        <template #title='{item}'>
-          <span class='cell-text'>{{ item.title }}</span>
-          <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
-          <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
+      <table-view
+        style="flex: auto"
+        :selection="multiple"
+        :columns="columns"
+        :data="songList"
+        @row-dblclick="playMediaList"
+        @infinite-scroll="loadDataList"
+      >
+        <template #title="{ item }">
+          <span class="cell-text">{{ item.title }}</span>
+          <icon class="vip-icon" name="vip" width="1em" height="1em" v-if="item.vip" />
+          <icon class="mv-icon" name="mv" width="1em" height="1em" v-if="item.vid" />
         </template>
 
-        <template #singer='{item:{singer:singers = []}}'>
-        <span class='link cell-text' v-for='(singer, index) in singers' :key='index'
-              :data-mid='singer.mid'>{{ singer.name }}</span>
+        <template #singer="{ item: { singer: singers = [] } }">
+          <span class="link cell-text" v-for="(singer, index) in singers" :key="index" :data-mid="singer.mid">{{
+            singer.name
+          }}</span>
         </template>
 
-        <template #album='{item:{album}}'>
-          <span class='link cell-text' :data-mid='album.mid' v-if='album'>{{ album.name }}</span>
+        <template #album="{ item: { album } }">
+          <span class="link cell-text" :data-mid="album.mid" v-if="album">{{ album.name }}</span>
         </template>
       </table-view>
     </template>
 
     <template #album>
-      <grid-view cell-widths='repeat(auto-fit, 13em)' :data='albumList'
-                 @infinite-scroll='loadAlbumData' :cell-height='234' @cell-click='onAlbumItemClicked'>
-        <template v-slot='{item}'>
-          <image-view v-model='item.cover' defaultValue='icon/album.png'/>
-          <div class='name'>{{ item.name }}</div>
+      <grid-view
+        cell-widths="repeat(auto-fit, 13em)"
+        :data="albumList"
+        @infinite-scroll="loadAlbumData"
+        :cell-height="234"
+        @cell-click="onAlbumItemClicked"
+      >
+        <template v-slot="{ item }">
+          <image-view v-model="item.cover" defaultValue="icon/album.png" />
+          <div class="name">{{ item.name }}</div>
         </template>
       </grid-view>
     </template>
 
     <template #mv>
-      <grid-view class='arc-rect' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
-                 :cell-height='206' @infinite-scroll='loadMvData'>
-        <template v-slot='{item}'>
-          <image-view v-model='item.cover' defaultValue='icon/mv.png'/>
+      <grid-view
+        class="arc-rect"
+        cell-widths="repeat(auto-fit, 16em)"
+        :data="mvList"
+        :cell-height="206"
+        @infinite-scroll="loadMvData"
+      >
+        <template v-slot="{ item }">
+          <image-view v-model="item.cover" defaultValue="icon/mv.png" />
           <div>
-            <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
+            <span class="link" v-for="(singer, index) in item.singer" :key="index" :data-mid="singer.mid">
               {{ singer.name }}
             </span>
             -<span>{{ item.title }}</span>
@@ -69,21 +88,21 @@
     </template>
 
     <template #introduce>
-      <div class='label'>{{ singer.introduce }}</div>
+      <div class="label">{{ singer.introduce }}</div>
     </template>
   </tab-pane>
 </template>
 
-<script lang='ts'>
+<script lang="ts">
 import Spinner from '../components/Spinner';
-import {playMediaList} from '../player/hooks';
-import {getSingerAlbumList, getSingerMvList, getSingerSongList} from '../api';
+import { playMediaList } from '@/player/hooks';
+import { getSingerAlbumList, getSingerMvList, getSingerSongList } from '@/api';
 
-import {Album, Mv, Singer, Song, ComputedPage} from '../../types';
-import {TableColumn, Tab as BaseTab} from '../components/types';
+import { Album, Mv, Singer, Song, ComputedPage } from '@/types';
+import { TableColumn, Tab as BaseTab } from '../components/types';
 
-import {reactive, watch, PropType, defineComponent, ref} from 'vue';
-import {useRouter} from 'vue-router';
+import { reactive, watch, PropType, defineComponent, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 type TabName = 'song' | 'album' | 'mv' | 'introduce';
 /**
@@ -101,7 +120,7 @@ export default defineComponent({
   name: 'SingerView',
 
   props: {
-    query: {type: Object as PropType<Singer>, required: true}
+    query: { type: Object as PropType<Singer>, required: true }
   },
 
   setup(props) {
@@ -110,20 +129,20 @@ export default defineComponent({
     const albumList = reactive<Album[]>([]);
     const mvList = reactive<Mv[]>([]);
 
-    const SONG_TAB = {title: '歌曲', name: 'song', update: true, page: {current: 1, size: 30}} as Tab;
-    const ALBUM_TAB = {title: '专辑', name: 'album', update: true, page: {current: 1, size: 30}} as Tab;
-    const MV_TAB = {title: 'MV', name: 'mv', update: true, page: {current: 1, size: 30}} as Tab;
-    const DETAIL_TAB = {title: '详情', name: 'introduce', update: true} as Tab;
+    const SONG_TAB = { title: '歌曲', name: 'song', update: true, page: { current: 1, size: 30 } } as Tab;
+    const ALBUM_TAB = { title: '专辑', name: 'album', update: true, page: { current: 1, size: 30 } } as Tab;
+    const MV_TAB = { title: 'MV', name: 'mv', update: true, page: { current: 1, size: 30 } } as Tab;
+    const DETAIL_TAB = { title: '详情', name: 'introduce', update: true } as Tab;
 
     const tabs = [SONG_TAB, ALBUM_TAB, MV_TAB, DETAIL_TAB];
     const activeTabName = ref<TabName>('song');
 
     const columns: TableColumn[] = [
-      {type: 'index', width: '100px'},
-      {title: '歌曲', property: 'title', flex: true},
-      {title: '歌手', property: 'singer'},
-      {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: '100px'}
+      { type: 'index', width: '100px' },
+      { title: '歌曲', property: 'title', flex: true },
+      { title: '歌手', property: 'singer' },
+      { title: '专辑', property: 'album' },
+      { title: '时长', property: 'duration', width: '100px' }
     ];
 
     const multiple = ref(false);
@@ -153,61 +172,77 @@ export default defineComponent({
       const page = newTab.page as ComputedPage;
 
       if (newTab.name === 'song') {
-        getSingerSongList(page, singer).then(data => {
-          // 修改分页信息
-          data.page && Object.assign(page, data.page);
-          // 修改歌手信息
-          data.singer && Object.assign(singer, data.singer);
-          // 添加歌曲
-          songList.splice(0, songList.length, ...data.list);
-
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        getSingerSongList(page, singer)
+          .then((data) => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+            // 修改歌手信息
+            data.singer && Object.assign(singer, data.singer);
+            // 添加歌曲
+            songList.splice(0, songList.length, ...data.list);
+          })
+          .catch(() => (newTab.update = true))
+          .finally(Spinner.close);
       }
 
       if (newTab.name === 'album') {
-        getSingerAlbumList(page, singer).then(data => {
-          // 修改分页信息
-          data.page && Object.assign(page, data.page);
-          // 添加专辑
-          albumList.splice(0, albumList.length, ...data.list);
-
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        getSingerAlbumList(page, singer)
+          .then((data) => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+            // 添加专辑
+            albumList.splice(0, albumList.length, ...data.list);
+          })
+          .catch(() => (newTab.update = true))
+          .finally(Spinner.close);
       }
 
       if (newTab.name === 'mv') {
-        getSingerMvList(page, singer).then(data => {
-          // 修改分页信息
-          data.page && Object.assign(page, data.page);
-          // 添加Mv
-          mvList.splice(0, mvList.length, ...data.list);
-
-        }).catch(() => newTab.update = true).finally(Spinner.close);
+        getSingerMvList(page, singer)
+          .then((data) => {
+            // 修改分页信息
+            data.page && Object.assign(page, data.page);
+            // 添加Mv
+            mvList.splice(0, mvList.length, ...data.list);
+          })
+          .catch(() => (newTab.update = true))
+          .finally(Spinner.close);
       }
-
     };
 
     // 监听查询参数改变
-    watch(() => props.query, (value: Singer) => {
-      if (singer.mid !== value.mid && value.mid) {
-        // 重设歌手信息
-        Object.assign(singer, value);
+    watch(
+      () => props.query,
+      (value: Singer) => {
+        if (singer.mid !== value.mid && value.mid) {
+          // 重设歌手信息
+          Object.assign(singer, value);
 
-        tabs.forEach(tab => {
-          tab.update = true;
-          if (tab.page) {
-            // 清除分页数据
-            tab.page.total = 0;
-            tab.page.current = 1;
-            tab.page.pageCount = 0;
-          }
-        });
+          tabs.forEach((tab) => {
+            tab.update = true;
+            if (tab.page) {
+              // 清除分页数据
+              tab.page.total = 0;
+              tab.page.current = 1;
+              tab.page.pageCount = 0;
+            }
+          });
 
-        handleTabChanged(SONG_TAB);
-      }
-    }, {immediate: true});
+          handleTabChanged(SONG_TAB);
+        }
+      },
+      { immediate: true }
+    );
 
     return {
-      tabs, activeTabName, singer, columns, songList, albumList, mvList, multiple,
+      tabs,
+      activeTabName,
+      singer,
+      columns,
+      songList,
+      albumList,
+      mvList,
+      multiple,
 
       handleTabChanged,
 
@@ -220,7 +255,7 @@ export default defineComponent({
        */
       onAlbumItemClicked(album: Album) {
         // 若存在专辑信息, 则跳转到专辑视图
-        album && router.push({path: '/album-view', query: {...album, singer: null}});
+        album && router.push({ path: '/album-view', query: { ...album, singer: null } });
       },
 
       /** 加载歌曲数据到表格视图中 */
@@ -232,13 +267,15 @@ export default defineComponent({
           ++page.current;
           Spinner.open();
 
-          getSingerSongList(page, singer).then(data => {
-            // 重设置分页信息
-            data.page && Object.assign(page, data.page);
-            // 添加歌曲
-            songList.push(...data.list);
-
-          }).catch(() => --page.current).finally(Spinner.close);
+          getSingerSongList(page, singer)
+            .then((data) => {
+              // 重设置分页信息
+              data.page && Object.assign(page, data.page);
+              // 添加歌曲
+              songList.push(...data.list);
+            })
+            .catch(() => --page.current)
+            .finally(Spinner.close);
         }
       },
 
@@ -251,13 +288,15 @@ export default defineComponent({
 
           ++page.current;
 
-          getSingerAlbumList(page, singer).then(data => {
-            // 修改分页信息
-            data.page && Object.assign(page, data.page);
-            // 添加专辑
-            albumList.push(...data.list);
-
-          }).catch(() => --page.current).finally(Spinner.close);
+          getSingerAlbumList(page, singer)
+            .then((data) => {
+              // 修改分页信息
+              data.page && Object.assign(page, data.page);
+              // 添加专辑
+              albumList.push(...data.list);
+            })
+            .catch(() => --page.current)
+            .finally(Spinner.close);
         }
       },
 
@@ -270,16 +309,17 @@ export default defineComponent({
 
           ++page.current;
 
-          getSingerMvList(page, singer).then(data => {
-            // 修改分页信息
-            data.page && Object.assign(page, data.page);
-            // 添加Mv
-            mvList.push(...data.list);
-
-          }).catch(() => --page.current).finally(Spinner.close);
+          getSingerMvList(page, singer)
+            .then((data) => {
+              // 修改分页信息
+              data.page && Object.assign(page, data.page);
+              // 添加Mv
+              mvList.push(...data.list);
+            })
+            .catch(() => --page.current)
+            .finally(Spinner.close);
         }
       }
-
     };
   }
 });

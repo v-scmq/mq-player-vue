@@ -34,7 +34,7 @@
 </template>
 
 <script lang='ts'>
-import Message from '../components/Message';
+import {Message} from '@/components/Message';
 
 import {reactive, ref, defineComponent} from "vue";
 

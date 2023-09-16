@@ -1,26 +1,35 @@
 <template>
-  <div data-placeholder='暂无歌词' class='lyric-view' :class='{empty: lyricList.length < 1}'
-       :ref='element => void (elements[-1] = element)' @pointerdown='onDragStart'>
-
-    <div class='content-wrapper' :class='{animation: scrollable}'
-         :style='{transform: `translateY(${translatedY}px)`}'>
-
-      <div class='lyric-item' v-for='(line, index) in lyricList' :key='index'
-           :ref='element => void (elements[index] = element)'
-           :class='{active: selectedIndex === index}'>
+  <div
+    data-placeholder="暂无歌词"
+    class="lyric-view"
+    :class="{ empty: lyricList.length < 1 }"
+    :ref="element => setRef(-1, element)"
+    @pointerdown="onDragStart"
+  >
+    <div
+      class="content-wrapper"
+      :class="{ animation: scrollable }"
+      :style="{ transform: `translateY(${translatedY}px)` }"
+    >
+      <div
+        class="lyric-item"
+        v-for="(line, index) in lyricList"
+        :key="index"
+        :ref="element => setRef(index, element)"
+        :class="{ active: selectedIndex === index }"
+      >
         {{ line.content }}
       </div>
     </div>
   </div>
 </template>
 
-<script lang='ts'>
-import {ref, watch, defineComponent, inject, nextTick, onMounted, onUnmounted, computed} from 'vue';
+<script lang="ts">
+import { ref, watch, defineComponent, inject, nextTick, onMounted, onUnmounted, computed } from 'vue';
 
-import {LyricLine} from '../../types';
+import { LyricLine } from '@/types';
 
 export default defineComponent({
-
   name: 'LyricView',
 
   setup() {
@@ -35,15 +44,16 @@ export default defineComponent({
     let elements: HTMLElement[] = [];
 
     // 注入歌词信息
-    const lyrics = inject('lyrics') as { list: LyricLine[], playedTime: number };
+    const lyrics = inject('lyrics') as { list: LyricLine[]; playedTime: number };
 
     // 若有歌词翻译, 则歌词翻译在普通歌词的下一行显示
-    const lyricList = computed(() => lyrics.list.map(({start, end, content, translation}) => ({
-      start, end,
-      content: translation
-          ? `${content}\n${translation}`
-          : content
-    })));
+    const lyricList = computed(() =>
+      lyrics.list.map(({ start, end, content, translation }) => ({
+        start,
+        end,
+        content: translation ? `${content}\n${translation}` : content
+      }))
+    );
 
     // 组件根元素可见高度
     let visibleHeight = 1;
@@ -69,7 +79,7 @@ export default defineComponent({
      * 计算指定index的歌词在父元素中垂直方向上处于中央的translateY(单位px)
      *
      * @param index 指定需要计算歌词平移量的index
-     * @return {number} 歌词信息元素在父元素垂直居中的平移量
+     * @return number 歌词信息元素在父元素垂直居中的平移量
      */
     const computeTranslateY = (index: number) => {
       //       ---------------------------  content-wrapper
@@ -94,9 +104,9 @@ export default defineComponent({
         return 0;
       }
 
-      const {offsetHeight: height, offsetTop: top} = element;
+      const { offsetHeight: height, offsetTop: top } = element;
       return -top + (visibleHeight - height) / 2;
-    }
+    };
 
     /**
      * 滚动歌词内容到可见视图的中央
@@ -106,9 +116,10 @@ export default defineComponent({
         return;
       }
 
-      const {list, playedTime} = lyrics;
+      const { list, playedTime } = lyrics;
       const max = list.length;
-      let active = false, index = 0;
+      let active = false,
+        index = 0;
 
       for (; index < max; ++index) {
         const line = list[index];
@@ -184,7 +195,7 @@ export default defineComponent({
     };
 
     onMounted(() => {
-      resizeObserver = new ResizeObserver(([{contentRect}]) => {
+      resizeObserver = new ResizeObserver(([{ contentRect }]) => {
         // 可见高度设定为组件根元素内容盒子的高度
         visibleHeight = contentRect.height;
 
@@ -219,21 +230,34 @@ export default defineComponent({
       visibleHeight = resizeObserver = elements = null as any;
     });
 
-
     // 监听歌词变化, 重新计算歌词 在 y轴方向上的 最大 和 最小 平移量
-    watch(lyricList, () => void (nextTick(() => {
-      // 计算最大平移量(基本上是正值)
-      maxTranslateY = computeTranslateY(0);
-      // 计算最小平移量(平移得越多, 负得越多, 则变得越小)
-      minTranslateY = computeTranslateY(elements.length - 1);
-
-    })), {immediate: true});
+    watch(
+      lyricList,
+      () =>
+        void nextTick(() => {
+          // 计算最大平移量(基本上是正值)
+          maxTranslateY = computeTranslateY(0);
+          // 计算最小平移量(平移得越多, 负得越多, 则变得越小)
+          minTranslateY = computeTranslateY(elements.length - 1);
+        }),
+      { immediate: true }
+    );
 
     // 开始监听 歌词内容 和 播放时间 的变化
     watch(() => lyrics.playedTime as any, scrollLyric);
 
-    return {elements, selectedIndex, translatedY, scrollable, lyricList, onDragStart};
-  },
+    return {
+      elements,
+      selectedIndex,
+      translatedY,
+      scrollable,
+      lyricList,
+      onDragStart,
 
-})
+      setRef(index: number, el: any) {
+        elements[index] = el as HTMLElement;
+      }
+    };
+  }
+});
 </script>

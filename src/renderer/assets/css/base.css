@@ -106,7 +106,7 @@
     border: 1px solid rgb(181, 181, 181);
 }
 
-.check-box[data-disabled = 'true'] {
+.check-box.disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }

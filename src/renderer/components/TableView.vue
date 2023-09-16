@@ -1,51 +1,59 @@
 <template>
-  <div class='table' tabindex='0' @keydown='onKeydown' :style='{"--table-cell-height":`${cellHeight}px`}'>
+  <div class="table" tabindex="0" @keydown="onKeydown" :style="{ '--table-cell-height': `${cellHeight}px` }">
     <!-- 表格列信息 -->
-    <div class='table-column-wrapper' :style='{gridTemplateColumns:`${columnWidths} ${gutterWidth}`}'>
-      <div class='table-cell flex selection' v-if="selection">
-        <check-box v-model='isSelectAll' @update:modelValue='headerCheckChange'/>
+    <div class="table-column-wrapper" :style="{ gridTemplateColumns: `${columnWidths} ${gutterWidth}` }">
+      <div class="table-cell flex selection" v-if="selection">
+        <check-box v-model="isSelectAll" :disabled="data.length < 1" @update:modelValue="headerCheckChange" />
       </div>
 
-      <div class='table-cell' :class="{flex: column.flex}" v-for='(column,index) in columns' :key='index'>
+      <div class="table-cell" :class="{ flex: column.flex }" v-for="(column, index) in columns" :key="index">
         {{ column.type === 'index' ? data.length : column.title }}
       </div>
 
-      <div class='table-cell gutter'>+</div>
+      <div class="table-cell gutter">+</div>
     </div>
 
     <!-- 表格内容虚拟滚动部分 -->
-    <div ref='scrollWrapper'
-         style='flex:auto;overflow:hidden auto;position:relative'
-         @scroll='updateVisibleData'>
-
-      <div style='position:absolute;left:0;right:0;z-index:-1;'
-           :style='{minHeight: `${maxScrollHeight}px`}'/>
+    <div ref="scrollWrapper" style="flex: auto; overflow: hidden auto; position: relative" @scroll="updateVisibleData">
+      <div style="position: absolute; left: 0; right: 0; z-index: -1" :style="{ minHeight: `${maxScrollHeight}px` }" />
 
       <!-- 表格内容部分  -->
-      <div class='content-wrapper'
-           style='display:grid;position:sticky;top:0'
-           @click='onTableCellClick'
-           @pointermove='onHover'
-           @pointerleave='hoverRow = -1'
-           @touchend='infiniteScrollEmitter'
-           @wheel='infiniteScrollEmitter'
-           :style='{gridTemplateColumns: columnWidths, paddingRight: hasScrollbar ? null : gutterWidth}'>
-
+      <div
+        class="content-wrapper"
+        style="display: grid; position: sticky; top: 0"
+        @click="onTableCellClick"
+        @pointermove="onHover"
+        @pointerleave="hoverRow = -1"
+        @touchend="infiniteScrollEmitter"
+        @wheel="infiniteScrollEmitter"
+        :style="{ gridTemplateColumns: columnWidths, paddingRight: hasScrollbar ? null : gutterWidth }"
+      >
         <!-- 单元格 -->
-        <template v-for='(row, rowIndex) in visibleData' :key="rowIndex">
-
-          <div class='table-cell flex selection' v-if="selection" :data-row='rowIndex'
-               :class='{selected:selectedItems[rowIndex + offsetIndex], hover:hoverRow === rowIndex}'>
-            <check-box v-model='selectedItems[rowIndex + offsetIndex]'
-                       @update:modelValue='onItemCheckChanged(rowIndex)'/>
+        <template v-for="(row, rowIndex) in visibleData" :key="rowIndex">
+          <div
+            class="table-cell flex selection"
+            v-if="selection"
+            :data-row="rowIndex"
+            :class="{ selected: selectedItems[rowIndex + offsetIndex], hover: hoverRow === rowIndex }"
+          >
+            <check-box
+              v-model="selectedItems[rowIndex + offsetIndex]"
+              @update:modelValue="onItemCheckChanged(rowIndex)"
+            />
           </div>
 
-          <div class='table-cell'
-               :data-row='rowIndex'
-               :key='`${rowIndex}-${columnIndex}`'
-               v-for='(column, columnIndex) in columns'
-               :class='{flex:column.flex, selected:selectedItems[rowIndex + offsetIndex], hover:hoverRow === rowIndex}'>
-            <slot :name='column.property' :item='row'>{{ valueGetters[columnIndex](row, rowIndex, column) }}</slot>
+          <div
+            class="table-cell"
+            :data-row="rowIndex"
+            :key="`${rowIndex}-${columnIndex}`"
+            v-for="(column, columnIndex) in columns"
+            :class="{
+              flex: column.flex,
+              selected: selectedItems[rowIndex + offsetIndex],
+              hover: hoverRow === rowIndex
+            }"
+          >
+            <slot :name="column.property" :item="row">{{ valueGetters[columnIndex](row, rowIndex, column) }}</slot>
           </div>
         </template>
       </div>
@@ -53,32 +61,32 @@
   </div>
 </template>
 
-<script lang='ts'>
-import {ref, reactive, computed, watch, defineComponent, onMounted, onBeforeUnmount, PropType} from 'vue';
+<script lang="ts">
+import { ref, reactive, computed, watch, defineComponent, onMounted, onBeforeUnmount, PropType } from 'vue';
 
-import {TableColumn, TableRow, CellValueGetter} from './types';
+import { TableColumn, TableRow, CellValueGetter } from './types';
 
 export default defineComponent({
   name: 'TableView',
 
   props: {
     /* 表格内容部分的行单元格高度 */
-    cellHeight: {type: Number, default: 36},
+    cellHeight: { type: Number, default: 36 },
     /* 表格列信息 */
-    columns: {type: Array as PropType<TableColumn[]>, required: true},
+    columns: { type: Array as PropType<TableColumn[]>, required: true },
     /* 表格数据 */
-    data: {type: Array as PropType<TableRow[]>, required: true},
+    data: { type: Array as PropType<TableRow[]>, required: true },
     /* 是否开启表格复选框 */
-    selection: {type: Boolean, default: false}
+    selection: { type: Boolean, default: false }
   },
 
   emits: [
     /** 行单元格点击事件 */ 'row-click',
     /** 行单元格双击事件 */ 'row-dblclick',
-    /** 无限滚动 */ 'infinite-scroll',
+    /** 无限滚动 */ 'infinite-scroll'
   ],
 
-  setup(props, {emit}) {
+  setup(props, { emit }) {
     //列标题尾部填充单元格宽度
     const gutterWidth = ref('0px');
     // 是否有垂直滚动条
@@ -99,7 +107,7 @@ export default defineComponent({
 
     // 列宽 => grid-template-columns: minmax(100px, 1fr) 100px 1fr ;
     const columnWidths = computed(() => {
-      const {selection, columns} = props;
+      const { selection, columns } = props;
       const width = columns.map(column => column.width || '1fr').join(' ');
       // 复选框列默认为40px
       return selection ? `40px ${width}` : width;
@@ -107,9 +115,9 @@ export default defineComponent({
 
     // 获取单元格值的getter. 已废弃深度获取值, 如 column:{property: 'singer.name'},
     //                      推荐使用 column:{ valueGetter: item => item.singer?.name)
-    const valueGetters = computed<CellValueGetter[]>(() => props.columns.map(column =>
-        column.valueGetter || (column.type === 'index' ? getSequenceValue : getPropertyValue)
-    ));
+    const valueGetters = computed<CellValueGetter[]>(() =>
+      props.columns.map(column => column.valueGetter || (column.type === 'index' ? getSequenceValue : getPropertyValue))
+    );
 
     // 组件内部滚动元素引用 (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
     const scrollWrapper = ref(null as unknown as HTMLElement);
@@ -167,7 +175,6 @@ export default defineComponent({
         return;
       }
 
-
       // 0 |-----------------|  0
       // 1 |-----------------|  40
       // 2 |-----------------|  80
@@ -180,7 +187,7 @@ export default defineComponent({
       // start = top:50 / cellHeight:40 = 1
 
       // 获取已滚动距离
-      const top = scrollWrapper.value.scrollTop;
+      const top = Math.ceil(scrollWrapper.value.scrollTop);
 
       // 可视数据起始索引、可视数据结束索引
       let start, end;
@@ -193,7 +200,6 @@ export default defineComponent({
       if (isAtBottom) {
         end = size;
         start = end - visibleRowCount;
-
       } else {
         start = (top / props.cellHeight) ^ 0;
         end = start + visibleRowCount;
@@ -222,9 +228,7 @@ export default defineComponent({
 
       if (!newValue) {
         keys.forEach(key => delete map[key]);
-
       } else {
-
         let max = props.data.length - 1;
         // key:string ^ 0 => number
         keys.forEach(key => (0 ^ key) > max && delete map[key]);
@@ -237,13 +241,12 @@ export default defineComponent({
 
     /** 选择所有单元格 */
     const selectAll = () => {
-      props.data.length && props.selection &&
-      headerCheckChange(isSelectAll.value = true);
+      props.data.length && props.selection && headerCheckChange((isSelectAll.value = true));
     };
 
     /** 清除所有选择 */
     const clearSelection = () => {
-      headerCheckChange(isSelectAll.value = false);
+      headerCheckChange((isSelectAll.value = false));
     };
 
     onMounted(() => {
@@ -258,13 +261,12 @@ export default defineComponent({
       element.style.overflowY = overflowY;
 
       /** 当根元素宽高发生变化时,回调此方法 */
-      resizeObserve = new ResizeObserver(([{target, contentRect}]) => {
+      resizeObserve = new ResizeObserver(([{ target, contentRect }]) => {
         // 获取滚动元素高度
         const height = Math.max(1, contentRect.height);
 
         // 是否可滚动
-        const scrollable = ((target as HTMLElement).offsetWidth -
-            (target as HTMLElement).clientWidth) > 0;
+        const scrollable = (target as HTMLElement).offsetWidth - (target as HTMLElement).clientWidth > 0;
 
         // 若 更新滚动条是否存在的标记 发生变化, 则更新它
         if (hasScrollbar.value !== scrollable) {
@@ -291,8 +293,7 @@ export default defineComponent({
     onBeforeUnmount(() => {
       resizeObserve && resizeObserve.disconnect();
 
-      scrollWrapper.value = isAtBottom = infiniteScrollTimer =
-          scrollWrapperHeight = resizeObserve = null as any;
+      scrollWrapper.value = isAtBottom = infiniteScrollTimer = scrollWrapperHeight = resizeObserve = null as any;
     });
 
     // 监听表格数据变化, 更新可视区域数据
@@ -349,8 +350,9 @@ export default defineComponent({
        *
        * @param event 指针设备点击事件
        */
-      onTableCellClick(event: PointerEvent) {
-        let target = event.target as HTMLElement, count = event.detail;
+      onTableCellClick(event: PointerEvent | MouseEvent) {
+        let target = event.target as HTMLElement,
+          count = event.detail;
         // 获取已有的class
         const classList = target.classList;
 
@@ -398,7 +400,6 @@ export default defineComponent({
           Object.keys(map).forEach(key => delete map[key]);
           // 将当前行数据设置为选中
           map[index] = true;
-
         } else if (count === 2) {
           emit('row-dblclick', props.data, index);
         }
@@ -412,20 +413,20 @@ export default defineComponent({
       onKeydown(event: KeyboardEvent) {
         // 对于出现滚动条的元素的scrollTop值无需检查值范围的合法性,因为元素内部已做控制
         switch (event.key || '') {
-          case 'PageUp':    // pageUp键滚动到上一页单元格
+          case 'PageUp': // pageUp键滚动到上一页单元格
             return void (scrollWrapper.value.scrollTop -= props.cellHeight * visibleRowCount);
-          case 'PageDown':  // pageDown键滚动到下一页单元格
+          case 'PageDown': // pageDown键滚动到下一页单元格
             return void (scrollWrapper.value.scrollTop += props.cellHeight * visibleRowCount);
-          case 'ArrowUp':   // 上方向键滚动到上一行单元格
+          case 'ArrowUp': // 上方向键滚动到上一行单元格
             return void (scrollWrapper.value.scrollTop -= props.cellHeight);
           case 'ArrowDown': // 下方向键滚动到下一行单元格
             return void (scrollWrapper.value.scrollTop += props.cellHeight);
-          case 'Home':      // home键滚动到第一行单元格
+          case 'Home': // home键滚动到第一行单元格
             return scrollWrapper.value.scrollTo(0, 0); // ({left:0, top:0, behavior:'smooth'})
-          case 'End':       // end键滚动最后一行单元格
+          case 'End': // end键滚动最后一行单元格
             return scrollWrapper.value.scrollTo(0, maxScrollHeight.value);
           case 'a':
-          case 'A':         // Ctrl + A 组合键全选所有单元格 ; Ctrl + Shirt + A 组合键全不选
+          case 'A': // Ctrl + A 组合键全选所有单元格 ; Ctrl + Shirt + A 组合键全不选
             return void (event.ctrlKey && (event.shiftKey ? clearSelection() : selectAll()));
         }
       },
@@ -440,7 +441,7 @@ export default defineComponent({
 
         const value = element && element.getAttribute('data-row');
 
-        hoverRow.value = value ? ((value as unknown as number) ^ 0) : -1;
+        hoverRow.value = value ? (value as unknown as number) ^ 0 : -1;
       },
 
       /**
@@ -460,7 +461,7 @@ export default defineComponent({
          */
         // 若没有滚动到底部, 则什么也不做
         if (!isAtBottom || (event as WheelEvent).deltaY <= 0) {
-          return
+          return;
         }
 
         // 若计时器正在使用,则清除计时器
@@ -471,12 +472,10 @@ export default defineComponent({
 
         infiniteScrollTimer = window.setTimeout(() => {
           infiniteScrollTimer = null;
-          emit('infinite-scroll')
+          emit('infinite-scroll');
         }, 500);
       }
-
     };
   }
-
 });
 </script>

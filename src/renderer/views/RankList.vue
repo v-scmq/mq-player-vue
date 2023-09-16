@@ -34,13 +34,13 @@
 
 <script lang='ts'>
 import {defineComponent, reactive, ref} from 'vue';
-import {playMediaList} from '../player/hooks';
-import Message from '../components/Message';
+import {playMediaList} from '@/player/hooks';
+import {Message} from '@/components/Message';
 import Spinner from '../components/Spinner';
 
-import {getRanksSongList} from '../api';
-import {ComputedPage, Rank, RankItem, Song} from 'src/types';
-import {TableColumn} from '../components/types';
+import {getRanksSongList} from '@/api';
+import {ComputedPage, Rank, RankItem, Song} from '@/types';
+import {TableColumn} from '@/components/types';
 
 export default defineComponent({
   name: 'RankList',

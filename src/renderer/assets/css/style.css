@@ -83,6 +83,12 @@ html, body, #app {
     -webkit-app-region: none;
 }
 
+.root:fullscreen .full-screen-icon,
+.root:not(:fullscreen) .fulled-screen-icon,
+.root:fullscreen .fulled-screen-hidden {
+    display: none;
+}
+
 /* 设置间距,用以鼠标在窗口边沿操作(如缩放) 在Electron16开始不需要设置此样式,也可以在窗口边缘resize */
 /*.title-bar.un-maximized { margin: 2px 2px 0 2px;}*/
 
@@ -238,22 +244,34 @@ html, body, #app {
     right: 0;
     bottom: 4px;
     width: 40vw;
-    gap: 8px;
-    padding: 8px;
+    gap: 16px;
+    padding: 16px;
+    /*background: #00AAAA;*/
+    background: linear-gradient(skyblue, khaki);
+    filter: drop-shadow(16px 16px 20px #128c94) /*invert(75%)*/;
     /*background: var(--popover-inner-fill);*/
     /*--text-base: white;*/
 
     opacity: 1;
     transition: transform .3s ease-in-out;
     transform: translate3d(100%, 0, 0);
+
 }
+/*
+.popover.play-queue::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.6;
+    background: black;
+    filter: blur(80px);
+}*/
 
 .popover.play-queue.expand {
     transform: translate3d(0, 0, 0);
-}
-
-.popover.play-queue > .v-row {
-    padding: 8px;
 }
 
 .popover.play-queue > .title {
@@ -270,6 +288,11 @@ html, body, #app {
 
 .popover.play-queue > .option-bar > .song-count-label {
     flex: 1;
+}
+
+.popover.play-queue > .table {
+    flex: 1;
+    margin: 0 -16px 0 0;
 }
 
 
@@ -362,14 +385,21 @@ html, body, #app {
 }
 
 .cover--rect-inner {
-    /*flex: 1;*/
     margin: 0 20px;
-    max-width: 360px;
-    min-width: 100px;
-    max-height: 360px;
-    min-height: 100px;
     height: 100%;
-    border-radius: 12px;
+    max-width: 300px;
+    min-width: 100px;
+    max-height: 300px;
+    min-height: 100px;
+    border-radius: 8px;
+    align-self: center;
+    object-fit: scale-down;
+}
+
+@media (max-height: 500px) {
+    .cover--rect-inner {
+        align-self: flex-end;
+    }
 }
 
 /************************ LyricView ******************************/
@@ -390,7 +420,7 @@ html, body, #app {
 .lyric-view.empty::after {
     color: white;
     padding: 12px;
-    font-size: 22px;
+    font-size: 20px;
     /* CSS表达式 attr() 用来获取选择到的元素的某一HTML属性值, 并用于其样式 */
     content: attr(data-placeholder);
 }
@@ -401,7 +431,7 @@ html, body, #app {
 
 .lyric-view > .content-wrapper > .lyric-item {
     text-align: center;
-    font-size: 18px;
+    font-size: 16px;
     color: white;
     padding: 12px 0;
     white-space: pre-wrap;

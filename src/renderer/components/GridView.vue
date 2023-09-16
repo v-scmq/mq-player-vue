@@ -1,39 +1,49 @@
 <template>
-  <div class='grid-view' style='position:relative;flex:1;overflow:hidden auto;' ref='el'
-       @scroll='updateVisibleData' @click='onClick'>
+  <div
+    class="grid-view"
+    style="position: relative; flex: 1; overflow: hidden auto"
+    ref="el"
+    @scroll="updateVisibleData"
+    @click="onClick"
+  >
+    <div
+      style="position: absolute; left: 0; right: 0; z-index: -1"
+      :style="{ minHeight: `${maxScrollHeight}px` }"
+    ></div>
 
-    <div style='position:absolute;left:0;right:0;z-index:-1;'
-         :style='{minHeight:`${maxScrollHeight}px`}'></div>
-
-    <div class='content-wrapper' :style='{gridTemplateColumns: cellWidths}'
-         @touchend='infiniteScrollEmitter' @wheel='infiniteScrollEmitter'>
-      <div class='item-cell' v-for='(item, index) in visibleData' :key='index' :data-index='index'>
-        <slot :item='item'>{{ item }}</slot>
+    <div
+      class="content-wrapper"
+      :style="{ gridTemplateColumns: cellWidths }"
+      @touchend="infiniteScrollEmitter"
+      @wheel="infiniteScrollEmitter"
+    >
+      <div class="item-cell" v-for="(item, index) in visibleData" :key="index" :data-index="index">
+        <slot :item="item">{{ item }}</slot>
       </div>
     </div>
   </div>
 </template>
 
-<script lang='ts'>
-import {computed, reactive, ref, watch, defineComponent, onBeforeUnmount, onMounted, PropType} from 'vue';
+<script lang="ts">
+import { computed, reactive, ref, watch, defineComponent, onBeforeUnmount, onMounted, PropType } from 'vue';
 
-import {GridDataItem} from './types';
+import { GridDataItem } from './types';
 
 export default defineComponent({
   name: 'grid-view',
 
   props: {
     // 单元格宽度(作为grid布局的grid-template-columns样式属性使用)
-    cellWidths: {type: String, required: true},
+    cellWidths: { type: String, required: true },
     // 单元格高度(用于虚拟滚动计算可视区域内容行数)
-    cellHeight: {type: Number, required: true},
+    cellHeight: { type: Number, required: true },
     // 作为循环渲染的数据内容
-    data: {type: Array as PropType<GridDataItem[]>, required: true},
+    data: { type: Array as PropType<GridDataItem[]>, required: true }
   },
 
   emits: [/* 单元格点击事件 */ 'cell-click', /* 无限滚动 */ 'infinite-scroll'],
 
-  setup(props, {emit}) {
+  setup(props, { emit }) {
     // 可视区域数据
     const visibleData = reactive<GridDataItem[]>([]);
 
@@ -41,8 +51,9 @@ export default defineComponent({
     const visibleColumnCount = ref(1);
 
     // 计算虚拟滚动部分撑开表格内容而出现滚动条的最大高度
-    const maxScrollHeight = computed(() => Math.ceil(
-        props.data.length / visibleColumnCount.value * props.cellHeight));
+    const maxScrollHeight = computed(() =>
+      Math.ceil((props.data.length / visibleColumnCount.value) * props.cellHeight)
+    );
 
     // (相关文档 => https://v3.cn.vuejs.org/guide/composition-api-template-refs.html)
     // 组件根元素引用
@@ -85,7 +96,6 @@ export default defineComponent({
         return;
       }
 
-
       // | 0 -  1 -  2 -  3 -  4 -  5|  0
       // | 6 -  7 -  8 -  9 - 10 - 11|  208
       // |12 - 13 - 14 - 15 - 16 - 17|  416
@@ -107,7 +117,6 @@ export default defineComponent({
       if (isAtBottom) {
         end = props.data.length;
         start = end - visibleCount;
-
       } else {
         start = ((top / props.cellHeight) ^ 0) * visibleColumnCount.value;
         end = start + visibleCount;
@@ -121,7 +130,7 @@ export default defineComponent({
       }
 
       // 获取可视区域对应的数据([start,end]范围内的数据)
-      let list = props.data.slice(offsetIndex = start, end);
+      let list = props.data.slice((offsetIndex = start), end);
       visibleData.splice(0, visibleData.length, ...list);
 
       // 注: *** 已使用css position:sticky + top:0 固定在可视区域; 以下方案不再使用 ***
@@ -140,7 +149,7 @@ export default defineComponent({
        *
        * {@link ResizeObserverEntry} 的contentRect是内容矩形盒子,这部分不包含border和padding
        */
-      resizeObserver = new ResizeObserver(([{contentRect}]) => {
+      resizeObserver = new ResizeObserver(([{ contentRect }]) => {
         // 获取组件根元素内容宽度
         const width = Math.max(1, contentRect.width);
         // 获取组件根元素内容高度
@@ -157,7 +166,7 @@ export default defineComponent({
         // 若高度发生变化
         if (oldHeight !== height) {
           // 获取行间隙(如 '32px')
-          const {gridRowGap} = computedStyle = window.getComputedStyle(contentWrapper);
+          const { gridRowGap } = (computedStyle = window.getComputedStyle(contentWrapper));
           // 计算不包括行间隙的显示行数
           let count = Math.ceil((oldHeight = height) / props.cellHeight);
 
@@ -166,7 +175,6 @@ export default defineComponent({
             let gapHeight = --count * (gridRowGap.substring(0, gridRowGap.length - 2) as unknown as number);
             // 可见行数 = (总高度 - 所有行间隙) / 每行的高度
             count = Math.ceil((height - gapHeight) / props.cellHeight);
-
           }
 
           // 若可视行单元格数量发生变化
@@ -181,7 +189,7 @@ export default defineComponent({
           oldWidth = width;
           let count = 1;
           // '0px 0px 0px 0px 0px 0px'
-          const {gridTemplateColumns} = computedStyle || window.getComputedStyle(contentWrapper);
+          const { gridTemplateColumns } = computedStyle || window.getComputedStyle(contentWrapper);
           for (let index = gridTemplateColumns.length - 1; index >= 0; --index) {
             if (gridTemplateColumns.charAt(index) === ' ') {
               ++count;
@@ -217,14 +225,17 @@ export default defineComponent({
     watch(props.data, updateVisibleData);
 
     return {
-      el, maxScrollHeight, visibleData, updateVisibleData,
+      el,
+      maxScrollHeight,
+      visibleData,
+      updateVisibleData,
 
       /**
        * 单元格被点击时的回调
        *
        * @param event 指针设备点击事件
        */
-      onClick(event: PointerEvent) {
+      onClick(event: PointerEvent | MouseEvent) {
         let target = event.target as HTMLElement;
         if (!target.classList.contains('item-cell')) {
           const parent = target.closest<HTMLElement>('.item-cell');
@@ -256,7 +267,7 @@ export default defineComponent({
          */
         // 若没有滚动到底部, 则什么也不做
         if (!isAtBottom || (event as WheelEvent).deltaY <= 0) {
-          return
+          return;
         }
 
         // 若计时器正在使用,则清除计时器
@@ -267,12 +278,10 @@ export default defineComponent({
 
         infiniteScrollTimer = window.setTimeout(() => {
           infiniteScrollTimer = null;
-          emit('infinite-scroll')
+          emit('infinite-scroll');
         }, 500);
       }
-
     };
   }
-
 });
 </script>

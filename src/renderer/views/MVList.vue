@@ -1,31 +1,42 @@
 <template>
-  <div class='v-row list-view' v-for='(children, index) in tags' :key='index' @click='onListViewClicked'>
-    <div class='item' v-for='tag in children' :key='tag.id' :data-tag='tag.value'
-         :class='{active: tag.id === mvTagParam[tag.group]}'>{{ tag.name }}
+  <div class="v-row list-view" v-for="(children, index) in tags" :key="index" @click="onListViewClicked">
+    <div
+      class="item"
+      v-for="tag in children"
+      :key="tag.id"
+      :data-tag="tag.value"
+      :class="{ active: tag.id === mvTagParam[tag.group as 'area' | 'version'] }"
+    >
+      {{ tag.name }}
     </div>
   </div>
 
-  <grid-view class='arc-rect' style='margin-top:1em' cell-widths='repeat(auto-fit, 16em)' :data='mvList'
-             :cell-height='206' @infinite-scroll='loadData'>
-    <template v-slot='{item}'>
-      <image-view v-model='item.cover' defaultValue='icon/mv.png'/>
+  <grid-view
+    class="arc-rect"
+    style="margin-top: 1em"
+    cell-widths="repeat(auto-fit, 16em)"
+    :data="mvList"
+    :cell-height="206"
+    @infinite-scroll="loadData"
+  >
+    <template v-slot="{ item }">
+      <image-view v-model="item.cover" defaultValue="icon/mv.png" />
       <div>
-        <span class='link' v-for='(singer, index) in item.singer' :key='index' :data-mid='singer.mid'>
-            {{ singer.name }}
-       </span>
+        <span class="link" v-for="(singer, index) in item.singer" :key="index" :data-mid="singer.mid">
+          {{ singer.name }}
+        </span>
         -<span>{{ item.title }}</span>
       </div>
     </template>
   </grid-view>
-
 </template>
 
-<script lang='ts'>
-import {getMvList} from '../api';
+<script lang="ts">
+import { getMvList } from '@/api';
 import Spinner from '../components/Spinner';
 
-import {reactive, onMounted, defineComponent} from 'vue';
-import {ComputedPage, Mv, MvTagsParam} from 'src/types';
+import { reactive, onMounted, defineComponent } from 'vue';
+import { ComputedPage, Mv, MvTagsParam } from '@/types';
 
 /**
  * tag标签节点信息
@@ -48,48 +59,51 @@ export default defineComponent({
     const tags = reactive<TagItemNode[][]>([]);
     const mvList = reactive<Mv[]>([]);
     const mvTagParam = reactive<MvTagsParam>({} as MvTagsParam);
-    const page = {current: 1, size: 30} as ComputedPage;
+    const page = { current: 1, size: 30 } as ComputedPage;
 
     onMounted(() => {
       Spinner.open();
 
-      getMvList(page, null).then(data => {
-        // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
-        data.page && Object.assign(page, data.page);
+      getMvList(page, null)
+        .then(data => {
+          // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
+          data.page && Object.assign(page, data.page);
 
-        const tagList: TagItemNode[][] = [];
+          const tagList: TagItemNode[][] = [];
 
-        // 转换结构 => {a:[{id, name}], b:[{id, name}]} => [[{id, name, group:a, value:'a;${id}'}] , ...]
-        Object.keys(data.tags).forEach(key => {
-          const property = key as keyof typeof mvTagParam;
-          const children = data.tags[property];
-          //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
-          mvTagParam[property] = (children[0] && children[0].id) as string; // 1 && 0 => 0
+          // 转换结构 => {a:[{id, name}], b:[{id, name}]} => [[{id, name, group:a, value:'a;${id}'}] , ...]
+          Object.keys(data.tags).forEach(key => {
+            const property = key as keyof typeof mvTagParam;
+            const children = data.tags[property];
+            //  {a:[{id:1,name:'A'}], b:[{}] } => {a:id, b:id}
+            mvTagParam[property] = (children[0] && children[0].id) as string; // 1 && 0 => 0
 
-          // {id, name} => {id, name, group:key, value:`${key};${id}`}
-          children.forEach(item => item.value = `${item.group = key};${item.id}`);
+            // {id, name} => {id, name, group:key, value:`${key};${id}`}
+            children.forEach(item => (item.value = `${(item.group = key)};${item.id}`));
 
-          tagList.push(children as TagItemNode[]);
-        });
+            tagList.push(children as TagItemNode[]);
+          });
 
-        // 添加Mv分类标签信息
-        tags.splice(0, tags.length, ...tagList);
+          // 添加Mv分类标签信息
+          tags.splice(0, tags.length, ...tagList);
 
-        // 添加Mv数据
-        mvList.splice(0, mvList.length, ...data.list);
-
-      }).finally(Spinner.close);
+          // 添加Mv数据
+          mvList.splice(0, mvList.length, ...data.list);
+        })
+        .finally(Spinner.close);
     });
 
     return {
-      tags, mvList, mvTagParam,
+      tags,
+      mvList,
+      mvTagParam,
 
       /**
        * Mv分类标签被点击时, 加载最新的Mv数据列表
        *
        * @param event 点击事件
        */
-      onListViewClicked(event: PointerEvent) {
+      onListViewClicked(event: PointerEvent | MouseEvent) {
         const value = (event.target as HTMLElement).getAttribute('data-tag');
         if (!value) {
           return;
@@ -110,12 +124,13 @@ export default defineComponent({
 
         Spinner.open();
 
-        getMvList(page, mvTagParam).then(data => {
-          Object.assign(page, data.page);
+        getMvList(page, mvTagParam)
+          .then(data => {
+            Object.assign(page, data.page);
 
-          mvList.splice(0, mvList.length, ...data.list);
-
-        }).finally(Spinner.close);
+            mvList.splice(0, mvList.length, ...data.list);
+          })
+          .finally(Spinner.close);
       },
 
       /** 加载数据到视图上(无限滚动触发点) */
@@ -126,18 +141,18 @@ export default defineComponent({
 
           ++page.current;
 
-          getMvList(page, mvTagParam).then(data => {
-            Object.assign(page, data.page);
+          getMvList(page, mvTagParam)
+            .then(data => {
+              Object.assign(page, data.page);
 
-            mvList.push(...data.list);
-
-          }).catch(() => --page.current).finally(Spinner.close);
+              mvList.push(...data.list);
+            })
+            .catch(() => --page.current)
+            .finally(Spinner.close);
         }
       }
-
     };
   }
-
 });
 </script>
 

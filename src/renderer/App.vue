@@ -1,25 +1,25 @@
 <template>
-  <title-bar/>
+  <title-bar />
 
-  <tab-pane tab-position="left" mode="router" :tabs="tabs"/>
+  <tab-pane tab-position="left" mode="router" :tabs="tabs" />
 
   <!--  底部播放器控制视图  -->
-  <media-control/>
+  <media-control />
 </template>
 
-<script lang='ts'>
-import {Tab} from './components/types';
+<script lang="ts">
+import { Tab } from './components/types';
 
 import TitleBar from './views/TitleBar.vue';
 import MediaControl from './views/MediaControl.vue';
-import Message from './components/Message';
+import { Message } from './components/Message';
 
-import {useRouter} from 'vue-router';
-import {defineComponent, onBeforeUnmount} from 'vue';
+import { useRouter } from 'vue-router';
+import { defineComponent, onBeforeUnmount } from 'vue';
 
 export default defineComponent({
   name: 'App',
-  components: {TitleBar, MediaControl},
+  components: { TitleBar, MediaControl },
 
   setup() {
     const netStateChanged = () => Message(navigator.onLine ? '网络已连接' : '已断开网络连接');
@@ -33,13 +33,11 @@ export default defineComponent({
     });
 
     return {
-      tabs: useRouter().options.routes
-          .filter(route => !!route.meta)
-          // @ts-ignore
-          .map(({name, path, meta: {icon, title}}) =>
-              ({name, path, title, icon} as Tab))
+      tabs: useRouter()
+        .options.routes.filter(route => !!route.meta)
+        // @ts-ignore
+        .map(({ name, path, meta: { icon, title } }) => ({ name, path, title, icon }) as Tab)
     };
   }
-
 });
 </script>

@@ -1,72 +1,76 @@
 <template>
-  <div class='title-bar v-row'>
-    <div class='v-row fixed-left-bar' style='padding:4px;'>
+  <div class="title-bar v-row">
+    <div class="v-row fixed-left-bar" style="padding: 4px">
       <!--  用户头像图片 -->
-      <img alt class='user-icon cover' :src='user.headURI' v-if='user.uin'
-           @click='loginModal = true'/>
+      <img alt="" class="user-icon cover" :src="user.headURI" v-if="user.uin" @click="loginModal = true" />
 
       <!-- 用户未登录时,使用默认的SVG图标显示 -->
-      <icon name='user-circle' class='user-icon' @click='login' v-else/>
+      <icon name="user-circle" class="user-icon" @click="login" v-else />
 
-      <span class='user-name' :title='user.nickName' @click='user.uin ? (loginModal = true) : login($event)'>
+      <span class="user-name" :title="user.nickName" @click="login">
         {{ user.uin ? user.nickName : '点击登录' }}
       </span>
     </div>
 
-    <div class='v-row option-container' style='margin:0 4px 0 16px;'>
+    <div class="v-row option-container" style="margin: 0 4px 0 16px">
       <!-- 后退 -->
-      <icon class='back' name='back' :class='{disabled: backLength === 0}' style='margin-left:0' @click='back'/>
+      <icon class="back" name="back" :class="{ disabled: backLength === 0 }" style="margin-left: 0" @click="back" />
       <!-- 前进 -->
-      <icon class='forward' name='back' style='transform:rotate(180deg)' @click='forward'
-            :class='{disabled : forwardLength === 0}'/>
+      <icon
+        class="forward"
+        name="back"
+        style="transform: rotate(180deg)"
+        @click="forward"
+        :class="{ disabled: forwardLength === 0 }"
+      />
       <!-- 刷新 -->
-      <icon name='refresh' @click='refresh' style='margin:0 8px 0 0'/>
+      <icon name="refresh" @click="refresh" style="margin: 0 8px 0 0" />
 
-      <text-field placeholder='请输入内容' v-model='searchInput' suffixIcon='search' @keyup.enter='openNetSearchView'/>
+      <text-field placeholder="请输入内容" v-model="searchInput" suffixIcon="search" @keyup.enter="openNetSearchView" />
     </div>
 
     <window-state-bar>
       <!-- 皮肤 -->
-      <icon class='icon-menu skin viewer-hidden' name='skin'/>
+      <icon class="icon-menu skin viewer-hidden" name="skin" />
       <!-- 设置 -->
-      <icon class='icon-menu setting viewer-hidden' name='setting' @click='openSystemSetting'/>
+      <icon class="icon-menu setting viewer-hidden" name="setting" @click="openSystemSetting" />
     </window-state-bar>
 
-    <modal title='QQ登录' id='login-modal' width='600px' height='400px' v-model:visible='loginModal'>
-      <div class='v-column' style='color:var(--text-base);font-size:18px;flex:1;justify-content:space-around;'>
+    <modal title="QQ登录" id="login-modal" width="600px" height="400px" v-model:visible="loginModal">
+      <div class="v-column" style="color: var(--text-base); font-size: 18px; flex: 1; justify-content: space-around">
         <div>账号：{{ user.uin }}</div>
         <div>昵称：{{ user.nickName }}</div>
-        <template v-if='user.level'>
-          <div class='v-row'>
-            VIP等级：<img alt class='cover' style='margin:-0.5em 0 0 0;' :src='user.levelIconURI'/>
+        <template v-if="user.level">
+          <div class="v-row">
+            VIP等级：<img alt="" class="cover" style="margin: -0.5em 0 0 0" :src="user.levelIconURI" />
           </div>
           <span>会员开通时间：{{ user.startTime }}</span>
           <span>会员到期时间：{{ user.endTime }}</span>
-          <span v-if='user.autoPay'>已开启自动续费</span>
+          <span v-if="user.autoPay">已开启自动续费</span>
         </template>
       </div>
-      <hl-button @click='logout'>退出</hl-button>
+      <hl-button @click="logout">退出</hl-button>
     </modal>
   </div>
 </template>
 
-<script lang='ts'>
-import {db, tables} from '../database';
-import Message from '../components/Message';
+<script lang="ts">
+import { db, tables } from '@/database';
+import { Message } from '@/components/Message';
 import Spinner from '../components/Spinner';
 
 import WindowStateBar from './WindowStateBar.vue';
 
-import {useRoute, useRouter} from 'vue-router';
-import {nextTick, reactive, ref, defineComponent} from 'vue';
-import {login as loginApi, logout as logoutApi} from '../api';
+import { useRoute, useRouter } from 'vue-router';
+import { nextTick, reactive, ref, defineComponent } from 'vue';
+import { login as loginApi, logout as logoutApi } from '../api';
 
-import {User} from 'src/types';
+import { User } from '@/types';
 
 export default defineComponent({
   name: 'TitleBar',
 
-  components: {WindowStateBar},
+  components: { WindowStateBar },
 
   setup() {
     const backLength = ref(0);
@@ -77,7 +81,8 @@ export default defineComponent({
     // 用户基本信息
     const user = reactive<User>({} as User);
 
-    const router = useRouter(), route = useRoute();
+    const router = useRouter(),
+      route = useRoute();
 
     let navigation: boolean | null = null;
 
@@ -100,33 +105,36 @@ export default defineComponent({
      *
      * @param event 点击事件,若事件为不存在,则认为主动调用
      */
-    const login = async (event: PointerEvent | void) => {
+    const login = async (event: PointerEvent | MouseEvent | void) => {
+      if (user.uin) {
+        loginModal.value = true;
+        return;
+      }
+
       Spinner.open();
 
       try {
-        /** @type {Electron.Cookie[]} */
         let cookies, uin;
 
         if (event) {
           const data = await loginApi(null);
-          const {option} = data || {};
+          const { option } = data || {};
 
           if (!option || !option.url) {
             return Message.error('登录失败！');
           }
 
-          const {electron: electronApi} = window as any;
+          const { electron: electronApi } = window as any;
           cookies = electronApi && JSON.parse(await electronApi.openModal(option));
 
           if (!cookies || cookies.length < 1) {
             return Message.info('已取消登录！');
           }
-
         } else {
           // 从数据库获取用户信息
           await db.open();
           const usersInfo = await db.queryAll(tables.user);
-          const [{uin: _uin = '', cookies: cookieArray = []} = {}] = usersInfo || [];
+          const [{ uin: _uin = '', cookies: cookieArray = [] } = {}] = usersInfo || [];
 
           uin = _uin;
           cookies = _uin && cookieArray;
@@ -138,7 +146,7 @@ export default defineComponent({
         }
 
         const data = await loginApi(cookies);
-        const {user: userInfo, reason} = data;
+        const { user: userInfo, reason } = data;
 
         if (!userInfo || !userInfo.uin) {
           // 若网络连接正常情况下, 仍然登录失败, 则删除已存储的用户信息
@@ -156,7 +164,6 @@ export default defineComponent({
         await db.insert(tables.user, userInfo);
         // 将新的用户信息复制到视图展示的user对象上
         Object.assign(user, userInfo);
-
       } catch (e: any) {
         Message.error(`登录失败： ${e.message} !`);
       } finally {
@@ -168,7 +175,11 @@ export default defineComponent({
     nextTick(login);
 
     return {
-      loginModal, backLength, forwardLength, searchInput, user,
+      loginModal,
+      backLength,
+      forwardLength,
+      searchInput,
+      user,
 
       /** 后退 */
       back() {
@@ -201,12 +212,14 @@ export default defineComponent({
       logout() {
         if (user.uin) {
           // 删除indexDB中存储的用户信息
-          db.delete(tables.user, user.uin).then(logoutApi).then(data => {
-            if (data && data.cookieURL) {
-              const {electron: electronApi} = window as any;
-              electronApi.removeAllCookie(data.cookieURL);
-            }
-          });
+          db.delete(tables.user, user.uin)
+            .then(logoutApi)
+            .then(data => {
+              if (data && data.cookieURL) {
+                const { electron: electronApi } = window as any;
+                electronApi.removeAllCookie(data.cookieURL);
+              }
+            });
         }
       },
 
@@ -215,24 +228,25 @@ export default defineComponent({
         const value = searchInput.value;
 
         if (value) {
-          const viewPath = '/net-search-view', {path, query} = route;
+          const viewPath = '/net-search-view',
+            { path, query } = route;
 
           // 若当前路径相同且查询参数相同, 则什么也不做; 否则则跳转到搜索页面
-          if ((path !== viewPath || query.value !== value)) {
-            router.push({path: viewPath, query: {value}});
+          if (path !== viewPath || query.value !== value) {
+            router.push({ path: viewPath, query: { value } });
           }
         }
       },
 
       openSystemSetting() {
-        const viewPath = '/system-setting', path = route.path;
+        const viewPath = '/system-setting',
+          path = route.path;
 
         if (path !== viewPath) {
-          router.push({path: viewPath});
+          router.push({ path: viewPath });
         }
       }
     };
   }
-
 });
 </script>
