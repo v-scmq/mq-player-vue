@@ -1,138 +1,135 @@
-<template>
-  <div class="v-row data-container">
-    <image-view v-model="album.cover" defaultValue="icon/album.png" />
+<script lang="ts" setup>
+import { reactive, watch } from 'vue';
 
-    <div class="v-column">
+import CImage from '@/components/CImage.vue';
+import CButton from '@/components/CButton.vue';
+import CTable from '@/components/CTable.vue';
+import CIcon from '@/components/CIcon.vue';
+
+import player from '@/player';
+import { Spinner } from '@/components/spinner';
+
+import { usePlayMedias, useDownload, unhandledFn } from '@/hooks';
+import { getAlbumSongs } from '@/api';
+
+import type { PropType } from 'vue';
+import type { Album, ComputedPage } from '@/types';
+import type { TableColumn } from '@/components/types';
+
+const props = defineProps({ album: Object as PropType<Album> });
+
+const [songs, selectSongs, multiple, playSongs] = usePlayMedias();
+const album = reactive<Album>({ mid: '', name: '', cover: '', company: '' });
+const page = { current: 1, size: 30, total: 1 } as ComputedPage;
+
+const columns: TableColumn[] = [
+  { type: 'index', width: '100px' },
+  { title: '歌曲', property: 'title', flex: true },
+  { title: '歌手', property: 'singer' },
+  { title: '时长', property: 'duration', width: '100px' },
+  { title: '大小', property: 'size', width: '100px' }
+];
+
+const downloadFn = useDownload(songs, selectSongs);
+
+watch(
+  () => props.album,
+  newAlbum => {
+    if (!newAlbum || album.mid === newAlbum.mid) {
+      return;
+    }
+
+    Spinner.open();
+    Object.assign(album, newAlbum);
+    const { id, mid } = newAlbum as { mid: string; id?: string };
+
+    getAlbumSongs({ page, mid, id }).then(({ data }) => {
+      Spinner.close();
+      // 重设分页信息
+      data && Object.assign(page, data.page);
+      // // 更新专辑信息
+      // data && Object.assign(album, data.album);
+      // 添加歌曲数据
+      data && songs.splice(0, songs.length, ...data.list);
+    });
+  },
+  { immediate: true }
+);
+
+/** 加载歌曲数据到表格视图中 */
+const loadDataList = () => {
+  if (page.pageCount < 2 || page.current >= page.pageCount) {
+    return;
+  }
+
+  // 若还有数据, 则发起网络请求加载歌曲数据列表
+  Spinner.open();
+  ++page.current;
+
+  const { id, mid } = album as { mid: string; id?: string };
+
+  getAlbumSongs({ page, mid, id }).then(({ data, error }) => {
+    Spinner.close();
+
+    error && --page.current;
+    // 重设置分页信息
+    data && Object.assign(page, data.page);
+    // 添加歌曲
+    data && songs.push(...data.list);
+  });
+};
+</script>
+
+<template>
+  <div class="row data-container">
+    <c-image v-model="album.cover" error="image/album.png" />
+
+    <div class="col">
       <div>{{ album.name || '-' }}</div>
 
-      <div class="v-row data-statistic">
+      <div class="row data-statistic">
         <span class="statistic-item">流派：{{ album.genre || '-' }}</span>
         <span class="statistic-item">语种：{{ album.language || '-' }}</span>
         <span class="statistic-item">唱片公司：{{ album.company || '-' }}</span>
         <span class="statistic-item">发行时间：{{ album.year || '-' }}</span>
       </div>
 
-      <div class="v-row" style="--button-icon-size: 1.5em">
-        <hl-button icon="play-select">播放全部</hl-button>
-        <hl-button icon="plus">添加到</hl-button>
-        <hl-button icon="my-download">下载</hl-button>
-        <hl-button icon="trash">删除</hl-button>
-        <hl-button icon="multiple" @click="multiple = !multiple">{{
-          multiple ? '退出批量操作' : '批量操作'
-        }}</hl-button>
+      <div class="row" style="--button-icon-size: 1.5em">
+        <c-button icon="play-select" @click="playSongs">播放全部</c-button>
+        <c-button icon="plus" @click="unhandledFn">添加到</c-button>
+        <c-button icon="my-download" @click="downloadFn">下载</c-button>
+        <c-button icon="multiple" @click="multiple = !multiple">{{ multiple ? '退出批量操作' : '批量操作' }}</c-button>
       </div>
     </div>
   </div>
 
-  <div class="v-row" style="margin: 1em 0 0 0; flex: auto; overflow: hidden; align-items: stretch">
-    <table-view
+  <div class="row" style="margin: 1em 0 0 0; flex: auto; overflow: hidden; align-items: stretch">
+    <c-table
       style="flex: auto"
-      :selection="multiple"
       :columns="columns"
-      :data="songList"
-      @row-dblclick="playMediaList"
+      :data="songs"
+      v-model:multiple="multiple"
+      v-model:selections="selectSongs"
+      @row-dblclick="player.playMedias"
       @infinite-scroll="loadDataList"
     >
-      <template v-slot:title="{ item }">
+      <template #title="{ item }">
         <span class="cell-text">{{ item.title }}</span>
-        <icon class="vip-icon" name="vip" width="1em" height="1em" v-if="item.vip" />
-        <icon class="mv-icon" name="mv" width="1em" height="1em" v-if="item.vid" />
+        <c-icon class="vip-icon" name="vip" v-if="item.vip" />
+        <c-icon class="mv-icon" name="mv" v-if="item.vid" />
       </template>
 
-      <template v-slot:singer="{ item: { singer: singers = [] } }">
+      <template #singer="{ item: { singer: singers = [] } }">
         <span class="link cell-text" v-for="(singer, index) in singers" :key="index" :data-mid="singer.mid">{{
           singer.name
         }}</span>
       </template>
 
-      <template v-slot:album="{ item: { album } }">
+      <template #album="{ item: { album } }">
         <span class="link cell-text" :data-mid="album.mid" v-if="album">{{ album.name }}</span>
       </template>
-    </table-view>
+    </c-table>
 
     <div class="label" style="margin: 0 0 0 1em; padding: 0 1em 0 0; width: 15em">简介：{{ album.introduce }}</div>
   </div>
 </template>
-
-<script lang="ts">
-import Spinner from '../components/Spinner';
-import { playMediaList } from '@/player/hooks';
-import { getAlbumSongList } from '@/api';
-
-import { Album, ComputedPage, Song } from '@/types';
-
-import { reactive, watch, defineComponent, PropType, ref } from 'vue';
-import { TableColumn } from '@/components/types';
-
-export default defineComponent({
-  name: 'AlbumView',
-
-  props: { query: Object as PropType<Album> },
-
-  setup(props) {
-    const songList = reactive<Song[]>([]);
-    const album = reactive<Album>({ mid: '', name: '', cover: '', company: '' });
-    const page = { current: 1, size: 30, total: 1 } as ComputedPage;
-
-    const columns: TableColumn[] = [
-      { type: 'index', width: '100px' },
-      { title: '歌曲', property: 'title', flex: true },
-      { title: '歌手', property: 'singer' },
-      { title: '时长', property: 'duration', width: '100px' },
-      { title: '大小', property: 'size', width: '100px' }
-    ];
-
-    const multiple = ref(false);
-
-    watch(
-      () => props.query,
-      (newQuery) => {
-        if (newQuery && album.mid !== newQuery.mid) {
-          Spinner.open();
-
-          getAlbumSongList(page, newQuery)
-            .then((data) => {
-              // 重设分页信息
-              Object.assign(page, data.page);
-              // 更新专辑信息
-              data.album && Object.assign(album, data.album);
-              // 添加歌曲数据
-              songList.splice(0, songList.length, ...data.list);
-            })
-            .finally(Spinner.close);
-        }
-      },
-      { immediate: true }
-    );
-
-    return {
-      songList,
-      page,
-      album,
-      columns,
-      multiple,
-
-      playMediaList,
-
-      /** 加载歌曲数据到表格视图中 */
-      loadDataList() {
-        // 若还有数据, 则发起网络请求加载歌曲数据列表
-        if (page.current >= 1 && page.current < page.pageCount) {
-          ++page.current;
-          Spinner.open();
-
-          getAlbumSongList(page, album)
-            .then((data) => {
-              // 重设置分页信息
-              data.page && Object.assign(page, data.page);
-              // 添加歌曲
-              songList.push(...data.list);
-            })
-            .catch(() => --page.current)
-            .finally(Spinner.close);
-        }
-      }
-    };
-  }
-});
-</script>

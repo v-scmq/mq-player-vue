@@ -1,121 +1,131 @@
-<template>
-  <div class='v-row' style='gap:8px;margin:0 0 1em 0;--button-icon-size: 1.5em'>
-    <hl-button icon='play-select'>播放全部</hl-button>
-    <hl-button icon='plus'>添加到</hl-button>
-    <hl-button icon='my-download'>下载</hl-button>
-    <hl-button icon='trash'>删除</hl-button>
-    <hl-button icon='multiple' @click='multiple = !multiple'>{{ multiple ? '退出批量操作' : '批量操作' }}</hl-button>
-  </div>
+<script lang="ts" setup>
+import { reactive } from 'vue';
 
-  <div class='v-row' style='flex:1;align-items:stretch;overflow:hidden;'>
-    <!-- 在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
-    <table-view style='flex:auto;' :selection='multiple' :columns='columns' :data='songList'
-                @row-dblclick='playMediaList' @infinite-scroll='loadDataList'>
-      <template v-slot:title='{item}'>
-        <span class='cell-text'>{{ item.title }}</span>
-        <icon class='vip-icon' name='vip' width='1em' height='1em' v-if='item.vip'/>
-        <icon class='mv-icon' name='mv' width='1em' height='1em' v-if='item.vid'/>
-      </template>
+import CButton from '@/components/CButton.vue';
+import CTable from '@/components/CTable.vue';
+import CIcon from '@/components/CIcon.vue';
+import CAccordion from '@/components/CAccordion.vue';
 
-      <template v-slot:singer='{item:{singer:singers = []}}'>
-        <span class='link cell-text' v-for='(singer, index) in singers' :key='index'
-              :data-mid='singer.mid'>{{ singer.name }}</span>
-      </template>
+import player from '@/player';
+import { Spinner } from '@/components/spinner';
 
-      <template v-slot:album='{item:{album}}'>
-        <span class='link cell-text' :data-mid='album.mid' v-if='album'>{{ album.name }}</span>
-      </template>
-    </table-view>
+import { unhandledFn, useDownload, usePlayMedias } from '@/hooks';
 
-    <!-- 音乐排行榜信息 -->
-    <accordion style='flex:none' :list='rankList' @change='onRankChanged'/>
-  </div>
-</template>
+import { getRanks, getRankSongs } from '@/api';
 
-<script lang='ts'>
-import {defineComponent, reactive, ref} from 'vue';
-import {playMediaList} from '@/player/hooks';
-import {Message} from '@/components/Message';
-import Spinner from '../components/Spinner';
+import type { ComputedPage, Rank, RankItem } from '@/types';
+import type { TableColumn } from '@/components/types';
 
-import {getRanksSongList} from '@/api';
-import {ComputedPage, Rank, RankItem, Song} from '@/types';
-import {TableColumn} from '@/components/types';
+const ranks = reactive<Rank[]>([]);
+const [songs, selectSongs, multiple, playSongs] = usePlayMedias();
+const page = { current: 1, size: 30 } as ComputedPage;
+let rankItemId = '';
 
-export default defineComponent({
-  name: 'RankList',
+const columns: TableColumn[] = [
+  { type: 'index', width: '100px' },
+  { title: '歌曲', property: 'title', flex: true },
+  { title: '歌手', property: 'singer' },
+  { title: '专辑', property: 'album' },
+  { title: '时长', property: 'duration', width: '100px' }
+];
 
-  setup() {
-    let currentRankItem: RankItem = null as any;
+const downloadFn = useDownload(songs, selectSongs);
 
-    const rankList = reactive<Rank[]>([]);
-    const songList = reactive<Song[]>([]);
-    const page = {current: 1, size: 30} as ComputedPage;
-
-    const columns: TableColumn[] = [
-      {type: 'index', width: '100px'},
-      {title: '歌曲', property: 'title', flex: true},
-      {title: '歌手', property: 'singer'},
-      {title: '专辑', property: 'album'},
-      {title: '时长', property: 'duration', width: '100px'},
-    ];
-
-    const multiple = ref(false);
-
-    Spinner.open();
-    getRanksSongList(page, currentRankItem).then(data => {
-      // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
-      data.page && Object.assign(page, data.page);
-
-      data.rankList && rankList.splice(0, rankList.length, ...data.rankList);
-
-      songList.splice(0, songList.length, ...data.list);
-
-    }).finally(Spinner.close);
-
-    return {
-      rankList, songList, columns, multiple,
-
-      /**
-       * 所选榜单发生改变时,获取最新的歌曲列表数据
-       *
-       * @param rankItem 榜单项信息
-       * @param rankType 榜单项所属分类
-       */
-      onRankChanged(rankItem: RankItem, rankType: Rank) {
-        currentRankItem = rankItem;
-        Message(`榜单分类：${rankType.title} 对应的榜单项：${rankItem.name}`);
-
-        Spinner.open();
-        page.current = 1;
-
-        getRanksSongList(page, rankItem).then(data => {
-          data.page && Object.assign(page, data.page);
-          songList.splice(0, songList.length, ...data.list)
-
-        }).finally(Spinner.close);
-      },
-
-      playMediaList,
-
-      /** 加载歌曲数据到表格视图中 */
-      loadDataList() {
-        // 若还有数据, 则发起网络请求加载歌曲数据列表
-        if (page.current >= 1 && page.current < page.pageCount) {
-          ++page.current;
-          Spinner.open();
-
-          getRanksSongList(page, currentRankItem).then(data => {
-            // 重设置分页信息
-            data.page && Object.assign(page, data.page);
-            // 添加歌曲
-            songList.push(...data.list);
-
-          }).catch(() => --page.current).finally(Spinner.close);
-        }
-      }
-    };
+/**
+ * 所选榜单发生改变时,获取最新的歌曲列表数据
+ */
+const onRankChanged = (rankItem: RankItem) => {
+  if (rankItemId === rankItem.id) {
+    return;
   }
 
+  Spinner.open();
+  page.current = 1;
+
+  getRankSongs({ page, id: (rankItemId = rankItem.id) }).then(({ data }) => {
+    Spinner.close();
+    data && Object.assign(page, data.page);
+    data && songs.splice(0, songs.length, ...data.list);
+  });
+};
+
+/** 加载歌曲数据到表格视图中 */
+const loadDataList = () => {
+  if (page.pageCount < 2 || page.current >= page.pageCount) {
+    return;
+  }
+
+  // 若还有数据, 则发起网络请求加载歌曲数据列表
+  Spinner.open();
+  ++page.current;
+
+  getRankSongs({ page, id: rankItemId }).then(({ data, error }) => {
+    Spinner.close();
+    error && --page.current;
+    // 重设置分页信息
+    data && Object.assign(page, data.page);
+    // 添加歌曲
+    data && songs.push(...data.list);
+  });
+};
+
+// =========== 调用API获取数据 ============
+Spinner.open();
+getRanks().then(({ data, error }) => {
+  if (error || !data) {
+    Spinner.close();
+    return;
+  }
+
+  ranks.push(...data);
+  rankItemId = ranks[0].items[0].id;
+
+  getRankSongs({ page, id: rankItemId }).then(({ data }) => {
+    Spinner.close();
+    // 获取 total(总数据条数) 和 size(每页数据量,有可能会被重设为其他值)
+    data && Object.assign(page, data.page);
+    data && songs.push(...data.list);
+  });
 });
 </script>
+
+<template>
+  <div class="row" style="padding-bottom: 1em; --button-icon-size: 1.5em">
+    <c-button icon="play-select" @click="playSongs">播放全部</c-button>
+    <c-button icon="plus" @click="unhandledFn">添加到</c-button>
+    <c-button icon="my-download" @click="downloadFn">下载</c-button>
+    <c-button icon="multiple" @click="multiple = !multiple">{{ multiple ? '退出批量操作' : '批量操作' }}</c-button>
+  </div>
+
+  <div class="row" style="flex: 1; align-items: stretch; overflow: hidden">
+    <!-- 在这里,这个按行排列的元素,必须设置在竖直方向上子元素填充整个父元素高度,且这个元素高度必须设定100%  -->
+    <c-table
+      style="flex: auto"
+      :data="songs"
+      :columns="columns"
+      v-model:multiple="multiple"
+      v-model:selections="selectSongs"
+      @row-dblclick="player.playMedias"
+      @infinite-scroll="loadDataList"
+    >
+      <template #title="{ item }">
+        <span class="cell-text">{{ item.title }}</span>
+        <c-icon class="vip-icon" name="vip" v-if="item.vip" />
+        <c-icon class="mv-icon" name="mv" v-if="item.vid" />
+      </template>
+
+      <template #singer="{ item: { singer: singers = [] } }">
+        <span class="link cell-text" v-for="(singer, index) in singers" :key="index" :data-mid="singer.mid">{{
+          singer.name
+        }}</span>
+      </template>
+
+      <template #album="{ item: { album } }">
+        <span class="link cell-text" :data-mid="album.mid" v-if="album">{{ album.name }}</span>
+      </template>
+    </c-table>
+
+    <!-- 音乐排行榜信息 -->
+    <c-accordion style="flex: none" :list="ranks" @change="onRankChanged" />
+  </div>
+</template>

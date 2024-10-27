@@ -1,9 +1,10 @@
+import { reactive, ref } from 'vue';
+import type { LyricLine, Song } from '@/types';
+
 /**
  * 媒体播放器状态枚举
  */
 export enum Status {
-  /** 未知 */
-  UNKNOWN,
   /** 就绪 */
   READY,
   /** 播放中 */
@@ -13,9 +14,7 @@ export enum Status {
   /** 已停止 */
   STOPPED,
   /** 已阻塞(由于某些原因而发生阻塞,例如网络不佳) */
-  STALLED,
-  /** 就绪 */
-  RELEASED
+  STALLED
 }
 
 /**
@@ -24,7 +23,8 @@ export enum Status {
 type MediaEventListener = {
   /**
    * 媒体播放器状态已发生改变
-   * @param status
+   *
+   * @param status 播放器新状态
    */
   statusChanged(status: Status): void;
 
@@ -66,7 +66,7 @@ type MediaEventListener = {
    *
    * @param reason 错误异常信息
    */
-  error(reason: Error | null): void;
+  error(reason?: Error): void;
 };
 
 /**
@@ -74,8 +74,24 @@ type MediaEventListener = {
  */
 type AudioSpectrumListener = (dataArray: Uint8Array) => void;
 
+/** 当前正在播放歌曲的歌词(不使用readonly限制导出,只需保持正常使用即可) */
+export const lyrics = reactive({ list: [] as LyricLine[], playedTime: 0 });
+/** 当前的播放队列(不使用readonly限制导出,只需保持正常使用即可) */
+export const playList = reactive<Song[]>([]);
+/** 当前播放歌曲索引(不使用readonly限制导出,只需保持正常使用即可) */
+export const playIndex = ref(-1);
+
 /** 本地播放器 */
 const nativePlayer = new Audio();
+
+/** 当前播放器状态 */
+let status: Status = Status.READY;
+/** 事件监听器 */
+let eventListener: MediaEventListener;
+/** 当前加载的媒体资源路径 */
+let currentPath: string | null;
+/** 播放速率 */
+let speed = 1;
 
 /** 音频分析器 */
 let analyser: AnalyserNode;
@@ -91,15 +107,6 @@ let spectrumTimer: number;
 /** 音频频谱监听器 */
 let audioSpectrumListener: () => void;
 
-/** 事件监听器 */
-let eventListener: MediaEventListener;
-
-/** 当前加载的媒体资源路径 */
-let currentPath: string | null;
-
-/** 播放速率 */
-let speed = 1;
-
 const stopTimer = () => {
   if (audioSpectrumListener) {
     dataArray.fill(0);
@@ -114,19 +121,12 @@ const stopTimer = () => {
  * 播放器对象
  */
 const player = {
-  /** 播放器当前状态 */
-  status: Status.UNKNOWN,
-
-  /**
-   * 开始播放媒体
-   */
+  /** 开始播放媒体 */
   play() {
-    nativePlayer.play().then(null);
+    void nativePlayer.play();
   },
 
-  /**
-   * 暂停播放媒体
-   */
+  /** 暂停播放媒体 */
   pause() {
     nativePlayer.pause();
   },
@@ -141,71 +141,12 @@ const player = {
   },
 
   /**
-   * 释放播放器资源
-   */
-  release() {
-    nativePlayer.src = '';
-    const listener = eventListener;
-    eventListener = null as any;
-
-    listener && listener.statusChanged(Status.RELEASED);
-  },
-
-  /**
-   * 设置播放器是否自动播放
-   *
-   * @param value 是否自动播放
-   */
-  setAutoPlay(value: boolean) {
-    nativePlayer.autoplay = value;
-  },
-
-  /**
-   * 准备媒体资源
-   *
-   * @param media 媒体资源信息
-   */
-  prepare(media: { path?: string; [key: string]: any }) {
-    const path = media && media.path;
-
-    // 路径至少包含2个字符
-    if (!path || path.length < 2) {
-      currentPath = null;
-      nativePlayer.src = '';
-      return false;
-    }
-
-    // let isWindows = navigator.platform === 'Win32';
-    // windows => D:\music\... .mp3 ; linux | mac => /media/... .mp3
-    // let isLocalFile = isWindows ? path.charAt(1) === ':' : path.charAt(0) === '/';
-
-    if (currentPath !== path && eventListener) {
-      eventListener.mediaChanged(media);
-    }
-
-    // 已使用代理方式 代替本地文件资源和第三方网络资源,无需做任何转换
-    nativePlayer.src = currentPath = path;
-
-    // 必须重新设定播放速率, 否则之前的设定无效
-    this.setSpeed(speed);
-
-    return true;
-  },
-
-  /**
    * 设置播放器音量
    *
    * @param value 播放器音量,[0,1]
    */
   setVolume(value: number) {
     nativePlayer.volume = value;
-  },
-
-  /**
-   * 获取播放器音量
-   */
-  getVolume() {
-    return nativePlayer.volume;
   },
 
   /**
@@ -218,13 +159,6 @@ const player = {
   },
 
   /**
-   * 获取播放器播放速率
-   */
-  getSpeed() {
-    return nativePlayer.playbackRate;
-  },
-
-  /**
    * 获取播放器时长，单位毫秒
    */
   getDuration() {
@@ -232,47 +166,63 @@ const player = {
   },
 
   /**
-   * 获取当前播放器时间，单位秒
-   */
-  getTime() {
-    return nativePlayer.currentTime;
-  },
-
-  /**
-   * 设置播放器是否静音
-   *
-   * @param value 是否静音
-   */
-  setMute(value: boolean) {
-    nativePlayer.muted = value;
-  },
-
-  /**
-   * 检查播放器是否静音
-   */
-  isMute() {
-    return nativePlayer.muted;
-  },
-
-  /**
-   * 检查播放器是否已暂停
-   */
-  isPaused() {
-    return nativePlayer.paused;
-  },
-
-  /**
    * 检查播放器是否已播放
    */
   isPlaying() {
-    return this.status === Status.PLAYING;
+    return !!nativePlayer.src && status === Status.PLAYING;
   },
 
   /**
    * 检查播放器中是否有媒体资源可播放
    */
   isPlayable() {
-    return nativePlayer.src !== '' && this.status !== Status.RELEASED;
+    return !!nativePlayer.src && status < Status.STALLED;
+  },
+
+  /**
+   * 准备媒体资源
+   *
+   * @param media 媒体资源信息
+   */
+  prepare(media: { path?: string; [key: string]: any }) {
+    const path = media && media.path;
+
+    // 路径至少包含2个字符
+    if (!path || path.length < 2) {
+      nativePlayer.src = currentPath = '';
+      return false;
+    }
+
+    if (currentPath !== path) {
+      // 已使用代理方式 代替本地文件资源和第三方网络资源,无需做任何转换
+      nativePlayer.src = currentPath = path;
+      eventListener?.mediaChanged(media);
+    }
+
+    // 必须重新设定播放速率, 否则之前的设定无效
+    player.setSpeed(speed);
+
+    return true;
+  },
+
+  /**
+   * 从一个包含媒体信息的列表中指定位置的媒体资源播放
+   *
+   * @param list 媒体资源信息列表
+   * @param index 指定开始播放的索引
+   */
+  playMedias(list: Song[], index?: number) {
+    const length = list.length;
+    playList.splice(0, playList.length, ...list);
+    playIndex.value = index = Math.max(Math.min(index || 0, length), 0);
+
+    if (!length || index >= length) {
+      return eventListener?.error(new Error('当前播放列表无任何歌曲'));
+    }
+
+    const state = player.prepare(list[index]);
+    state && player.play();
+    !state && eventListener?.error(new Error('当前歌曲不能播放'));
   },
 
   /**
@@ -281,11 +231,8 @@ const player = {
    * @param listener 事件监听器
    */
   setEventListener(listener: MediaEventListener) {
-    // 若是第一次调用注册监听器
-    if (!eventListener) {
-      // 默认先回调一次状态改变事件
-      listener.statusChanged(Status.READY);
-    }
+    // 若是第一次调用注册监听器, 先回调一次状态改变事件
+    !eventListener && listener.statusChanged(Status.READY);
     eventListener = listener;
   },
 
@@ -333,23 +280,21 @@ const player = {
     };
 
     // 主动执行一次代理监听方法
-    audioSpectrumListener();
+    requestAnimationFrame(audioSpectrumListener);
 
     // 若播放器并未播放,则取消监听
-    if (!this.isPlaying()) {
-      stopTimer();
-    }
+    !player.isPlaying() && stopTimer();
   }
 };
 
 // 注册播放器时长改变时的回调
 nativePlayer.ondurationchange = () => {
-  eventListener && eventListener.durationChanged(nativePlayer.duration);
+  eventListener?.durationChanged(nativePlayer.duration);
 };
 
 // 注册播放器播放时间改变的回调
 nativePlayer.ontimeupdate = () => {
-  eventListener && eventListener.timeChanged(nativePlayer.currentTime);
+  eventListener?.timeChanged(nativePlayer.currentTime);
 };
 
 // 注册播放器正在缓冲时的回调
@@ -366,10 +311,10 @@ nativePlayer.onprogress = () => {
 
 // 注册播放器播放时的回调
 nativePlayer.onplaying = () => {
-  player.status = Status.PLAYING;
+  status = Status.PLAYING;
 
   // 回调播放器状态变化事件
-  eventListener && eventListener.statusChanged(Status.PLAYING);
+  eventListener?.statusChanged(Status.PLAYING);
 
   // 若已注册音频监听器, 则开启音频频谱监听
   audioSpectrumListener && audioSpectrumListener();
@@ -378,10 +323,10 @@ nativePlayer.onplaying = () => {
 // 注册播放器正在播放时的回调
 nativePlayer.onended = () => {
   // 设置为停止状态
-  player.status = Status.STOPPED;
+  status = Status.STOPPED;
 
   // 回调播放完成事件
-  eventListener && eventListener.finished();
+  eventListener?.finished();
 
   // 取消音频频谱数据监听
   stopTimer();
@@ -389,31 +334,32 @@ nativePlayer.onended = () => {
 
 // 注册播放器暂停时的回调
 nativePlayer.onpause = () => {
-  player.status = Status.PAUSED;
+  status = Status.PAUSED;
 
   // 回调播放器状态变化事件
-  eventListener && eventListener.statusChanged(Status.PAUSED);
+  eventListener?.statusChanged(Status.PAUSED);
   // 取消音频频谱数据监听
   stopTimer();
 };
 
 // 注册播放器阻塞时的回调
 nativePlayer.onstalled = () => {
-  player.status = Status.STALLED;
+  status = Status.STALLED;
 
   // 回调播放器状态变化事件
-  eventListener && eventListener.statusChanged(Status.STALLED);
+  eventListener?.statusChanged(Status.STALLED);
   // 取消音频频谱数据监听
   stopTimer();
 };
 
 // 注册播放器发生错误时的回调
-nativePlayer.onerror = (event, source, lineno, colno, error) => {
+nativePlayer.onerror = (_event, _source, _lineno, _colno, error) => {
+  nativePlayer.src = '';
+  status = Status.STOPPED;
   // 回调播放器发生错误事件
-  eventListener && eventListener.error(error || null);
+  eventListener?.error(error);
   // 取消音频频谱数据监听
   stopTimer();
 };
 
-// 导出对象
 export default player;

@@ -6,7 +6,7 @@
   directories: {
     output: 'build/release/${version}'
   },
-  files: ['build/main', 'build/static'],
+  files: ['build/main', 'build/preload', 'build/static'],
   mac: {
     artifactName: '${productName}_${version}.${ext}',
     target: ['dmg']

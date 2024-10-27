@@ -1,257 +1,200 @@
+<script lang="ts" setup>
+import { ref } from 'vue';
+
+import CButton from '@/components/CButton.vue';
+import CPopover from '@/components/CPopover.vue';
+import CInput from '@/components/CInput.vue';
+import CTable from '@/components/CTable.vue';
+
+import { db } from '@/database';
+import { Spinner } from '@/components/spinner';
+import { Message } from '@/components/message';
+
+import electron from '@/electron';
+import player from '@/player';
+
+import { toList, toFileSize, formatTime, debounce } from '@/utils';
+import { usePlayMedias, unhandledFn } from '@/hooks';
+
+import type { TableColumn } from '@/components/types';
+import type { Song } from '@/types';
+
+// 本地文件相关记录存储表名称
+const FILE_TABLE = import.meta.env.VITE_TABLE_FILE;
+
+const keyword = ref('');
+const [list, selectSongs, multiple, playSongs] = usePlayMedias();
+
+const columns: TableColumn[] = [
+  { type: 'index', width: '100px' },
+  { title: '歌曲', property: 'title' },
+  { title: '歌手', property: 'singerName' },
+  { title: '专辑', valueGetter: item => item.album?.name },
+  { title: '时长', property: 'duration', width: '100px' },
+  { title: '大小', property: 'size', width: '100px' }
+];
+
+// 文件选择元素响应式引用
+const fileInputRef = ref(null as any as HTMLInputElement);
+
+// 用于在indexDB中存储本地音乐信息的数据量(无需响应式)
+let maxSize = 0;
+
+/** 批量删除本地歌曲 */
+const deleteSongs = async () => {
+  if (list.length < 1) {
+    return Message.error('当前无任何歌曲！');
+  }
+
+  // 若处于非批量选择模式
+  if (!multiple.value) {
+    Spinner.open();
+
+    // ===执行全部删除===
+    const ids = list.map(item => item.id as string);
+    await db.delete(FILE_TABLE, ids);
+    list.splice(0, list.length);
+
+    return Spinner.close();
+  }
+
+  // 处于批量选择模式
+  const { value } = selectSongs;
+
+  if (value.length < 1) {
+    return Message.error('请至少选择一首歌曲！');
+  }
+
+  Spinner.open();
+
+  // 本地歌曲以路径作为id
+  const ids = value.map(i => list[i].id as string);
+  // 批量删除歌曲
+  const state = await db.delete(FILE_TABLE, ids);
+  console.info(state);
+  // 清空选择
+  selectSongs.value = [];
+
+  // 若全选, 则直接清空列表
+  if (ids.length === list.length) {
+    list.splice(0, list.length);
+  } else {
+    const length = list.length - ids.length;
+    const map: { [key: string]: 1 } = {};
+
+    ids.forEach(id => (map[id] = 1));
+    // @ts-ignore
+    list.splice(0, length, ...list.filter(item => !map[item.id]));
+  }
+
+  Spinner.close();
+};
+
+const handleSongFilter = debounce(() => {
+  const limited = maxSize > 1024;
+  limited && Spinner.open();
+
+  // 若输入了搜索关键词,则调用过滤, 否则查询所有
+  const filter = keyword.value
+    ? (item: Song) => {
+        const value = keyword.value;
+        const { title = '', album, singerName = '' } = item;
+        return title.includes(value) || album?.name?.includes(value) || singerName.includes(value);
+      }
+    : void 0;
+
+  db.query(FILE_TABLE, filter).then(data => {
+    keyword.value && (maxSize = data.length);
+    list.splice(0, list.length, ...data);
+
+    limited && Spinner.close();
+  });
+});
+
+/** 导入歌曲按钮被点击时,弹出文件选择框 */
+const openFileChoosePicker = () => {
+  if (keyword.value) {
+    return Message.error('当前存在筛选条件，必须清空才能进行！');
+  }
+
+  // 清除文件选择器(input元素)的值,解决重新选择不能回调change事件的问题
+  fileInputRef.value.value = null as any;
+  fileInputRef.value.click();
+};
+
+/** 导入音乐信息 */
+const addSongs = async (event: Event) => {
+  const files = (<HTMLInputElement>event.target).files;
+
+  if (!files?.length) {
+    return;
+  }
+
+  Spinner.open();
+  const medias: Song[] = await electron.parseFile(toList(files));
+  const exists: { [key: string]: 1 } = {};
+
+  list.forEach(item => {
+    exists[item.path as string] = 1;
+  });
+
+  medias.forEach((media, index) => {
+    if (!exists[media.path as string]) {
+      // 格式化文件大小
+      media.size = toFileSize(files[index].size);
+      // 格式化播放时长(已在preload中初始化为数值)
+      media.duration = formatTime(media.duration as any as number);
+    }
+  });
+
+  const newMedias = medias.filter(item => item.size);
+
+  if (newMedias.length) {
+    list.push(...newMedias);
+    await db.put(FILE_TABLE, newMedias);
+    maxSize += newMedias.length;
+  }
+
+  Spinner.close();
+};
+
+/************ 加载表格视图数据 START ************/
+Spinner.open();
+db.query<Song>(FILE_TABLE)
+  .then(data => (maxSize = list.push(...data)))
+  .finally(Spinner.close);
+/************ 加载表格视图数据   END ************/
+</script>
+
 <template>
-  <div class="v-row" style="margin: 0 8px 12px 0; gap: 8px; flex-wrap: wrap; --button-icon-size: 1.5em">
-    <hl-button icon="play-select" @click="playSelect">播放全部</hl-button>
+  <div class="row" style="margin: 0 8px 12px 0; flex-wrap: wrap; --button-icon-size: 1.5em">
+    <c-button icon="play-select" @click="playSongs">播放全部</c-button>
 
-    <popover closeable>
-      <hl-button icon="plus">添加到</hl-button>
+    <c-popover closeable>
+      <c-button icon="plus">添加到</c-button>
 
-      <template v-slot:content>
-        <div class="dropdown-item separator first">我的收藏</div>
-        <div class="dropdown-item last">添加到新歌单</div>
-        <div class="dropdown-item separator first">我的收藏</div>
-        <div class="dropdown-item last">添加到新歌单</div>
-        <div class="dropdown-item separator first">我的收藏</div>
-        <div class="dropdown-item last">添加到新歌单</div>
-        <div class="dropdown-item separator first">我的收藏</div>
-        <div class="dropdown-item last">添加到新歌单</div>
-        <div class="dropdown-item separator first">我的收藏</div>
-        <div class="dropdown-item last">添加到新歌单</div>
-        <div class="dropdown-item separator first">我的收藏</div>
-        <div class="dropdown-item last">添加到新歌单</div>
+      <template #content>
+        <div class="dropdown-item separator first" @click="unhandledFn">我的收藏</div>
+        <div class="dropdown-item last" @click="unhandledFn">添加到新歌单</div>
       </template>
-    </popover>
+    </c-popover>
 
-    <hl-button icon="my-download">下载</hl-button>
-    <hl-button icon="trash" icon-size="1.5em">删除</hl-button>
-    <hl-button icon="multiple" @click="multiple = !multiple">{{ multiple ? '退出批量操作' : '批量操作' }}</hl-button>
+    <c-button icon="trash" @click="deleteSongs">{{ multiple ? '删除' : '清空' }}</c-button>
+    <c-button icon="multiple" @click="multiple = !multiple">{{ multiple ? '退出批量操作' : '批量操作' }}</c-button>
 
-    <text-field v-model="inputKey" placeholder="搜索本地歌曲" @input="handleMusicFilter" style="margin: 0 0 0 auto" />
+    <c-input v-model="keyword" placeholder="搜索本地歌曲" @input="handleSongFilter" style="margin: 0 0 0 auto" />
 
-    <hl-button icon="import" @click="onImportButtonClicked">导入歌曲</hl-button>
-    <input type="file" style="display: none" ref="fileChooser" multiple accept="audio/*" @change="addMusic" />
-    <hl-button icon="sort" style="--button-icon-size: 1.2em">排序方式</hl-button>
+    <c-button icon="import" @click="openFileChoosePicker">导入歌曲</c-button>
+    <input hidden type="file" multiple accept="audio/*" ref="fileInputRef" @change="addSongs" />
+    <c-button icon="sort" style="--button-icon-size: 1.2em" @click="unhandledFn">排序方式</c-button>
   </div>
 
-  <table-view style="flex: auto" :columns="columns" :data="list" :selection="multiple" @row-dblclick="playMediaList" />
+  <c-table
+    style="flex: auto"
+    :columns="columns"
+    :data="list"
+    v-model:multiple="multiple"
+    v-model:selections="selectSongs"
+    @row-dblclick="player.playMedias"
+  />
 </template>
-
-<script lang="ts">
-import { db, tables } from '@/database'
-import { Message } from '@/components/Message'
-import Spinner from '@/components/Spinner'
-import { playMediaList } from '@/player/hooks'
-
-import { defineComponent, onBeforeUnmount, reactive, ref } from 'vue'
-import { getMediaInfo, resolveFileName, secondToString, toFileSize } from '@/utils'
-import { TableColumn } from '@/components/types'
-import { Song } from '@/types'
-
-export default defineComponent({
-  name: 'LocalMusic',
-
-  setup() {
-    const inputKey = ref('');
-    const multiple = ref(false);
-    const list = reactive([] as Song[]);
-
-    const columns: TableColumn[] = [
-      { type: 'index', width: '100px' },
-      { title: '歌曲', property: 'title' },
-      { title: '歌手', property: 'singer' },
-      { title: '专辑', property: 'album' },
-      { title: '时长', property: 'duration', width: '100px' },
-      { title: '大小', property: 'size', width: '100px' }
-    ];
-
-    const fileChooser = ref(null as unknown as HTMLInputElement);
-
-    // 用于在indexDB中存储本地音乐信息的数据量(非响应式)
-    let maxSize = 0;
-
-    /**
-     * 通过文件对象生成音乐信息
-     *
-     * @param basePath 存储音频专辑封面图的根路径
-     * @param file 文件对象
-     * @param meta 音频元数据信息
-     */
-    const parse = (basePath: string, file: File, meta: any) => {
-      const data = {
-        path: import.meta.env.DEV
-          ? `${import.meta.env.VITE_SERVER_PROTOCOL}://${import.meta.env.VITE_SERVER_DOMAIN}/${
-              import.meta.env.VITE_SERVER_FILE
-            }/${file.path}`
-          : `/${import.meta.env.VITE_SERVER_FILE}/${file.path}`,
-        title: meta.common.title,
-        singer: meta.common.artist,
-        // singerList: meta.common.artists,
-        year: meta.common.year,
-        album: meta.common.album,
-        cover: '',
-        duration: secondToString(meta.format.duration),
-        size: toFileSize(2, file.size),
-        bitrate: meta.format.bitrate,
-        sampleRate: meta.format.sampleRate
-        // codec: meta.format.codec, // 'MPEG 1 Layer 3'
-        // codecProfile: meta.format.codecProfile,
-        // container: meta.format.container,
-        // lossless: false,
-        // numberOfChannels: meta.format.numberOfChannels,
-      } as Song;
-
-      if (!data.title || !data.singer) {
-        let info = getMediaInfo(file, true);
-        data.title = info.title || '未知';
-        data.singer = info.singer || '未知';
-      }
-
-      const { electron: electronApi } = window as any;
-
-      const name = (data.album as string) || file.name;
-      const path = `${basePath}/${resolveFileName(name)}`;
-      // 注意必须先检测存在才能判断是文件还是目录,否则抛出异常
-      const exists = electronApi.exists(path);
-      let isDirectory, cover;
-
-      // 若文件路径不存在,或者是目录
-      if (!exists || (isDirectory = electronApi.isDirectory(path))) {
-        // 是目录则强制删除目录
-        isDirectory && electronApi.rmDir(path);
-
-        let buffer = meta.common.picture;
-
-        if ((buffer = buffer && buffer.length ? buffer[0].data : null)) {
-          electronApi.writeFile(path, buffer);
-          cover = path;
-        }
-      } else {
-        // 替换路径为本地服务器地址
-        cover = path;
-      }
-
-      meta = meta.common = meta.format = null;
-
-      if (cover) {
-        data.cover = import.meta.env.DEV
-          ? `${import.meta.env.VITE_SERVER_PROTOCOL}://${import.meta.env.VITE_SERVER_DOMAIN}/${
-              import.meta.env.VITE_SERVER_FILE
-            }/${cover}`
-          : `/${import.meta.env.VITE_SERVER_FILE}/${cover}`;
-      }
-
-      return data;
-    };
-
-    /**
-     * @param item 数据库表单条记录
-     */
-    const filter = (item: { [key: string]: any }) => {
-      const value = inputKey.value,
-        { title = '', album = '', singer = '' } = item;
-      return title.includes(value) || album.includes(value) || singer.includes(value);
-    };
-
-    const playSelect = () => Message({ message: '播放所选音乐', showClose: true, type: 'success' });
-
-    /** 开始执行本地歌曲模糊搜索(使用事件防抖原理,避免频繁调用过滤逻辑) */
-    const handleMusicFilter: any = () => {
-      // 若计时器存在,清除计时器,取消上次行的任务
-      clearTimeout(handleMusicFilter.$timer);
-
-      // 若还未初始化过处理方法,则先初始化
-      if (!handleMusicFilter.$method) {
-        handleMusicFilter.$method = () => {
-          const limited = maxSize > 1024;
-          limited && Spinner.open();
-
-          const table = tables.localMusic;
-          // 若输入了搜索关键词,则调用过滤,否则查询所有
-          const promise = inputKey.value ? db.queryOfFilter(table, filter) : db.queryAll(table);
-
-          promise.then(data => {
-            inputKey.value && (maxSize = data.length);
-            list.splice(0, list.length, ...data);
-          });
-          promise.finally(limited ? Spinner.close : null);
-        };
-      }
-      // 开始计时,在指定时间后执行数据过滤
-      handleMusicFilter.$timer = setTimeout(handleMusicFilter.$method, 500);
-    };
-
-    /** 导入音乐信息 */
-    const addMusic = async (event: Event) => {
-      const files = (event.target as HTMLInputElement).files as null | File[];
-
-      if (!files || files.length === 0) {
-        return;
-      }
-
-      Spinner.open();
-      let savedList: Song[] = [];
-
-      const { electron: electronApi } = window as any;
-
-      // 获取应用程序运行时进程所在的根路径
-      let path = await electronApi.getStorePath();
-
-      path = `${path}/picture/album`;
-      if (!electronApi.exists(path)) {
-        electronApi.mkDirs(path);
-      }
-
-      const map: { [key: string]: true } = {};
-
-      for (const item of list) {
-        map[item.path || ''] = true;
-      }
-
-      for (let file of files) {
-        if (!map[file.path]) {
-          const meta = await electronApi.parseFile(file);
-          // TODO 解析音频文件失败时,将无法添加
-          meta && savedList.push(parse(path, file, meta));
-        }
-      }
-
-      if (savedList.length) {
-        list.push(...savedList);
-        await db.insert(tables.localMusic, savedList);
-        maxSize += savedList.length;
-      }
-
-      Spinner.close();
-    };
-
-    onBeforeUnmount(() => db.close());
-
-    /************ 加载表格视图数据 START ************/
-    Spinner.open();
-    db.open()
-      .then(() => db.queryAll(tables.localMusic))
-      .then(data => (maxSize = list.push(...data)))
-      .finally(Spinner.close);
-    /************ 加载表格视图数据   END ************/
-
-    return {
-      columns,
-      list,
-      multiple,
-      inputKey,
-      fileChooser,
-      playSelect,
-      handleMusicFilter,
-      playMediaList,
-      addMusic,
-
-      /** 导入歌曲按钮被点击时,弹出文件选择框 */
-      onImportButtonClicked: () => {
-        const inputElement = fileChooser.value;
-        // 清除文件选择器(input元素)的值,解决重新选择不能回调change事件的问题
-        inputElement.value = null as any;
-        inputElement.click();
-      }
-    };
-  }
-});
-</script>

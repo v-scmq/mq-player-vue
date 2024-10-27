@@ -4,127 +4,103 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ### 项目技术栈
 
-![](https://img.shields.io/badge/Electron-18-success.svg)
+![](https://img.shields.io/badge/Electron-32-success.svg)
 ![](https://img.shields.io/badge/Vue-3-success.svg)
-![](https://img.shields.io/badge/NodeJS-16-blue.svg)
-![](https://img.shields.io/badge/TypeScript-4.5-blue.svg)
-![](https://img.shields.io/badge/MusicMetadata-7.9-blue.svg)
+![](https://img.shields.io/badge/NodeJS-20-blue.svg)
+![](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
+![](https://img.shields.io/badge/MusicMetadata-10.5-blue.svg)
 
-### 特性
+### 1.特别声明
+目前所公开的接口(位于:src/main/server/api/lib0, 作为demo用，请勿作为商业用途！)
+1. 其中第三方音乐资源均来源于【赛博朋客2077】游戏中体温电台
+2. 歌曲的歌词来源于互联网
+3. 作为MV页面的视频资源录制于【赛博朋客2077】游戏
+4. 它们存放于Salesforce平台，若有侵权，联系删除！
+
+### 2.特性
 
 1. 支持音乐频谱
-2. 界面友好，支持皮肤切换
-3. 跨平台，可打包Windows、Mac、Linux
-4. 良好的架构模式和代码风格
-5. 提供支持主流的第三方音乐平台
+2. 界面友好，支持皮肤切换(暂未实现)
+3. 跨平台，可打包Windows、Mac、Linux(当前仅测试了windows)
+4. 尽量使用良好的架构模式和代码风格
+5. 提供支持主流的第三方音乐平台(未公开)
+6. 进程沙盒化(从现在开始所有接口调用都由electron中自定义协议代理调用，解析媒体元数据已经调整到主进程部分)
+7. 从现在开始,不再支持纯浏览器端(如本地音乐页面), 且已经将语法降级相关配置调整,使其尽量避免语法降级
 
-### 效果预览 ([在线预览](https://v-scmq.github.io/mq-player-vue))
+### 3.效果预览
 
 + 本地音乐
 
-![本地音乐](preview/1.png "本地音乐")
+![本地音乐](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/1.png "本地音乐")
 
 + 播放详情
 
-![播放详情](preview/2.png "背景虚化")
+![播放详情](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/2.png "背景虚化")
 
 + 歌手分类
 
-![歌手分类](preview/3.png "歌手分类")
+![歌手分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/3.png "歌手分类")
 
 + 歌手歌曲
 
-![歌手歌曲](preview/4.png "歌手歌曲")
-
-+ 歌手专辑
-
-![歌手专辑](preview/5.png "歌手专辑")
-
-+ 歌单分类
-
-![歌手专辑](preview/6.png "歌单分类")
+![歌手歌曲](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/4.png "歌手歌曲")
 
 + MV分类
 
-![MV分类](preview/7.png "MV分类")
+![MV分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/5.png "MV分类")
 
-+ 榜单分类
++ 下载管理
 
-![榜单分类](preview/8.png "榜单分类")
+![MV分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/6.png "下载管理")
 
-+ 歌曲搜索
+更多效果，可自行体验
 
-![歌曲搜索](preview/9.png "歌曲搜索")
+### 4.待实现功能
+1. 本地音乐页面排序
+2. 播放队列UI相关
+3. MV播放问题(现在仅仅在MV分类页面支持简单播放)
+4. 歌单页面歌曲列表
+5. 收藏、添加歌曲到歌单等
+6. 歌曲播放UI相关(播放过程中出现已缓冲部分完成,但需要继续加载资源问题而没有任何标识)
+7. 全体UI相关(皮肤切换……)
+8. ……
 
-#### 问题汇集
 
-> 1.electron不能加载本地资源(即使关闭webSecurity安全策略)
-
-问题在于electron版本自身存在的问题,关闭Web安全策略仍然不能解决,反而出现了file协议不认识的情况,该问题解决方案在
-[问题发现](https://github.com/electron/electron/issues/23664)
-[问题解决](https://github.com/electron/electron/issues/23757) . 从解决的方案衍生一个不使用file协议,注册自定义文件协议,这样可以不关闭安全策略 且可以访问本地文件.
-
-```javascript
-import {protocol} from "electron";
-
-app.whenReady().then(() => {
-    // 注册文件协议必须在应用程序就绪后才能执行
-    protocol.registerFileProtocol('fs', (request, callback) => {
-        // request请求包含原始请求URL和header等信息
-        const pathname = request.url.replace('fs://', '');
-
-        // callback回调用于将文件(必须)绝对路径传入并做响应信息处理
-        callback(pathname);
-    });
-});
-
+### 5.项目结构
+```text
+├─build              (打包根目录)
+│  ├─main            (主进程部分)
+│  ├─preload         (预加载部分)
+│  └─static          (渲染进程部分)
+├─public             (开发环境下静态资源)
+│  └─image           (开发环境下静态图片资源)
+└─src
+    ├─main           (***开发环境下,主进程部分***)
+    │  ├─icon        (仅在打包时提供给electron-build使用)
+    │  ├─server      (electron自定义协议作为代理服务器)
+    │  │  ├─api      (提供音乐资源接口)
+    │  │  │  ├─lib0  (作为demo使用的音乐接口)
+    │  │  │  └─lib1  (提供支持调用第三方音乐接口)
+    │  │  ├─request  (网络请求工具相关代码)
+    │  │  └─types    (相关类型定义)
+    │  └─util        (主进程部分相关使用的工具代码)
+    ├─preload        (***预加载脚本***)
+    └─renderer       (***渲染进程部分)
+        ├─api        (渲染进程部分所调用的api)
+        ├─components (自定义组件)
+        │  ├─message (ElementPlus Message的模拟实现)
+        │  ├─spinner (进度指示器)
+        │  └─types   (组件相关类型定义)
+        ├─database   (IndexedDB简单封装)
+        ├─electron   (对预加载脚本提供的方法进一步封装)
+        ├─hooks      (渲染进程全局使用的hook)
+        ├─player     (播放器相关封装)
+        ├─router     (VueRouter相关)
+        ├─styles     (全局样式,目前未使用作用域样式)
+        ├─types      (类型定义)
+        │  └─api
+        ├─utils      (渲染进程部分相关使用的工具代码)
+        └─views      (渲染进程部分相关页面)
 ```
 
-> 2.Electron环境中的各种问题
 
-1) 在渲染进程中,不能导入electron <br>
-   使用window.require代替require,因为require会被webpack将其替换为__webpack_require__
-
-2) 导入music-metadata库打包后在electron中报错 <br>
-   若是直接在渲染进程中导入,需要在以下2个文件中将require('fs')替换为window.require('fs')
-   %project_home%\node_modules\strtok3\lib\FsPromise.js (
-   %project_home%\node_modules\music-metadata\lib\common\RandomFileReader.js <br>
-   目前最佳方案:在preload.js中引入music-metadata,并且将preload.js在electron-builder插件配置选项中引入
-
-3) 在Electron14以后警告不能在package.json中使用 【main:'background.js'】作为配置项, 若移除此配置项,在打包构建时,会找不到主进程相关文件(此时默认为index.js), 解决办法:
-   在node-modules/vue-cli-plugin-electron-builder/index.js中的bundleMain方法中 修改mainConfig.entry(isBuild ? 'background' : '
-   index') => mainConfig.entry('index')
-
-### 位运算总结
-
-```ecmascript 6
-
-// 1.判断一个整数是偶数还是奇数 a & 1 == 0 ? 偶数 : 奇数
-const isEvenNumber = value => value & 1 == 0;
-
-// 2.取模(取余)运算,仅对 a % b (b = 2 ^ n)适用
-const mod = (a, b) => a & --b;
-
-// 3.两个整数交换 a = 1 , b = 2 => b = 1 , a = 2
-const swap = (a, b) => {
-    // a = a ^ b; b = a ^ b; a = a ^ b;
-    a = (a ^ b) ^ (b = a);
-};
-
-// 4.判断一个数是否为2的n次方
-// const isPowerOfTwo = value => (value & --value) == 0 && value != 0;
-const isPowerOfTwo = value => value && (value & --value) == 0;
-
-// 5.计算一个数的相反数
-const opposite = value => ~value + 1;
-
-// 6.计算2个数的平均数(有问题)
-const average = (a, b) => (a & b) + ((a ^ b) >> 1);
-
-// 7.计算一个数的绝对值(有问题)
-const abs = a => {
-    let b = a >> 31;
-    return (a + b) ^ b; // ( a ^ b ) - b
-}
-
-```

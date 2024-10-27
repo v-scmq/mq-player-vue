@@ -1,0 +1,601 @@
+html, body, #app {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+    white-space: nowrap;
+    background: rgb(236, 236, 236);
+    font-size: 14px;
+    -webkit-text-size-adjust: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+/** 可拖动的父元素 */
+.drag {
+    -webkit-app-region: drag;
+}
+
+/** 可拖动元素中以下子元素禁用拖动(使其能够正常交互) */
+.drag .c-icon,
+.drag .user-name,
+.drag .user-icon,
+.drag .c-input {
+    -webkit-app-region: none;
+}
+
+.c-table .table-cell > .c-icon.vip-icon,
+.c-table .table-cell > .c-icon.mv-icon {
+    fill: #eb5183;
+    margin: 0 0 0 0.25em;
+    width: 1.2em;
+}
+
+.c-table .table-cell > .c-icon.vip-icon {
+    cursor: unset;
+    width: 1.5em;
+}
+
+.label {
+    font-size: 15px;
+    white-space: pre-line;
+    overflow: hidden auto;
+    color: var(--text-base);
+}
+
+/* 标题栏左侧元素 和 选项卡容器 */
+.side-left,
+.title-bar + .c-tab-pane > .tab-container {
+    flex: none;
+    width: 200px;
+    /*
+        border-box :元素实际部分为指定的宽高 (内容部分 = 指定的为实际宽高 - 边框 - 内边距)
+        content-box:元素内容部分为指定的宽高 (实际部分 = 指定的为内容宽高 + 边框 + 内边距)
+     */
+    box-sizing: border-box;
+    background: rgb(241, 241, 241);
+}
+
+
+/****************** TitleBar(Header) START *****************/
+.title-bar {
+    font-size: 14px;
+}
+
+.title-bar .user-icon.c-image {
+    width: 40px;
+    height: 40px;
+    background: none;
+    border-radius: 50%;
+}
+
+.title-bar .user-icon.c-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    fill: rgb(188, 191, 193);
+}
+
+.title-bar .user-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13px;
+}
+
+.title-bar .c-icon.disabled {
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.title-bar > .option-container > .c-icon {
+    padding: 6px;
+}
+
+.title-bar > .option-container > .c-icon:hover {
+    background: rgba(210, 212, 216, 0.8);
+}
+
+.window-state-bar {
+    flex: 1;
+    gap: 16px;
+    padding: 8px;
+    --icon-fill-base: unset;
+    --icon-fill-hover: unset;
+}
+
+.window-state-bar.viewer {
+    --icon-fill-base: rgb(210, 210, 210);
+    --icon-fill-hover: rgb(245, 108, 108);
+}
+
+.window-state-bar > .c-icon {
+    padding: 6px;
+    fill: var(--icon-fill-base);
+}
+
+.window-state-bar > .c-icon:hover {
+    fill: var(--icon-fill-hover);
+}
+
+.window-state-bar > .separator {
+    height: 1em;
+    display: flex;
+    margin: 0 0.5em;
+    border-left: 2px solid #222;
+}
+
+.window-state-bar:not(.viewer) > .c-icon:hover {
+    background: rgba(210, 212, 216, 0.8);
+}
+
+.window-state-bar:not(.viewer) > .c-icon.close:hover {
+    background: rgb(232, 17, 35);
+    fill: white;
+}
+
+.window-state-bar.viewer > .c-icon {
+    width: 1.5em;
+    cursor: pointer;
+}
+
+.window-state-bar.viewer.full-screen .full-screen-icon ~ .c-icon {
+    display: none;
+}
+
+/****************** TitleBar(Header)   END *****************/
+
+
+/****************** MediaControl(Footer) START ******************/
+.media-control {
+    --icon-fill-base: var(--fill-base);
+    --stroke-icon-fill-base: var(--fill-base);
+    color: var(--text-base);
+}
+
+.media-control.viewer {
+    --slider-filler-fill: rgb(226, 155, 208);
+    --slider-thumb-fill: rgb(226, 155, 208);
+    --slider-buffer-fill: rgb(210, 210, 210);
+
+    --icon-fill-base: rgb(210, 210, 210);
+    --stroke-icon-fill-base: var(--icon-fill-base);
+
+    color: white;
+    padding: 0 0 4px 0;
+}
+
+.media-control .album-icon {
+    width: 4em;
+    height: 4em;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 4px 2px 2px;
+}
+
+.media-control .stroke-icon {
+    z-index: 1;
+    cursor: pointer;
+    padding: 1px 10px;
+    border-radius: 1.25em;
+    color: var(--stroke-icon-fill-base);
+    border: 1px solid var(--stroke-icon-fill-base);
+}
+
+.media-control .c-icon {
+    z-index: 1;
+    width: 2em;
+    cursor: pointer;
+    fill: var(--icon-fill-base);
+}
+
+.media-control .play-pause {
+    width: 3em;
+}
+
+/* [属性名^='值'] 匹配开始的值,   [属性名$='值'] 匹配结束的值   [属性名*='值'] 匹配包含的值 */
+/*.popover[class*='-control']*/
+.c-popover.volume-control,
+.c-popover.speed-control,
+.c-popover.mode-control {
+    gap: 0;
+    align-items: center;
+    justify-content: center;
+    background: var(--popover-inner-fill);
+    color: var(--text-active);
+    border-radius: 6px;
+    padding: 12px 8px;
+    box-sizing: border-box;
+    /* transition-property, transition-duration, transition-timing-function, and transition-delay. */
+    /* transition: visibility 1s ease; visibility: collapse; */
+}
+
+/* 音量弹出式面板 */
+.c-popover.volume-control {
+    height: 150px;
+    width: 54px;
+}
+
+.c-popover.speed-control {
+    height: 150px;
+    width: 54px;
+    align-items: stretch;
+}
+
+/* 播放模式弹出式面板 */
+.c-popover.mode-control {
+    width: 102px;
+    padding: 2px 0;
+    white-space: nowrap;
+    fill: var(--fill-base);
+}
+
+.c-popover.mode-control > .row {
+    width: 100%;
+    cursor: pointer;
+    padding: 8px 4px;
+    box-sizing: border-box;
+    justify-content: center;
+    font-size: 12px;
+    gap: 8px;
+}
+
+.c-popover.mode-control > .row:not(:last-child) {
+    border-bottom: 1px solid var(--popover-mode-border-fill);
+}
+
+.c-popover.mode-control > .row:hover {
+    background: var(--popover-mode-fill-hover);
+}
+
+.c-popover.play-queue {
+    /*position: absolute;*/
+    top: 4px;
+    right: 0;
+    bottom: 4px;
+    width: 30vw;
+    max-width: 600px;
+    gap: 16px;
+    padding: 16px;
+    background: white;
+    /*--text-base: white;*/
+
+    opacity: 1;
+    transition: transform .3s ease-in-out;
+    transform: translate3d(100%, 0, 0);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.12);
+}
+
+/*
+.popover.play-queue::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.6;
+    background: black;
+    filter: blur(80px);
+}*/
+
+.c-popover.play-queue.expand {
+    transform: translate3d(0, 0, 0);
+}
+
+.c-popover.play-queue > .title {
+    justify-content: space-between;
+    /* 弹出层中的图标填充色 */
+    --icon-fill-base: #f56c6c;
+}
+
+.c-popover.play-queue > .option-bar {
+    /* 弹出层中的图标填充色 */
+    --icon-fill-base: white;
+    gap: 8px;
+}
+
+.c-popover.play-queue > .option-bar > .song-count-label {
+    flex: 1;
+}
+
+.c-popover.play-queue > .c-table {
+    flex: 1;
+    margin: 0 -16px 0 0;
+}
+
+/****************** MediaControl(Footer) START ******************/
+
+
+/****************** 用户个人信息模态框 START ******************/
+.user-info-modal > .modal-content > .content {
+    flex: 1 1 0;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    font-size: 18px;
+    color: var(--text-base);
+    padding: 2em;
+}
+
+.user-info-modal > .modal-content > .content :nth-child(2n + 1) {
+    justify-self: flex-end;
+}
+
+.user-info-modal > .modal-content > .content > .c-button {
+    color: white;
+    font-size: inherit;
+    border-radius: 1em;
+    background: rgb(226, 155, 208);
+    grid-column: 1/3;
+    justify-self: center;
+    width: 80%;
+}
+
+/****************** 用户个人信息模态框 START ******************/
+
+
+/************************ LyricView START ************************/
+.lyric-view {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: grab;
+    mask-image: linear-gradient(180deg, #fff0 0, #fff9 15%, #fff 25%, #fff 75%, #fff9 85%, #fff0);
+}
+
+.lyric-view.empty {
+    cursor: default;
+    align-items: center;
+    justify-content: center;
+}
+
+.lyric-view.empty::after {
+    color: white;
+    padding: 12px;
+    font-size: 20px;
+    /* CSS表达式 attr() 用来获取选择到的元素的某一HTML属性值, 并用于其样式 */
+    content: attr(data-placeholder);
+}
+
+.lyric-view > .content-wrapper.animation {
+    transition: transform 0.1s ease-out;
+}
+
+.lyric-view > .content-wrapper > .lyric-item {
+    text-align: center;
+    font-size: 16px;
+    color: white;
+    padding: 12px 0;
+    white-space: pre-wrap;
+    transition: transform 0.1s ease-out;
+}
+
+.lyric-view > .content-wrapper > .lyric-item.active {
+    color: rgb(226, 155, 208);
+    transform: scale(1.5);
+}
+
+/************************ LyricView   END ************************/
+
+
+/************************ MusicViewer START ************************/
+.music-viewer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    overflow: hidden;
+    /*background-color: black;*/
+    /*background: rgb(224, 224, 224);*/
+    background: rgb(100, 100, 100);
+    /*rgb(250,235,215)*/
+    /*FAEBD7FF*/
+}
+
+.music-viewer > .effect-cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /*filter: blur(150px);*/
+    /*filter: blur(60px) brightness(60%);*/
+    filter: blur(60px);
+    opacity: 0.6;
+    z-index: -9;
+}
+
+.music-viewer .data-media {
+    color: white;
+    font-size: 16px;
+    justify-content: center;
+    margin: 0 0 1em 0;
+    gap: 8px;
+}
+
+.music-viewer .data-media .mv-icon {
+    fill: #ffc100;
+    width: 1em;
+    height: 1em;
+}
+
+.music-viewer .cover--rect-inner {
+    margin: 0 20px;
+    height: 100%;
+    max-width: 300px;
+    min-width: 100px;
+    max-height: 300px;
+    min-height: 100px;
+    border-radius: 8px;
+    align-self: center;
+    object-fit: scale-down;
+}
+
+@media (max-height: 500px) {
+    .music-viewer .cover--rect-inner {
+        align-self: flex-end;
+    }
+}
+
+/************************ MusicViewer   END ************************/
+
+/************************ DownloadView  START ************************/
+.tab-content.download-view {
+    gap: 8px;
+    padding: 0;
+    color: var(--text-base);
+}
+
+.tab-content.download-view .view-head {
+    padding: 20px 20px 0 20px;
+}
+
+.tab-content.download-view .view-body {
+    flex: 1;
+    gap: 8px;
+    padding: 20px;
+    overflow: auto;
+}
+
+@media screen and (max-height: 600px) {
+    .tab-content.download-view .empty-icon {
+        zoom: 0.5;
+    }
+}
+
+.tab-content.download-view .row,
+.tab-content.download-view .col {
+    gap: 12px;
+}
+
+.tab-content.download-view .card {
+    /*background: #fff;*/
+    border-radius: 4px;
+    padding: 12px;
+    box-shadow: 0 0 12px #0000001f;
+}
+
+.tab-content.download-view .card .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tab-content.download-view .controls {
+    flex-wrap: wrap;
+}
+
+.tab-content.download-view .controls .c-icon {
+    width: 1em;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+.tab-content.download-view .controls .c-popover .dropdown-item {
+    text-align: center;
+}
+
+.tab-content.download-view .controls .c-button:first-of-type {
+    margin-left: auto;
+}
+
+.tab-content.download-view .track {
+    background: var(--slider-track-fill);
+    height: 6px;
+    border-radius: 6px;
+}
+
+.tab-content.download-view .filler {
+    /*background: #128c94;*/
+    background: #6f7ad3;
+    height: inherit;
+    border-radius: inherit;
+}
+
+/************************ DownloadView    END ************************/
+
+
+/************************ 各页面分类标签 START ************************/
+.tag-lists:nth-child(2n) {
+    margin: 0.5em 0;
+}
+
+.tag-lists .item {
+    cursor: pointer;
+    border-radius: 1em;
+    white-space: nowrap;
+    margin: 0 0 0 0.5em;
+    padding: 0.25em 0.75em;
+    color: var(--text-base);
+}
+
+.tag-lists .item:hover {
+    color: var(--text-hover);
+}
+
+.tag-lists .item.active {
+    background: var(--fill-base);
+    color: var(--text-active);
+}
+
+/************************ 各页面分类标签   END ************************/
+
+/***/
+.data-container {
+    align-items: stretch;
+    color: var(--text-base);
+}
+
+.data-container .c-image {
+    width: 13em;
+    height: 13em;
+    border-radius: 50%;
+}
+
+.data-container .col {
+    justify-content: space-around;
+    margin: 1em;
+}
+
+.data-container .statistic-item:nth-child(n + 2)::before {
+    content: '|';
+    margin: 0 1.5em;
+}
+
+.data-container .c-button {
+    margin: 0 1.5em 0 0;
+}
+
+
+/****************** 定时器模态框 START ******************/
+.timer-modal .content {
+    color: var(--text-base);
+}
+
+.timer-modal .content .c-input {
+    width: 60px;
+}
+
+.timer-modal .content .c-button {
+    width: 80%;
+    font-size: 18px;
+    border-radius: 1em;
+    background: rgb(226, 155, 208);
+}
+
+/****************** 定时器模态框   END ******************/
+
+
+.tab-content.mv-list {
+    gap: 1em;
+}
+
+.mv-control {
+    flex: 1;
+    width: 100%;
+    height: 1px;
+    background: #000;
+}
