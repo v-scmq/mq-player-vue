@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain as ipc, protocol, shell, Menu, Tray } from 'electron';
-import { createServer } from './server';
+import { exec } from 'child_process';
 import { basename, join } from 'node:path';
 import { existsSync, mkdirSync, rmSync, statSync, writeFile } from 'fs';
-import { exec } from 'child_process';
 import { parseFile } from 'music-metadata';
+import { createServer } from './server';
 
 import type { WindowState, LoginOption } from '@/electron/type';
 import type { SetDownloadItem, Song } from '@/types';
@@ -347,10 +347,12 @@ app.on('ready', () => {
   // 7.处理来自渲染进程请求(解析媒体文件并获取媒体元数据信息)
   ipcHandle(import.meta.env.VITE_IPC_CHANNEL_PARSE_FILE, async (_, paths: string[]) => {
     const UNDEFINED = void 0;
-    let coverPath: string | undefined;
 
     let index = -1;
     let medias = paths as any as Song[];
+
+    let coverPath: string | undefined;
+    let nameRegex: RegExp | undefined;
 
     for (let path of paths) {
       const meta = (await parseFile(path).catch()) || ({} as IAudioMetadata);
@@ -361,18 +363,21 @@ app.on('ready', () => {
       let cover: string | undefined;
 
       if (!title || !artist) {
-        let name = fileName;
-        let index = fileName.lastIndexOf('.');
+        const index = fileName.lastIndexOf('.');
+        const name = index < 0 ? fileName : fileName.slice(0, index);
+        // 歌手 - 标题
+        const [v1, v2] = name.split((nameRegex = nameRegex || /-/), 2);
 
-        if (index < 0) {
-          name = name.slice(0, name.length);
+        // 存在2项时, 作为 歌手 - 标题
+        if (v2) {
+          artist = artist || v1.trim();
+          title = title || v2.trim();
         }
 
-        // 歌手 - 标题
-        const [v1, v2] = name.split(/-/, 2);
-
-        if (!artist) artist = v1.trim();
-        if (!title) title = v2.trim();
+        // 只有1项目, 作为标题
+        else {
+          title = title || v1.trim();
+        }
       }
 
       let buffer: any = meta.common?.picture;
