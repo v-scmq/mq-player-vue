@@ -1,5 +1,4 @@
-import { toPayload, toSuccess, toError, get, post, error, request, toHeaders } from '../../request';
-
+import { toPayload, toSuccess, toError, get, post, error, toHeaders, pipe } from '../../request';
 import { formatTime, readLyric } from '../../../util';
 
 import type { ApiHandlers } from '../../types';
@@ -45,6 +44,7 @@ import { Mv, Singer, Song } from '@/types';
  */
 export const createApis = () => {
   const cache: { [key: string]: any } = {};
+  const baseApiURL = 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest';
 
   /**
    * 获取歌曲在本地服务器上的URI地址
@@ -117,16 +117,16 @@ export const createApis = () => {
 
       return cookies && cookies.length > 0
         ? toSuccess<LoginRes>({
-            id: '1234567890',
-            nickName: '测试昵称',
-            avatar: '',
-            vip: false,
-            level: 0,
-            levelIcon: '',
-            startTime: '',
-            endTime: '',
-            autoPay: false
-          })
+          id: '1234567890',
+          nickName: '测试昵称',
+          avatar: '',
+          vip: false,
+          level: 0,
+          levelIcon: '',
+          startTime: '',
+          endTime: '',
+          autoPay: false
+        })
         : toError(void 0, '登录失败');
     },
 
@@ -153,7 +153,7 @@ export const createApis = () => {
       }
 
       const singers = await get<Singer[]>({
-        url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/singer/list'
+        url: `${baseApiURL}/singer/list`
       });
 
       const length = singers.length;
@@ -186,7 +186,7 @@ export const createApis = () => {
       }
 
       const songs = await post<Song[]>({
-        url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/singer/songs',
+        url: `${baseApiURL}/singer/songs`,
         body: { id, mid }
       });
 
@@ -283,36 +283,49 @@ export const createApis = () => {
     /**
      * 获取榜单列表
      */
-    'rank/list'() {
-      return toSuccess<RankListRes>([
-        {
-          id: `1`,
-          title: '热门榜单',
-          items: [
-            { id: `1-1`, name: '飙升榜', cover: '' },
-            { id: `1-2`, name: 'TOP榜', cover: '' }
-          ]
-        },
-        {
-          id: `2`,
-          title: '特色榜单',
-          items: [
-            { id: `2-1`, name: '电音榜', cover: '' },
-            { id: `2-2`, name: '粤语榜', cover: '' }
-          ]
-        }
-      ]);
+    async 'rank/list'() {
+      const key = `singer/ranks`;
+      let cached = cache[key] as RankListRes | undefined;
+
+      if (cached) {
+        return toSuccess(cached);
+      }
+
+      const ranks = await get<RankListRes>({ url: `${baseApiURL}/rank/list` });
+      return toSuccess(cached = cache[key] = ranks);
     },
 
     /**
      * 获取榜单歌曲列表
      */
     async 'rank/songs'(req) {
-      const { id, page } = await toPayload<RankSongListPayload>(req);
-      console.log(id, page);
-      return toSuccess<RankSongListRes>({
-        page: { current: 1, pageCount: 1, size: page.size, total: 0 },
-        list: []
+      const { id/*, page*/ } = await toPayload<RankSongListPayload>(req);
+
+      const key = `rank/songs/${id}`;
+      let cached = cache[key] as RankSongListRes | undefined;
+
+      if (cached) {
+        return toSuccess(cached);
+      }
+
+      const songs = await post<Song[]>({
+        url: `${baseApiURL}/rank/songs`,
+        body: { id/*, page*/ }
+      });
+
+      songs.forEach(song => {
+        song.singer?.forEach(singer => {
+          singer.cover = getProxyURI(singer.cover);
+        });
+
+        song.album && (song.album.cover = getProxyURI(song.album.cover));
+        song.duration = formatTime(song.duration as any as number);
+        song.path = getSongURI(song.id, song.mid);
+      });
+
+      return toSuccess<RankSongListRes>(cached = cache[key] = {
+        list: songs,
+        page: { current: 1, pageCount: 1, size: songs.length, total: songs.length }
       });
     },
 
@@ -391,7 +404,7 @@ export const createApis = () => {
       }
 
       const mvs = await get<Mv[]>({
-        url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/mv/list'
+        url: `${baseApiURL}/mv/list`
       });
 
       const length = mvs.length;
@@ -511,7 +524,7 @@ export const createApis = () => {
 
       if (!data) {
         data = await post<{ url: string }>({
-          url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/stream',
+          url: `${baseApiURL}/stream`,
           body: { id, mid }
         });
 
@@ -522,17 +535,12 @@ export const createApis = () => {
         return error();
       }
 
-      const res = await request(data.url, {
-        headers: toHeaders(req) as Record<string, string>
-      });
+      const res = await pipe(data.url, toHeaders(req));
 
       // 若提供了文件名,则重写附件响应标头
       if (fileName) {
         res.headers.set('content-disposition', `attachment; filename="${encodeURIComponent(fileName)}.${format}"`);
       }
-
-      // TODO 自定义协议设置浏览器缓存无效
-      res.headers.set('cache-control', 'public,max-age=3888000');
 
       return res;
     },
@@ -553,7 +561,7 @@ export const createApis = () => {
 
       if (!data) {
         data = await post<{ url: string }>({
-          url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/stream',
+          url: `${baseApiURL}/stream`,
           body: { id, vid }
         });
 
@@ -564,17 +572,12 @@ export const createApis = () => {
         return error();
       }
 
-      const res = await request(data.url, {
-        headers: toHeaders(req) as Record<string, string>
-      });
+      const res = await pipe(data.url, toHeaders(req));
 
       // 若提供了文件名,则重写附件响应标头
       if (file) {
         res.headers.set('content-disposition', `attachment; filename="${encodeURIComponent(file)}.${format}"`);
       }
-
-      // TODO 自定义协议设置浏览器缓存无效
-      // res.headers.set('cache-control', 'public,max-age=3888000');
 
       return res;
     },

@@ -1,5 +1,6 @@
 import { net } from 'electron';
 import { createReadStream, existsSync, statSync } from 'fs';
+import { request as httpsRequest } from 'https';
 import type { IncomingHttpHeaders } from 'http';
 import type { Page } from '@/types';
 
@@ -53,7 +54,7 @@ export const toPayload: Http['toPayload'] = <T>(req: Request, type?: 'text' | 'j
  * @param cookie 新的cookie值(若指定则替换原请求中cookie值;否则删除原请求中cookie值)
  */
 export const toHeaders = ({ headers }: Request, cookie?: string) => {
-  const newHeaders: IncomingHttpHeaders = {};
+  const newHeaders: Record<string, string> = {};
   const cookieKey = 'cookie';
 
   cookie ? headers.set(cookieKey, cookie) : headers.delete(cookieKey);
@@ -184,7 +185,7 @@ export const stream = (path: string, range?: string | null) => {
 
   // 若不存在或不是一个文件, 则返回404状态码信息
   if (!stats || !stats.isFile()) {
-    return toError();
+    return error();
   }
 
   // 分段传输时的数据字节范围请求头信息
@@ -234,5 +235,38 @@ export const stream = (path: string, range?: string | null) => {
     status: isRage ? 206 : 200,
     statusText: 'OK',
     headers
+  });
+};
+
+export const pipe = async (url: string, headers: Record<string, string>) => {
+  const cookies: { [key: string]: string } = {};
+  const NULL_REF = null as any;
+  let readable = NULL_REF;
+
+  while (url) {
+    headers.cookie = Object.keys(cookies).map(key => `${key}=${cookies[key]}`).join(';');
+
+    readable = await new Promise(resolve => {
+      const req = httpsRequest(url, { headers }, resolve);
+      req.once('error', () => resolve(NULL_REF));
+      req.end();
+    });
+
+    if (!readable) {
+      return error();
+    }
+
+    if ((url = readable.headers.location)) {
+      for (const cookie of (readable.headers['set-cookie'] || [])) {
+        const [key, value] = cookie.split(';')[0].trim().split('=');
+        cookies [key.trim()] = value.trim();
+      }
+    }
+  }
+
+  return new Res(readable as any as ReadableStream, {
+    status: readable.statusCode,
+    statusText: readable.statusMessage,
+    headers: readable.headers as any as Record<string, string>
   });
 };

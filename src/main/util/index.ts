@@ -148,10 +148,8 @@ export const readLyric = (text: string, translation?: string): LyricLine[] => {
 
     value.end =
       index < max
-        ? // 当前行的结束时间指定为下一行的开始时间
-          map[keys[index + 1]].start
-        : // 最后一行结束时间是接近无限的(相对于 移位运算 来说)
-          1 << 30;
+        ? map[keys[index + 1]].start // 当前行的结束时间指定为下一行的开始时间
+        : 1 << 30; // 最后一行结束时间是接近无限的(相对于 移位运算 来说)
 
     return value;
   });

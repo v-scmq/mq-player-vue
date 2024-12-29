@@ -412,8 +412,8 @@ app.on('ready', () => {
 
         cover = import.meta.env.DEV
           ? `${import.meta.env.VITE_SERVER_PROTOCOL}://${import.meta.env.VITE_SERVER_DOMAIN}/${
-              import.meta.env.VITE_SERVER_FILE
-            }/${_path}`
+            import.meta.env.VITE_SERVER_FILE
+          }/${_path}`
           : `/${_path}`;
 
         writeFile(_path, buffer as Uint8Array, null, () => UNDEFINED);
@@ -424,8 +424,8 @@ app.on('ready', () => {
       medias[++index] = {
         path: import.meta.env.DEV
           ? `${import.meta.env.VITE_SERVER_PROTOCOL}://${import.meta.env.VITE_SERVER_DOMAIN}/${
-              import.meta.env.VITE_SERVER_FILE
-            }/${path}`
+            import.meta.env.VITE_SERVER_FILE
+          }/${path}`
           : `/${import.meta.env.VITE_SERVER_FILE}/${path}`,
         title: title || UNKNOWN,
         singer: artist ? [{ name: artist }] : UNDEFINED,

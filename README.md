@@ -4,7 +4,7 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ### 项目技术栈
 
-![](https://img.shields.io/badge/Electron-32-success.svg)
+![](https://img.shields.io/badge/Electron-33-success.svg)
 ![](https://img.shields.io/badge/Vue-3-success.svg)
 ![](https://img.shields.io/badge/NodeJS-20-blue.svg)
 ![](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
@@ -49,9 +49,13 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ![MV分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/5.png "MV分类")
 
++ 歌曲榜单
+
+![MV分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/6.png "歌曲榜单")
+
 + 下载管理
 
-![MV分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/6.png "下载管理")
+![MV分类](https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/resource/demo/7.png "下载管理")
 
 更多效果，可自行体验
 
@@ -97,7 +101,7 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
         ├─player     (播放器相关封装)
         ├─router     (VueRouter相关)
         ├─styles     (全局样式,目前未使用作用域样式)
-        ├─types      (类型定义)
+        ├─types      (相关类型定义)
         │  └─api
         ├─utils      (渲染进程部分相关使用的工具代码)
         └─views      (渲染进程部分相关页面)
