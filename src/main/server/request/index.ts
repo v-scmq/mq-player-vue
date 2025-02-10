@@ -1,7 +1,10 @@
-import { net } from 'electron';
 import { createReadStream, existsSync, statSync } from 'fs';
+import { Readable } from 'stream';
+import { request as httpRequest } from 'http';
 import { request as httpsRequest } from 'https';
-import type { IncomingHttpHeaders } from 'http';
+
+import type { IncomingHttpHeaders, ClientRequest as NodeClientRequest } from 'http';
+import type { ReadableStream as NodeWebReadableStream } from 'stream/web';
 import type { Page } from '@/types';
 
 /*================== 类型定义 START ==================*/
@@ -9,42 +12,60 @@ type ErrorCode = 403 | 404;
 
 type RequestMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
-type RequestOption = {
-  /** 访问路径 */
+type RequestOptions = {
+  /** 请求目标站点地址 */
   url: string;
-  /** 请求头 */
-  headers?: IncomingHttpHeaders;
+
   /** get请求时的url参数(注意提供了此选项,如果url上存在相同的依然会被拼接到最终请求地址) */
   params?: Record<string, string | number | boolean>;
-};
 
-type PostRequestOption = RequestOption & {
+  /** 请求方法 */
+  method?: RequestMethod;
+
   /** 请求体 */
-  body?: Record<string, any> | string;
-};
+  body?: string | Record<string, any> | any[];
+
+  /** 请求头 */
+  headers?: Record<string, string> | IncomingHttpHeaders;
+
+  /** 代理请求,原始请求的header将覆盖指定的header */
+  proxy?: boolean;
+  /** 原始请求 */
+  origin?: Request;
+  /** 指定获取响应后以何种类型兑现promise, 'json':进行反序列化 | 'text':字符串形式 | 'raw':Response对象 */
+  response?: 'json' | 'text' | 'raw';
+}
+
+
+type ResType = Record<string, any> | any[] | string | Response
 
 type Http = {
   toPayload(req: Request, type: 'text'): Promise<string>;
   toPayload<T>(req: Request, type?: 'json'): Promise<T>;
-
-  get(options: RequestOption, type: 'text'): Promise<string>;
-  get<T>(options: RequestOption, type?: 'json'): Promise<T>;
-
-  post(options: PostRequestOption, type: 'text'): Promise<string>;
-  post<T>(options: PostRequestOption, type?: 'json'): Promise<T>;
 };
 /*================== 类型定义   END ==================*/
 
 const Res = Response;
 
 /**
- * 获取请求体(应在具有请求体的POST方式等的请求中调用)
+ * 从一个字符串中读取cookie信息,然后以键值对形式对象返回
  *
- * @param req 请求对象
- * @param type 指定获取请求体的类型(text:以存文本读取; json:以反序列化为对象读取)
+ * @param cookies cookie信息字符串
  */
-export const toPayload: Http['toPayload'] = <T>(req: Request, type?: 'text' | 'json') => {
-  return type === 'text' ? req.text() : (req.json() as Promise<T>);
+const toCookieMap = (cookies?: string) => {
+  const map: { [key: string]: string } = {};
+
+  if (cookies) {
+    // `xx = 11 ; yy = 22` => {'xx': 11, 'yy': 22}
+    for (const item of cookies.split(';')) {
+      const values = item.split('=');
+      const k = values[0].trim();
+      const v = values[1]?.trim();
+      k && v && (map[k] = v);
+    }
+  }
+
+  return map;
 };
 
 /**
@@ -64,79 +85,14 @@ export const toHeaders = ({ headers }: Request, cookie?: string) => {
 };
 
 /**
- * 使用electron net模块发出一个网络请求(默认GET请求)
- */
-export const request = net.fetch;
-
-/**
- * 发出一个网络请求
+ * 获取请求体(应在具有请求体的POST方式等的请求中调用)
  *
- * @param options 请求配置选项
- * @param type 响应体数据类型(默认以JSON反序列化)
- * @param method 请求方式(默认GET请求)
+ * @param req 请求对象
+ * @param type 指定获取请求体的类型(text:以存文本读取; json:以反序列化为对象读取)
  */
-const fetch = async <T>(options: RequestOption, type?: 'text' | 'json', method?: RequestMethod) => {
-  let { url, params, body, headers = {} } = options as RequestOption & { body: PostRequestOption['body'] };
-
-  if (params) {
-    const list: string[] = [];
-
-    for (const key in params) {
-      const value = params[key];
-      (value || value === 0) && list.push(`${key}=${encodeURIComponent(value)}`);
-    }
-
-    list.length && (url = `${url}${url.includes('?') ? '&' : '?'}${list.join('&')}`);
-  }
-
-  let key = 'content-type';
-
-  if (body) {
-    if (typeof body !== 'string') {
-      body = JSON.stringify(body);
-      headers[key] = 'application/json';
-    } else {
-      headers[key] = headers[key] || 'application/json';
-    }
-  } else {
-    // 没有请求体移除内容类型表头
-    delete headers[key];
-  }
-
-  key = 'referer';
-  headers[key] = headers[key] || url;
-
-  const isText = type === 'text';
-
-  try {
-    const res = await request(url, {
-      method: method,
-      headers: headers as Record<string, string>,
-      body
-    });
-
-    return await (isText ? res.text() : res.json());
-  } catch (e) {
-    return isText ? '' : ({} as T);
-  }
+export const toPayload: Http['toPayload'] = <T>(req: Request, type?: 'text' | 'json') => {
+  return type === 'text' ? req.text() : (req.json() as Promise<T>);
 };
-
-/**
- * 发出一个网络请求
- *
- * @param options 请求配置选项
- * @param type 响应体数据类型(默认以JSON反序列化)
- */
-export const get: Http['get'] = <T>(options: RequestOption, type?: 'text' | 'json') => fetch<T>(options, type);
-
-/**
- * 发出一个网络请求
- *
- * @param options 请求配置选项
- * @param type 响应体数据类型(默认以JSON反序列化)
- */
-export const post: Http['post'] = <T>(options: PostRequestOption, type?: 'text' | 'json') =>
-  fetch<T>(options, type, 'post');
 
 /**
  * 返回一个成功的响应对象
@@ -173,6 +129,135 @@ export const toError = <T extends Record<string, any> | any[]>(data?: T, message
  * @param code 错误响应状态码(默认404)
  */
 export const error = (code?: ErrorCode) => new Res(null, { status: code || 404 });
+
+/**
+ * 发出一个网络请求
+ *
+ * @param options 请求配置选项
+ */
+export const fetch = async <T extends ResType>(options: RequestOptions) => {
+  let { url, params, method, body, proxy, origin } = options;
+
+  // 若提供了URL参数对象, 则为其附加到URL字符串上
+  if (params) {
+    const list: string[] = [];
+
+    for (const key in params) {
+      const value = params[key];
+      (value || value === 0) && list.push(`${key}=${encodeURIComponent(value)}`);
+    }
+
+    list.length && (url = `${url}${url.includes('?') ? '&' : '?'}${list.join('&')}`);
+  }
+
+  let key = 'content-type';
+  const h1 = options.headers || {};
+  const h2 = origin ? toHeaders(origin) : {};
+
+  let sendBody: (newRequest: NodeClientRequest) => void;
+
+  if (proxy) {
+    method = origin?.method as RequestOptions['method'];
+    sendBody = newRequest => origin && origin.body
+      ? Readable.fromWeb(origin.body as NodeWebReadableStream).pipe(newRequest)
+      : newRequest.end();
+
+  } else {
+    if (body) {
+      if (typeof body !== 'string') {
+        body = JSON.stringify(body);
+        h1[key] = 'application/json;charset=UTF-8';
+      }
+
+      sendBody = (newRequest) => newRequest.end(body);
+
+    } else {
+      // 没有请求体移除内容类型表头
+      delete h1[key];
+
+      sendBody = (newRequest) => newRequest.end();
+    }
+  }
+
+  // 如果是代理, 那么原始请求的请求头优先级高于指定请求头
+  const headers: Record<string, string> | IncomingHttpHeaders = {
+    ...(proxy ? h1 : h2),
+    ...(proxy ? h2 : h1)
+  };
+
+  key = 'referer';
+  headers[key] = headers[key] || url;
+
+  const res = await new Promise<Response>(resolve => {
+    const send = url.startsWith('https') ? httpsRequest : httpRequest;
+
+    let redirectCount = 0;
+
+    const doSend = () => {
+      const newRequest = send(url, { method, headers }, readable => {
+        // 如果服务器响应头包含了重定向URL, 那么需要重新发起请求去访问新的资源(如果有可能需要携带cookie)
+        if ((url = readable.headers.location as string)) {
+          // 服务器响应头中的cookie
+          const c1 = readable.headers.cookie || '';
+          // 服务器响应头中的set-cookie
+          const c2 = (readable.headers['set-cookie'] || []).join(';');
+          // 从已有的cookie和服务器响应的cookie上构建cookie字符串, 从而构建cookie的key=>value对象
+          const cookies = toCookieMap(`${headers.cookie || ''};${c1};${c2}`);
+          delete cookies.Path;
+          delete cookies.Domain;
+          // 更新cookie
+          headers.cookie = Object.keys(cookies).map(key => `${key}=${cookies[key]}`).join(';');
+
+          // 需要重定向时, 按照现在的浏览器只可能是以get请求发送请求(这里通过递归调用完成发送, 最多允许重定向5次)
+          method = 'get';
+          ++redirectCount <= 5 ? doSend() : resolve(error());
+
+        } else {
+          resolve(new Res(readable as any as ReadableStream, {
+            status: readable.statusCode,
+            statusText: readable.statusMessage,
+            headers: readable.headers as Record<string, string>
+          }));
+        }
+      });
+
+      newRequest.once('error', () => resolve(error()));
+
+      sendBody(newRequest);
+    };
+
+    doSend();
+  });
+
+  const type = options.response;
+
+  if (type === 'raw') {
+    return res as T;
+  }
+
+  try {
+    return type === 'text' ? await res.text() as T : await res.json() as T;
+  } catch (error) {
+    return (type === 'text' ? '' : {}) as T;
+  }
+};
+
+/**
+ * 发出一个网络请求
+ *
+ * @param options 请求配置选项
+ */
+export const get = <T extends ResType>(options: Omit<RequestOptions, 'body'>) => fetch<T>(options);
+
+/**
+ * 发出一个网络请求
+ *
+ * @param options 请求配置选项
+ */
+export const post = <T extends ResType>(options: RequestOptions) => {
+  options.method = 'post';
+  return fetch<T>(options);
+};
 
 /**
  * 请求本地文件资源以stream方式响应
@@ -235,38 +320,5 @@ export const stream = (path: string, range?: string | null) => {
     status: isRage ? 206 : 200,
     statusText: 'OK',
     headers
-  });
-};
-
-export const pipe = async (url: string, headers: Record<string, string>) => {
-  const cookies: { [key: string]: string } = {};
-  const NULL_REF = null as any;
-  let readable = NULL_REF;
-
-  while (url) {
-    headers.cookie = Object.keys(cookies).map(key => `${key}=${cookies[key]}`).join(';');
-
-    readable = await new Promise(resolve => {
-      const req = httpsRequest(url, { headers }, resolve);
-      req.once('error', () => resolve(NULL_REF));
-      req.end();
-    });
-
-    if (!readable) {
-      return error();
-    }
-
-    if ((url = readable.headers.location)) {
-      for (const cookie of (readable.headers['set-cookie'] || [])) {
-        const [key, value] = cookie.split(';')[0].trim().split('=');
-        cookies [key.trim()] = value.trim();
-      }
-    }
-  }
-
-  return new Res(readable as any as ReadableStream, {
-    status: readable.statusCode,
-    statusText: readable.statusMessage,
-    headers: readable.headers as any as Record<string, string>
   });
 };

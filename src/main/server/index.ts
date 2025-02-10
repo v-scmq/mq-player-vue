@@ -1,5 +1,5 @@
 import { protocol } from 'electron';
-import { request, stream, error } from './request';
+import { stream, error, fetch } from './request';
 
 import type { RequestRootHandler, ApiHandlers } from './types';
 
@@ -28,12 +28,15 @@ export const createServer = () => {
         return error();
       }
 
-      // 移除cookie
-      req.headers.delete('cookie');
-      req.headers.set('referer', path);
-
       // 不允许代理访问自身
-      return url.protocol.includes(import.meta.env.VITE_SERVER_PROTOCOL) ? error(403) : request(path, req);
+      return url.protocol.includes(import.meta.env.VITE_SERVER_PROTOCOL)
+        ? error(403)
+        : fetch({
+          url: path,
+          origin: req,
+          proxy: true,
+          response: 'raw'
+        });
     },
 
     // 音乐数据统一前置接口

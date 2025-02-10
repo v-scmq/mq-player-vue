@@ -1,4 +1,4 @@
-import { toPayload, toSuccess, toError, get, post, error, toHeaders, pipe } from '../../request';
+import { toPayload, toSuccess, toError, get, post, error, fetch } from '../../request';
 import { formatTime, readLyric } from '../../../util';
 
 import type { ApiHandlers } from '../../types';
@@ -153,7 +153,8 @@ export const createApis = () => {
       }
 
       const singers = await get<Singer[]>({
-        url: `${baseApiURL}/singer/list`
+        url: `${baseApiURL}/singer/list`,
+        origin: req
       });
 
       const length = singers.length;
@@ -187,7 +188,8 @@ export const createApis = () => {
 
       const songs = await post<Song[]>({
         url: `${baseApiURL}/singer/songs`,
-        body: { id, mid }
+        body: { id, mid },
+        origin: req
       });
 
       const length = songs.length;
@@ -283,7 +285,7 @@ export const createApis = () => {
     /**
      * 获取榜单列表
      */
-    async 'rank/list'() {
+    async 'rank/list'(req) {
       const key = `singer/ranks`;
       let cached = cache[key] as RankListRes | undefined;
 
@@ -291,7 +293,11 @@ export const createApis = () => {
         return toSuccess(cached);
       }
 
-      const ranks = await get<RankListRes>({ url: `${baseApiURL}/rank/list` });
+      const ranks = await get<RankListRes>({
+        url: `${baseApiURL}/rank/list`,
+        origin: req
+      });
+
       return toSuccess(cached = cache[key] = ranks);
     },
 
@@ -310,7 +316,8 @@ export const createApis = () => {
 
       const songs = await post<Song[]>({
         url: `${baseApiURL}/rank/songs`,
-        body: { id/*, page*/ }
+        body: { id/*, page*/ },
+        origin: req
       });
 
       songs.forEach(song => {
@@ -404,7 +411,8 @@ export const createApis = () => {
       }
 
       const mvs = await get<Mv[]>({
-        url: `${baseApiURL}/mv/list`
+        url: `${baseApiURL}/mv/list`,
+        origin: req
       });
 
       const length = mvs.length;
@@ -525,7 +533,8 @@ export const createApis = () => {
       if (!data) {
         data = await post<{ url: string }>({
           url: `${baseApiURL}/stream`,
-          body: { id, mid }
+          body: { id, mid },
+          origin: req
         });
 
         cache[key] = data;
@@ -535,7 +544,12 @@ export const createApis = () => {
         return error();
       }
 
-      const res = await pipe(data.url, toHeaders(req));
+      const res = await fetch<Response>({
+        url: data.url,
+        origin: req,
+        proxy: true,
+        response: 'raw'
+      });
 
       // 若提供了文件名,则重写附件响应标头
       if (fileName) {
@@ -562,7 +576,8 @@ export const createApis = () => {
       if (!data) {
         data = await post<{ url: string }>({
           url: `${baseApiURL}/stream`,
-          body: { id, vid }
+          body: { id, vid },
+          origin: req
         });
 
         cache[key] = data;
@@ -572,7 +587,12 @@ export const createApis = () => {
         return error();
       }
 
-      const res = await pipe(data.url, toHeaders(req));
+      const res = await fetch<Response>({
+        url: data.url,
+        origin: req,
+        proxy: true,
+        response: 'raw'
+      });
 
       // 若提供了文件名,则重写附件响应标头
       if (file) {
@@ -594,7 +614,8 @@ export const createApis = () => {
 
       const data = await post<{ lyric: string; trans?: string }>({
         url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/lyric',
-        body: { id, mid }
+        body: { id, mid },
+        origin: req
       });
 
       return toSuccess<LyricRes>(readLyric(data?.lyric, data?.trans));
