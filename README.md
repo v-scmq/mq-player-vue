@@ -4,11 +4,11 @@ MQ音乐是一款基于Electron+Vue构建的桌面音乐播放器
 
 ### 项目技术栈
 
-![](https://img.shields.io/badge/Electron-33-success.svg)
+![](https://img.shields.io/badge/Electron-38-success.svg)
 ![](https://img.shields.io/badge/Vue-3-success.svg)
-![](https://img.shields.io/badge/NodeJS-20-blue.svg)
-![](https://img.shields.io/badge/TypeScript-5.6-blue.svg)
-![](https://img.shields.io/badge/MusicMetadata-10.5-blue.svg)
+![](https://img.shields.io/badge/NodeJS-22-blue.svg)
+![](https://img.shields.io/badge/TypeScript-5.9-blue.svg)
+![](https://img.shields.io/badge/MusicMetadata-11.8-blue.svg)
 
 ### 1.特别声明
 目前所公开的接口(位于:src/main/server/api/lib0, 作为demo用，请勿作为商业用途！)
