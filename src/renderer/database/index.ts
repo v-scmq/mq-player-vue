@@ -1,4 +1,4 @@
-import { List, isArray } from '@/utils';
+import { List, isArray as isList } from '@/utils';
 
 /**
  * indexDB 数据行类型
@@ -21,6 +21,9 @@ const UNDEFINED_REF = void 0;
 
 // 所有涉及修改的操作模式
 const WRITE_MODE: IDBTransactionMode = 'readwrite';
+// 数据库工厂对象
+const DB_FACTORY = indexedDB;
+const NAMED_DB = import.meta.env.VITE_DB_NAME;
 
 /** 数据库连接实例 */
 let database: IDBDatabase = NULL_REF;
@@ -43,26 +46,22 @@ const ensureOpen = () => {
   // 立即执行匿名函数,并将数据库打开请求(opening:Promise)引用为返回的Promise对象
   return (opening = (async () => {
     const keyPath = 'id';
-    // 数据库工厂对象
-    const factory = indexedDB;
     // 已经存在的数据库信息
-    const [{ version } = {}] = await factory.databases();
-    // 判断需要新创建书数据库
-    const creatable = !version;
+    const dbMap: Record<string, number> = {};
 
-    // 已经命名的数据库名称
-    const namedDB = import.meta.env.VITE_DB_NAME;
+    // 创建db名称到版本号的映射
+    (await DB_FACTORY.databases()).forEach(db => (dbMap[<string>db.name] = <number>db.version));
+
+    // 判断需要新创建书数据库
+    let version = dbMap[NAMED_DB];
+    let creatable = !version;
+
     // {key: TableName, value: 1(不存在) | 2(已存在)}
-    const tables: { [key: string]: 1 | 2 } = {
-      [import.meta.env.VITE_TABLE_USER]: 1,
-      [import.meta.env.VITE_TABLE_FILE]: 1,
-      [import.meta.env.VITE_TABLE_LYRIC]: 1,
-      [import.meta.env.VITE_TABLE_DOWNLOAD]: 1,
-      [import.meta.env.VITE_TABLE_PLAY_QUEUE]: 1
-    };
+    let tables: { [key: string]: 1 | 2 } = {};
+    __INDEXED_TABLES__.split(',').forEach(name => (tables[name] = 1));
 
     // 打开数据库(没有则新建)
-    let req = factory.open(namedDB, version || 1);
+    let req = DB_FACTORY.open(NAMED_DB, (version = version || 1));
 
     database = await new Promise<IDBDatabase>(resolve => {
       // 若是新创建数据库, 那么必须在版本升级事件中创建表
@@ -84,6 +83,9 @@ const ensureOpen = () => {
       // 3.打开数据库失败时的回调
       req.onerror = () => resolve(NULL_REF);
     });
+
+    // 监听close事件
+    database.onclose = close;
 
     // 若是完全新建 或 数据库打开失败, 则中断后续处理
     if (creatable || !database) {
@@ -123,7 +125,7 @@ const ensureOpen = () => {
     // 关闭数据库连接
     database.close();
     // 版本号增加1, 重新打开数据库
-    req = factory.open(namedDB, version + 1);
+    req = DB_FACTORY.open(NAMED_DB, version + 1);
 
     database = await new Promise(resolve => {
       // 1.版本升级
@@ -145,6 +147,9 @@ const ensureOpen = () => {
       req.onerror = () => resolve(NULL_REF);
     });
 
+    // 监听close事件
+    database.onclose = close;
+
     // 将数据库打开请求重置为空引用
     opening = NULL_REF;
 
@@ -154,9 +159,10 @@ const ensureOpen = () => {
 
 export const db = {
   /** 关闭数据库连接 */
-  close() {
-    database?.close();
+  close(event?: Event) {
+    !event && database?.close();
     database = NULL_REF;
+    opening = NULL_REF;
   },
 
   /**
@@ -216,11 +222,12 @@ export const db = {
       return await promise;
     }
 
-    const isList = isArray(condition);
+    const isArray = isList(condition);
     const isRange = condition instanceof IDBKeyRange;
+    const hasCondition = condition === 0 || condition;
 
     // 条件未指定 或 指定为0个元素的数组, 那么查询全部数据
-    if (!condition || (isList && !condition.length) || isRange) {
+    if (!hasCondition || (isArray && !condition.length) || isRange) {
       return await new Promise<T[]>(resolve => {
         // 注意:所有方法涉及IDBValidKey类型的参数,都不是实际支持数组传入的
         const req = store.getAll(isRange ? condition : UNDEFINED_REF, limit || UNDEFINED_REF);
@@ -230,7 +237,7 @@ export const db = {
     }
 
     // 统一调整为id数组
-    const ids: string[] | number[] = isList ? condition : ([condition] as string[] | number[]);
+    const ids: string[] | number[] = isArray ? condition : ([condition] as string[] | number[]);
 
     const promise = new Promise<T[]>(resolve => {
       transaction.oncomplete = () => resolve(data.filter(Boolean));
@@ -312,7 +319,7 @@ export const db = {
       return false;
     }
 
-    const list = isArray(data) ? data : [data];
+    const list = isList(data) ? data : [data];
 
     if (!list.length) {
       return false;
@@ -357,7 +364,7 @@ export const db = {
       return false;
     }
 
-    const ids = isArray(id) ? id : [id];
+    const ids = isList(id) ? id : [id];
     const transaction = database.transaction(table, WRITE_MODE);
     const store = transaction.objectStore(table);
 
@@ -393,11 +400,13 @@ export const db = {
     });
   }
 
-  // /**
-  //  * 获取数据库实例,以完成某些自定义CRUD操作
-  //  */
-  // async getDatabase() {
-  //   await ensureOpen();
-  //   return database;
+  // , clearDB() {
+  //   return new Promise<void>(resolve => {
+  //     close();
+  //
+  //     let req = DB_FACTORY.deleteDatabase(NAMED_DB);
+  //
+  //     req.onsuccess = req.onerror = () => resolve();
+  //   });
   // }
 };

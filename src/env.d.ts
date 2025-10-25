@@ -64,3 +64,5 @@ declare module NodeJS {
     };
   }
 }
+
+declare const __INDEXED_TABLES__: string;

@@ -34,10 +34,9 @@ type RequestOptions = {
   origin?: Request;
   /** 指定获取响应后以何种类型兑现promise, 'json':进行反序列化 | 'text':字符串形式 | 'raw':Response对象 */
   response?: 'json' | 'text' | 'raw';
-}
+};
 
-
-type ResType = Record<string, any> | any[] | string | Response
+type ResType = Record<string, any> | any[] | string | Response;
 
 type Http = {
   toPayload(req: Request, type: 'text'): Promise<string>;
@@ -158,10 +157,10 @@ export const fetch = async <T extends ResType>(options: RequestOptions) => {
 
   if (proxy) {
     method = origin?.method as RequestOptions['method'];
-    sendBody = newRequest => origin && origin.body
-      ? Readable.fromWeb(origin.body as NodeWebReadableStream).pipe(newRequest)
-      : newRequest.end();
-
+    sendBody = newRequest =>
+      origin && origin.body
+        ? Readable.fromWeb(origin.body as NodeWebReadableStream).pipe(newRequest)
+        : newRequest.end();
   } else {
     if (body) {
       if (typeof body !== 'string') {
@@ -169,13 +168,12 @@ export const fetch = async <T extends ResType>(options: RequestOptions) => {
         h1[key] = 'application/json;charset=UTF-8';
       }
 
-      sendBody = (newRequest) => newRequest.end(body);
-
+      sendBody = newRequest => newRequest.end(body);
     } else {
       // 没有请求体移除内容类型表头
       delete h1[key];
 
-      sendBody = (newRequest) => newRequest.end();
+      sendBody = newRequest => newRequest.end();
     }
   }
 
@@ -206,18 +204,21 @@ export const fetch = async <T extends ResType>(options: RequestOptions) => {
           delete cookies.Path;
           delete cookies.Domain;
           // 更新cookie
-          headers.cookie = Object.keys(cookies).map(key => `${key}=${cookies[key]}`).join(';');
+          headers.cookie = Object.keys(cookies)
+            .map(key => `${key}=${cookies[key]}`)
+            .join(';');
 
           // 需要重定向时, 按照现在的浏览器只可能是以get请求发送请求(这里通过递归调用完成发送, 最多允许重定向5次)
           method = 'get';
           ++redirectCount <= 5 ? doSend() : resolve(error());
-
         } else {
-          resolve(new Res(readable as any as ReadableStream, {
-            status: readable.statusCode,
-            statusText: readable.statusMessage,
-            headers: readable.headers as Record<string, string>
-          }));
+          resolve(
+            new Res(readable as any as ReadableStream, {
+              status: readable.statusCode,
+              statusText: readable.statusMessage,
+              headers: readable.headers as Record<string, string>
+            })
+          );
         }
       });
 
@@ -236,7 +237,7 @@ export const fetch = async <T extends ResType>(options: RequestOptions) => {
   }
 
   try {
-    return type === 'text' ? await res.text() as T : await res.json() as T;
+    return (type === 'text' ? await res.text() : await res.json()) as T;
   } catch (error) {
     return (type === 'text' ? '' : {}) as T;
   }

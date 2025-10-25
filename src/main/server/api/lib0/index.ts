@@ -44,7 +44,7 @@ import { Mv, Singer, Song } from '@/types';
  */
 export const createApis = () => {
   const cache: { [key: string]: any } = {};
-  const baseApiURL = 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest';
+  const baseApiURL = 'https://scmq-dev-ed.my.site.com/services/apexrest';
 
   /**
    * 获取歌曲在本地服务器上的URI地址
@@ -145,7 +145,7 @@ export const createApis = () => {
       console.log(tags, page);
 
       // 因为这里调用的接口, 仅仅是测试数据, 所以直接缓存所有结果
-      const key = 'singer/list';
+      const key = 'media/singers';
       let cached = cache[key] as SingerListRes | undefined;
 
       if (cached) {
@@ -153,7 +153,7 @@ export const createApis = () => {
       }
 
       const singers = await get<Singer[]>({
-        url: `${baseApiURL}/singer/list`,
+        url: `${baseApiURL}/media/singers`,
         origin: req
       });
 
@@ -178,7 +178,7 @@ export const createApis = () => {
     async 'singer/songs'(req) {
       const { id, mid /*, page*/ } = await toPayload<SingerSongListPayload>(req);
 
-      const key = `singer/songs/${id}/${mid}`;
+      const key = `media/singer/songs/${id}/${mid}`;
 
       let cached = cache[key] as SingerSongListRes | undefined;
 
@@ -187,7 +187,7 @@ export const createApis = () => {
       }
 
       const songs = await post<Song[]>({
-        url: `${baseApiURL}/singer/songs`,
+        url: `${baseApiURL}/media/singer/songs`,
         body: { id, mid },
         origin: req
       });
@@ -286,7 +286,7 @@ export const createApis = () => {
      * 获取榜单列表
      */
     async 'rank/list'(req) {
-      const key = `singer/ranks`;
+      const key = `media/ranks`;
       let cached = cache[key] as RankListRes | undefined;
 
       if (cached) {
@@ -294,7 +294,7 @@ export const createApis = () => {
       }
 
       const ranks = await get<RankListRes>({
-        url: `${baseApiURL}/rank/list`,
+        url: `${baseApiURL}/media/ranks`,
         origin: req
       });
 
@@ -307,7 +307,7 @@ export const createApis = () => {
     async 'rank/songs'(req) {
       const { id/*, page*/ } = await toPayload<RankSongListPayload>(req);
 
-      const key = `rank/songs/${id}`;
+      const key = `media/rank/songs/${id}`;
       let cached = cache[key] as RankSongListRes | undefined;
 
       if (cached) {
@@ -315,7 +315,7 @@ export const createApis = () => {
       }
 
       const songs = await post<Song[]>({
-        url: `${baseApiURL}/rank/songs`,
+        url: `${baseApiURL}/media/rank/songs`,
         body: { id/*, page*/ },
         origin: req
       });
@@ -402,7 +402,7 @@ export const createApis = () => {
       console.log(tags, page);
 
       // 因为这里调用的接口, 仅仅是测试数据, 所以直接缓存所有结果
-      const key = `mv/list`;
+      const key = `media/mvs`;
 
       let cached = cache[key] as MvListRes;
 
@@ -411,7 +411,7 @@ export const createApis = () => {
       }
 
       const mvs = await get<Mv[]>({
-        url: `${baseApiURL}/mv/list`,
+        url: `${baseApiURL}/media/mvs`,
         origin: req
       });
 
@@ -527,12 +527,12 @@ export const createApis = () => {
       const format = url.searchParams.get('format') || 'mp3';
       const fileName = url.searchParams.get('file');
 
-      const key = `song/stream/${id}/${mid}`;
+      const key = `media/url/${id}/${mid}`;
       let data = cache[key] as { url: string };
 
       if (!data) {
         data = await post<{ url: string }>({
-          url: `${baseApiURL}/stream`,
+          url: `${baseApiURL}/media/url`,
           body: { id, mid },
           origin: req
         });
@@ -570,12 +570,12 @@ export const createApis = () => {
       const file = url.searchParams.get('file');
       const format = url.searchParams.get('format') || 'mp4';
 
-      const key = `song/stream/${id}/${vid}`;
+      const key = `media/url/${id}/${vid}`;
       let data = cache[key] as { url: string };
 
       if (!data) {
         data = await post<{ url: string }>({
-          url: `${baseApiURL}/stream`,
+          url: `${baseApiURL}/media/url`,
           body: { id, vid },
           origin: req
         });
@@ -613,7 +613,7 @@ export const createApis = () => {
       }
 
       const data = await post<{ lyric: string; trans?: string }>({
-        url: 'https://scmq-ms-dev-ed.develop.my.salesforce-sites.com/services/apexrest/lyric',
+        url: `${baseApiURL}/media/lyric`,
         body: { id, mid },
         origin: req
       });

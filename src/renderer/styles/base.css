@@ -339,6 +339,7 @@
     display: grid;
     overflow: hidden;
     /*grid-template-columns: repeat(auto-fit, 13em);*/
+    grid-template-columns: repeat(auto-fit, minmax(13em, 1fr));
     grid-gap: 3em; /* row-gap: 3em; column-gap: 3em; grid-column-gap: 3em; */
     justify-content: space-around;
     position: sticky;

@@ -100,7 +100,7 @@ let audioSource: MediaElementAudioSourceNode;
 /** 音频上下文 */
 let audioContext: AudioContext;
 /** 8位无符号音频频谱数据 */
-let dataArray: Uint8Array;
+let dataArray: Uint8Array<ArrayBuffer>;
 /** 频谱计时器 */
 let spectrumTimer: number;
 

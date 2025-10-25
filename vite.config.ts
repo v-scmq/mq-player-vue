@@ -50,10 +50,28 @@ export default defineConfig(({ command, mode }) => {
   return {
     // 指定读取环境变量配置的目录
     //envDir: 'env',
+
+    define: {
+      __INDEXED_TABLES__: JSON.stringify(
+        Object.keys(env)
+          .filter(k => k.startsWith('VITE_TABLE_'))
+          .map(k => env[k])
+          .join(',')
+      )
+    },
+
     build: {
       target: ['esnext'],
       assetsDir: '',
-      outDir: `${buildBaseDir}/${env.VITE_SERVER_STATIC}`
+      outDir: `${buildBaseDir}/${env.VITE_SERVER_STATIC}`,
+      rollupOptions: {
+        output: {
+          hashCharacters: 'base36',
+          assetFileNames: '[hash].[ext]',
+          chunkFileNames: '[hash].js',
+          entryFileNames: '[hash].js'
+        }
+      }
     },
 
     // 仅在打包时配置(渲染进程部分有效)
@@ -81,6 +99,7 @@ export default defineConfig(({ command, mode }) => {
               outDir: `${buildBaseDir}/preload`,
               lib: { entry: 'src/preload/index.ts', name: 'index', formats: ['cjs'] },
               rollupOptions: {
+                // @ts-ignore
                 plugins: electronPlugins,
                 external: Object.keys('dependencies' in pkg ? pkg.dependencies : {}),
                 output: { inlineDynamicImports: true, entryFileNames: '[name].cjs' }
@@ -99,6 +118,7 @@ export default defineConfig(({ command, mode }) => {
               minify: optional(isBuild, 'terser'),
               outDir: `${buildBaseDir}/main`,
               rollupOptions: {
+                // @ts-ignore
                 plugins: electronPlugins,
                 external: Object.keys('dependencies' in pkg ? pkg.dependencies : {}),
                 output: { inlineDynamicImports: true }

@@ -24,7 +24,7 @@ if (import.meta.env.PROD && !app.requestSingleInstanceLock()) {
 // 空引用
 const NULL_REF = null as any;
 // 应用程序相关数据的根路径
-const ROOT_PATH = join(app.getPath('documents'), import.meta.env.VITE_APP_ID);
+const ROOT_PATH = join(app.getPath('documents'), `${import.meta.env.VITE_APP_ID}${import.meta.env.DEV ? '-dev' : ''}`);
 // 应用程序名
 const APP_NAME = import.meta.env.VITE_APP_NAME;
 // windows平台判定
@@ -74,7 +74,8 @@ protocol.registerSchemesAsPrivileged([
       // 开启fetch api支持
       supportFetchAPI: true,
       // 开启stream(流)支持
-      stream: true
+      stream: true,
+      codeCache: true
     }
   }
 ]);
@@ -412,8 +413,8 @@ app.on('ready', () => {
 
         cover = import.meta.env.DEV
           ? `${import.meta.env.VITE_SERVER_PROTOCOL}://${import.meta.env.VITE_SERVER_DOMAIN}/${
-            import.meta.env.VITE_SERVER_FILE
-          }/${_path}`
+              import.meta.env.VITE_SERVER_FILE
+            }/${_path}`
           : `/${_path}`;
 
         writeFile(_path, buffer as Uint8Array, null, () => UNDEFINED);
@@ -424,8 +425,8 @@ app.on('ready', () => {
       medias[++index] = {
         path: import.meta.env.DEV
           ? `${import.meta.env.VITE_SERVER_PROTOCOL}://${import.meta.env.VITE_SERVER_DOMAIN}/${
-            import.meta.env.VITE_SERVER_FILE
-          }/${path}`
+              import.meta.env.VITE_SERVER_FILE
+            }/${path}`
           : `/${import.meta.env.VITE_SERVER_FILE}/${path}`,
         title: title || UNKNOWN,
         singer: artist ? [{ name: artist }] : UNDEFINED,
